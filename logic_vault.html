@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Logic Vault — A Boolean Escape</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0a0d12;
+    --panel:#141b22;
+    --panel-raised:#1b242d;
+    --panel-line: rgba(255,255,255,0.07);
+    --brass:#c89b3c;
+    --brass-bright:#f0c063;
+    --brass-dark:#8b6b26;
+    --phosphor:#3ddc84;
+    --phosphor-dim: rgba(61,220,132,0.14);
+    --danger:#e4572e;
+    --danger-dim: rgba(228,87,46,0.14);
+    --text:#e8e6de;
+    --text-dim:#8a93a0;
+    --text-faint:#4b5560;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(200,155,60,0.09), transparent 60%),
+      radial-gradient(ellipse 1200px 800px at 50% 110%, rgba(61,220,132,0.05), transparent 60%),
+      var(--void);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+  .scanflicker{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background: linear-gradient(rgba(61,220,132,0.015) 50%, transparent 50%);
+    background-size: 100% 4px;
+    animation: flicker 9s infinite;
+    opacity:0.5;
+  }
+  @keyframes flicker{
+    0%,97%,100%{opacity:0.35;}
+    98%{opacity:0.1;}
+  }
+  h1,h2,h3,.display{
+    font-family:'Oswald', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:relative; z-index:2;
+    padding:26px 20px 14px;
+    text-align:center;
+    border-bottom:1px solid var(--panel-line);
+  }
+  header h1{
+    font-size:clamp(28px,5vw,42px);
+    font-weight:700;
+    color:var(--text);
+    margin:0 0 4px;
+    letter-spacing:0.08em;
+  }
+  header h1 span{color:var(--brass-bright);}
+  header p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:13px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .keycount{
+    margin-top:10px;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--brass-bright);
+    border:1px solid var(--brass-dark);
+    background:rgba(200,155,60,0.06);
+    padding:5px 14px;
+    border-radius:20px;
+  }
+
+  /* ---------- TRAIL ---------- */
+  .trail-wrap{
+    position:relative; z-index:2;
+    max-width:980px; margin:0 auto;
+    padding:16px 16px 6px;
+    overflow-x:auto;
+  }
+  .trail{
+    display:flex; gap:8px; justify-content:flex-start;
+    min-width:min-content;
+    padding-bottom:6px;
+  }
+  .door-node{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    border-radius:4px;
+    border:1px solid var(--panel-line);
+    background:var(--panel);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    position:relative;
+    cursor:default;
+    transition: all .25s;
+  }
+  .door-node.solved{
+    background:var(--phosphor-dim);
+    border-color:var(--phosphor);
+    color:var(--phosphor);
+  }
+  .door-node.current{
+    border-color:var(--brass-bright);
+    color:var(--brass-bright);
+    box-shadow:0 0 0 3px rgba(240,192,99,0.15);
+  }
+  .door-node.current::after{
+    content:"";
+    position:absolute; inset:-6px;
+    border:1px dashed var(--brass);
+    border-radius:8px;
+    opacity:0.5;
+  }
+
+  /* ---------- STAGE ---------- */
+  main{
+    position:relative; z-index:2;
+    max-width:720px;
+    margin:0 auto;
+    padding:20px 18px 80px;
+  }
+  .room-card{
+    background:linear-gradient(180deg, var(--panel-raised), var(--panel));
+    border:1px solid var(--panel-line);
+    border-radius:10px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    overflow:hidden;
+  }
+  .room-header{
+    padding:22px 26px 16px;
+    border-bottom:1px solid var(--panel-line);
+  }
+  .room-eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.15em;
+    color:var(--brass);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .room-title{
+    font-size:22px;
+    margin:0 0 10px;
+    color:var(--text);
+  }
+  .room-story{
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.6;
+    margin:0;
+  }
+
+  .terminal{
+    margin:20px 26px 0;
+    background:#080b0e;
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:16px 18px;
+  }
+  .terminal-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .expr-static{
+    font-family:'JetBrains Mono',monospace;
+    font-size:17px;
+    color:var(--brass-bright);
+    letter-spacing:0.02em;
+    margin-bottom:14px;
+  }
+  .expr-target{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+  }
+  .expr-target b{color:var(--phosphor); font-weight:600;}
+  .expr-live{
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    padding-top:14px;
+    margin-top:14px;
+    border-top:1px dashed var(--panel-line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .expr-live .expr-sub{color:var(--text);}
+  .expr-live .result-chip{
+    font-size:12px;
+    padding:4px 12px;
+    border-radius:20px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    border:1px solid var(--text-faint);
+    color:var(--text-faint);
+    transition:.2s;
+  }
+  .expr-live .result-chip.true{
+    color:var(--phosphor);
+    border-color:var(--phosphor);
+    background:var(--phosphor-dim);
+  }
+  .expr-live .result-chip.false{
+    color:var(--danger);
+    border-color:var(--danger);
+    background:var(--danger-dim);
+  }
+
+  /* ---------- SWITCHES ---------- */
+  .switch-bank{
+    display:flex; gap:14px; flex-wrap:wrap;
+    padding:22px 26px 6px;
+  }
+  .switch-unit{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:12px 16px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    min-width:78px;
+  }
+  .switch-unit .letter{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--text-dim);
+    letter-spacing:0.05em;
+  }
+  .toggle{
+    width:52px; height:28px;
+    border-radius:16px;
+    background:#0d1216;
+    border:1px solid var(--panel-line);
+    position:relative;
+    cursor:pointer;
+    transition:background .2s, border-color .2s;
+  }
+  .toggle .knob{
+    position:absolute; top:2px; left:2px;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:linear-gradient(180deg,#5a626c,#33383f);
+    box-shadow:0 1px 3px rgba(0,0,0,0.5);
+    transition: transform .18s cubic-bezier(.5,1.5,.5,1);
+  }
+  .toggle.on{
+    background:var(--phosphor-dim);
+    border-color:var(--phosphor);
+  }
+  .toggle.on .knob{
+    transform:translateX(24px);
+    background:linear-gradient(180deg,var(--brass-bright),var(--brass));
+    box-shadow:0 0 10px rgba(61,220,132,0.5);
+  }
+  .toggle:focus-visible{outline:2px solid var(--brass-bright); outline-offset:2px;}
+  .switch-unit .val{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text-faint);
+  }
+
+  /* ---------- LOCK / KEY ---------- */
+  .lockzone{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:20px;
+    padding:22px 26px 26px;
+    flex-wrap:wrap;
+  }
+  .hint-btn{
+    background:none;
+    border:1px solid var(--panel-line);
+    color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:9px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .hint-btn:hover{border-color:var(--brass); color:var(--brass-bright);}
+
+  .key-dock{
+    display:flex; align-items:center; gap:16px;
+  }
+  .key-svg{
+    cursor:grab;
+    filter:drop-shadow(0 0 6px rgba(200,155,60,0.35));
+    transition: transform .15s;
+    touch-action:none;
+  }
+  .key-svg:active{cursor:grabbing;}
+  .key-svg:hover{transform: translateY(-2px) rotate(-4deg);}
+
+  .lock-svg-wrap{
+    width:64px; height:64px;
+    border-radius:50%;
+    border:2px solid var(--brass-dark);
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 35% 30%, #23180a, #0c0906);
+    transition: box-shadow .3s, border-color .3s;
+  }
+  .lock-svg-wrap.dragover{
+    border-color:var(--brass-bright);
+    box-shadow:0 0 0 6px rgba(240,192,99,0.12);
+  }
+  .lock-svg-wrap.unlocked{
+    border-color:var(--phosphor);
+    box-shadow:0 0 0 6px rgba(61,220,132,0.15);
+  }
+  .lock-dial{
+    transition: transform .6s cubic-bezier(.6,-0.2,.3,1.3);
+  }
+  .lock-svg-wrap.unlocked .lock-dial{
+    transform:rotate(85deg);
+  }
+  .lock-svg-wrap.shake{
+    animation: shake .4s;
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+
+  .feedback{
+    padding:0 26px 22px;
+    min-height:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+  }
+  .feedback.ok{color:var(--phosphor);}
+  .feedback.bad{color:var(--danger);}
+  .feedback.hint{color:var(--brass-bright);}
+
+  .next-row{
+    padding:0 26px 26px;
+    display:flex; justify-content:flex-end;
+  }
+  .next-btn{
+    background:var(--phosphor);
+    color:#062012;
+    border:none;
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    font-weight:600;
+    font-size:14px;
+    padding:12px 22px;
+    border-radius:6px;
+    cursor:pointer;
+    display:none;
+    align-items:center;
+    gap:8px;
+    transition:.2s;
+  }
+  .next-btn:hover{filter:brightness(1.1); transform:translateY(-1px);}
+  .next-btn.show{display:inline-flex;}
+
+  /* ---------- VICTORY ---------- */
+  .victory{
+    text-align:center;
+    padding:60px 30px;
+  }
+  .victory h2{
+    font-size:clamp(30px,6vw,48px);
+    color:var(--phosphor);
+    margin-bottom:10px;
+  }
+  .victory p{color:var(--text-dim); font-size:15px; line-height:1.7; max-width:480px; margin:0 auto 24px;}
+  .stat-row{
+    display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
+    margin-bottom:30px;
+  }
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:8px;
+    padding:14px 22px;
+    min-width:120px;
+  }
+  .stat .n{font-family:'JetBrains Mono',monospace; font-size:24px; color:var(--brass-bright);}
+  .stat .l{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px;}
+  .restart-btn{
+    background:none;
+    border:1px solid var(--brass);
+    color:var(--brass-bright);
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    font-size:14px;
+    padding:12px 26px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  .restart-btn:hover{background:rgba(200,155,60,0.1);}
+
+  .legend{
+    max-width:720px; margin:26px auto 0;
+    padding:0 18px;
+    color:var(--text-faint);
+    font-size:12px;
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    line-height:1.7;
+  }
+
+  @media (max-width:480px){
+    .lockzone{flex-direction:column; align-items:stretch;}
+    .key-dock{justify-content:center;}
+    .switch-bank{justify-content:center;}
+  }
+</style>
+</head>
+<body>
+<div class="scanflicker"></div>
+
+<header>
+  <h1>THE LOGIC <span>VAULT</span></h1>
+  <p>an escape sequenced in boolean logic</p>
+  <div class="keycount mono">🔑 <span id="keyCount">0</span> / <span id="keyTotal">20</span> doors opened</div>
+</header>
+
+<div class="trail-wrap">
+  <div class="trail" id="trail"></div>
+</div>
+
+<main>
+  <div id="stage"></div>
+  <div class="legend">A, B, C, D each hold a value of 1 (true) or 0 (false). Point-and-click the switches to set them, then drag the brass key into the lock — or click the key — to test the door.</div>
+</main>
+
+<script>
+/* ============================= PUZZLE DATA ============================= */
+const PUZZLES = [
+  {
+    name:"Entry Hall",
+    story:"The heavy door behind you seals with a clunk. A cracked panel glows beside a simpler one: a single lever door.",
+    vars:["A"],
+    expr:"A",
+    target:true,
+    template:v=>`${v.A}`,
+    evaluate:v=>!!v.A,
+    hint:"The expression is just A. Flip A on."
+  },
+  {
+    name:"Reception Archive",
+    story:"Dusty ledgers line the walls. The archive gate wants either lever raised — it isn't picky about which.",
+    vars:["A","B"],
+    expr:"A OR B",
+    target:true,
+    template:v=>`${v.A} OR ${v.B}`,
+    evaluate:v=>!!(v.A||v.B),
+    hint:"OR is satisfied if at least one switch is 1."
+  },
+  {
+    name:"Security Booth",
+    story:"Twin badge-readers demand simultaneous authorization. Nothing less will do.",
+    vars:["A","B"],
+    expr:"A AND B",
+    target:true,
+    template:v=>`${v.A} AND ${v.B}`,
+    evaluate:v=>!!(v.A&&v.B),
+    hint:"AND needs every switch on — both A and B must be 1."
+  },
+  {
+    name:"Storage Closet",
+    story:"A hand-written note on the door: \"Keep the light OFF to open me.\" The switch controls the light, not the lock.",
+    vars:["A"],
+    expr:"NOT A",
+    target:true,
+    template:v=>`NOT ${v.A}`,
+    evaluate:v=>!v.A,
+    hint:"NOT flips the value. You need A itself to be 0."
+  },
+  {
+    name:"Server Vestibule",
+    story:"Cooling fans hum. The rack unlocks only when the main power is up but the bypass relay is down.",
+    vars:["A","B"],
+    expr:"A AND (NOT B)",
+    target:true,
+    template:v=>`${v.A} AND (NOT ${v.B})`,
+    evaluate:v=>!!(v.A && !v.B),
+    hint:"A must be 1, and B must be 0 so that NOT B becomes 1."
+  },
+  {
+    name:"Twin Circuit Room",
+    story:"A plaque reads: \"We agree on nothing.\" The mechanism only trusts switches that disagree with each other.",
+    vars:["A","B"],
+    expr:"A XOR B",
+    target:true,
+    template:v=>`${v.A} XOR ${v.B}`,
+    evaluate:v=>!!(v.A^v.B),
+    hint:"XOR is true only when A and B are different — one 1, one 0."
+  },
+  {
+    name:"Guard's Office",
+    story:"An old NAND relay guards the office. It fails only when both badges are presented at once — so don't do that.",
+    vars:["A","B"],
+    expr:"NOT (A AND B)",
+    target:true,
+    template:v=>`NOT (${v.A} AND ${v.B})`,
+    evaluate:v=>!(v.A&&v.B),
+    hint:"Anything except A=1 and B=1 together will satisfy this."
+  },
+  {
+    name:"Sealed Cell",
+    story:"This door must stay believably locked to any outside sensor. Keep every reading dark — the whole expression must read FALSE.",
+    vars:["A","B","C"],
+    expr:"(A AND B) OR C",
+    target:false,
+    template:v=>`(${v.A} AND ${v.B}) OR ${v.C}`,
+    evaluate:v=>!!((v.A&&v.B)||v.C),
+    hint:"For a FALSE result: C must be 0, and A and B can't both be 1."
+  },
+  {
+    name:"Laboratory Wing",
+    story:"A containment door: open if the primary switch is live, or if the backup is armed while the safety is clear.",
+    vars:["A","B","C"],
+    expr:"A OR (B AND (NOT C))",
+    target:true,
+    template:v=>`${v.A} OR (${v.B} AND (NOT ${v.C}))`,
+    evaluate:v=>!!(v.A || (v.B && !v.C)),
+    hint:"Easiest path: just set A to 1. Or set B=1 and C=0."
+  },
+  {
+    name:"Signal Junction",
+    story:"Two signals must differ, and the relay gate must be closed, for the junction to pass current through.",
+    vars:["A","B","C"],
+    expr:"(A XOR B) AND C",
+    target:true,
+    template:v=>`(${v.A} XOR ${v.B}) AND ${v.C}`,
+    evaluate:v=>!!((v.A^v.B) && v.C),
+    hint:"Make A and B different from each other, and set C to 1."
+  },
+  {
+    name:"Silent Chamber",
+    story:"This vault answers to silence alone. The moment either switch stirs, the mechanism refuses to move.",
+    vars:["A","B"],
+    expr:"NOT (A OR B)",
+    target:true,
+    template:v=>`NOT (${v.A} OR ${v.B})`,
+    evaluate:v=>!(v.A||v.B),
+    hint:"NOR is only true when both A and B are 0."
+  },
+  {
+    name:"Reactor Core",
+    story:"Redundant safety: the core arms if either of two independent switch-pairs is fully engaged.",
+    vars:["A","B","C","D"],
+    expr:"(A AND B) OR (C AND D)",
+    target:true,
+    template:v=>`(${v.A} AND ${v.B}) OR (${v.C} AND ${v.D})`,
+    evaluate:v=>!!((v.A&&v.B)||(v.C&&v.D)),
+    hint:"You only need ONE full pair — either A&B both 1, or C&D both 1."
+  },
+  {
+    name:"Greenhouse Dome",
+    story:"The irrigation valve needs a live line from each side of the dome — pick any switch on the left, any on the right.",
+    vars:["A","B","C","D"],
+    expr:"(A OR B) AND (C OR D)",
+    target:true,
+    template:v=>`(${v.A} OR ${v.B}) AND (${v.C} OR ${v.D})`,
+    evaluate:v=>!!((v.A||v.B)&&(v.C||v.D)),
+    hint:"Turn on at least one of A/B, and at least one of C/D."
+  },
+  {
+    name:"Cold Storage",
+    story:"Frost-covered controls: both alarms must be silenced, and the manual override must be pulled.",
+    vars:["A","B","C"],
+    expr:"(NOT A) AND (NOT B) AND C",
+    target:true,
+    template:v=>`(NOT ${v.A}) AND (NOT ${v.B}) AND ${v.C}`,
+    evaluate:v=>!!(!v.A && !v.B && v.C),
+    hint:"Set A=0, B=0, and C=1 — all three conditions at once."
+  },
+  {
+    name:"Mirror Hall",
+    story:"Mirrors only show a reflection when exactly one of the twin torches burns — never both, never neither.",
+    vars:["A","B"],
+    expr:"(A AND NOT B) OR (NOT A AND B)",
+    target:true,
+    template:v=>`(${v.A} AND NOT ${v.B}) OR (NOT ${v.A} AND ${v.B})`,
+    evaluate:v=>!!((v.A&&!v.B)||(!v.A&&v.B)),
+    hint:"This is just XOR written the long way: A and B must differ."
+  },
+  {
+    name:"Workshop Annex",
+    story:"An old workbench schematic: current flows if the main switch is live or the safety guard is up, AND the far breaker isn't blocking it — unless the override kicks in.",
+    vars:["A","B","C","D"],
+    expr:"(A OR NOT B) AND (NOT C OR D)",
+    target:true,
+    template:v=>`(${v.A} OR NOT ${v.B}) AND (NOT ${v.C} OR ${v.D})`,
+    evaluate:v=>!!((v.A||!v.B)&&(!v.C||v.D)),
+    hint:"Left side: A=1 or B=0. Right side: C=0 or D=1. Satisfy both sides."
+  },
+  {
+    name:"Observatory",
+    story:"The telescope dome only aligns when both dials point the same way — either both up, or both down.",
+    vars:["A","B"],
+    expr:"NOT (A XOR B)",
+    target:true,
+    template:v=>`NOT (${v.A} XOR ${v.B})`,
+    evaluate:v=>!(v.A^v.B),
+    hint:"XNOR: A and B must match — both 1, or both 0."
+  },
+  {
+    name:"Armory Vault",
+    story:"Full clearance opens the armory outright. Failing that, the fail-safe accepts anyone once the fourth switch is cut.",
+    vars:["A","B","C","D"],
+    expr:"(A AND B AND C) OR (NOT D)",
+    target:true,
+    template:v=>`(${v.A} AND ${v.B} AND ${v.C}) OR (NOT ${v.D})`,
+    evaluate:v=>!!((v.A&&v.B&&v.C)||!v.D),
+    hint:"Fastest route: just set D to 0."
+  },
+  {
+    name:"Clocktower",
+    story:"The bell only tolls if at least one gear turns — but never if all three turn together; that jams the works.",
+    vars:["A","B","C"],
+    expr:"(A OR B OR C) AND NOT (A AND B AND C)",
+    target:true,
+    template:v=>`(${v.A} OR ${v.B} OR ${v.C}) AND NOT (${v.A} AND ${v.B} AND ${v.C})`,
+    evaluate:v=>!!((v.A||v.B||v.C) && !(v.A&&v.B&&v.C)),
+    hint:"Turn on one or two switches — just not all three, and not zero."
+  },
+  {
+    name:"The Final Gate",
+    story:"Beyond this door is daylight. The old vault-master's riddle is carved into the frame: a matched pair on either side opens the way — but a house fully wired burns it down.",
+    vars:["A","B","C","D"],
+    expr:"((A AND B) OR (C AND D)) AND NOT (A AND B AND C AND D)",
+    target:true,
+    template:v=>`((${v.A} AND ${v.B}) OR (${v.C} AND ${v.D})) AND NOT (${v.A} AND ${v.B} AND ${v.C} AND ${v.D})`,
+    evaluate:v=>!!(((v.A&&v.B)||(v.C&&v.D)) && !(v.A&&v.B&&v.C&&v.D)),
+    hint:"Get one pair fully on (A&B, or C&D) — but avoid turning ALL four on at once."
+  }
+];
+
+/* ============================= STATE ============================= */
+const state = {
+  room: 0,
+  solved: new Array(PUZZLES.length).fill(false),
+  values: {},
+  hintsUsed: 0
+};
+
+function resetValuesForRoom(i){
+  const p = PUZZLES[i];
+  state.values = {};
+  p.vars.forEach(v=> state.values[v] = 0);
+}
+resetValuesForRoom(0);
+
+/* ============================= RENDER: TRAIL ============================= */
+function renderTrail(){
+  const trail = document.getElementById('trail');
+  trail.innerHTML = '';
+  PUZZLES.forEach((p,i)=>{
+    const d = document.createElement('div');
+    d.className = 'door-node' + (state.solved[i] ? ' solved':'') + (i===state.room ? ' current':'');
+    d.textContent = i+1;
+    d.title = p.name;
+    trail.appendChild(d);
+  });
+  document.getElementById('keyCount').textContent = state.solved.filter(Boolean).length;
+}
+
+/* ============================= RENDER: STAGE ============================= */
+function renderStage(){
+  const stage = document.getElementById('stage');
+
+  if(state.room >= PUZZLES.length){
+    stage.innerHTML = `
+      <div class="room-card victory">
+        <h2>You Escaped</h2>
+        <p>The final gate swings open onto daylight. Every circuit behind you now reads true — you reasoned your way through twenty locks of Boolean logic.</p>
+        <div class="stat-row">
+          <div class="stat"><div class="n">${PUZZLES.length}</div><div class="l">Doors Opened</div></div>
+          <div class="stat"><div class="n">${state.hintsUsed}</div><div class="l">Hints Used</div></div>
+        </div>
+        <button class="restart-btn" id="restartBtn">Re-enter the Vault</button>
+      </div>`;
+    document.getElementById('restartBtn').onclick = ()=>{
+      state.room = 0;
+      state.solved.fill(false);
+      state.hintsUsed = 0;
+      resetValuesForRoom(0);
+      renderAll();
+    };
+    return;
+  }
+
+  const p = PUZZLES[state.room];
+  const alreadySolved = state.solved[state.room];
+
+  stage.innerHTML = `
+    <div class="room-card">
+      <div class="room-header">
+        <div class="room-eyebrow">Room ${state.room+1} of ${PUZZLES.length} — ${p.name}</div>
+        <h2 class="room-title">${p.name}</h2>
+        <p class="room-story">${p.story}</p>
+      </div>
+
+      <div class="terminal">
+        <div class="terminal-label">Door Circuit</div>
+        <div class="expr-static">${p.expr}</div>
+        <div class="expr-target">Required output: <b>${p.target ? 'TRUE' : 'FALSE'}</b></div>
+        <div class="expr-live">
+          <span class="expr-sub mono" id="liveExpr"></span>
+          <span class="result-chip" id="resultChip">—</span>
+        </div>
+      </div>
+
+      <div class="switch-bank" id="switchBank"></div>
+
+      <div class="lockzone">
+        <button class="hint-btn" id="hintBtn">Show Hint</button>
+        <div class="key-dock">
+          <svg class="key-svg" id="keyEl" draggable="true" width="46" height="46" viewBox="0 0 46 46">
+            <circle cx="14" cy="14" r="9" fill="none" stroke="#c89b3c" stroke-width="4"/>
+            <rect x="20" y="12" width="20" height="4" fill="#c89b3c"/>
+            <rect x="30" y="16" width="4" height="7" fill="#c89b3c"/>
+            <rect x="36" y="16" width="4" height="9" fill="#c89b3c"/>
+          </svg>
+          <div class="lock-svg-wrap" id="lockEl">
+            <svg width="34" height="34" viewBox="0 0 34 34" class="lock-dial" id="lockDial">
+              <circle cx="17" cy="17" r="13" fill="none" stroke="#c89b3c" stroke-width="2"/>
+              <line x1="17" y1="17" x2="17" y2="6" stroke="#f0c063" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="17" cy="17" r="2.5" fill="#f0c063"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+      <div class="next-row">
+        <button class="next-btn" id="nextBtn">Enter Next Room →</button>
+      </div>
+    </div>
+  `;
+
+  // switches
+  const bank = document.getElementById('switchBank');
+  p.vars.forEach(v=>{
+    const unit = document.createElement('div');
+    unit.className='switch-unit';
+    unit.innerHTML = `
+      <div class="letter">${v}</div>
+      <div class="toggle" tabindex="0" role="switch" aria-checked="false" data-var="${v}">
+        <div class="knob"></div>
+      </div>
+      <div class="val mono" data-valfor="${v}">0</div>
+    `;
+    bank.appendChild(unit);
+  });
+
+  // wire up toggles
+  bank.querySelectorAll('.toggle').forEach(t=>{
+    const v = t.dataset.var;
+    function toggleIt(){
+      state.values[v] = state.values[v] ? 0 : 1;
+      t.classList.toggle('on', !!state.values[v]);
+      t.setAttribute('aria-checked', !!state.values[v]);
+      bank.querySelector(`[data-valfor="${v}"]`).textContent = state.values[v];
+      updateLiveReadout();
+    }
+    t.addEventListener('click', toggleIt);
+    t.addEventListener('keydown', e=>{
+      if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggleIt(); }
+    });
+  });
+
+  // key drag + click
+  const keyEl = document.getElementById('keyEl');
+  const lockEl = document.getElementById('lockEl');
+  keyEl.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain','key'); });
+  keyEl.addEventListener('click', ()=> attemptUnlock());
+  keyEl.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') attemptUnlock(); });
+  lockEl.addEventListener('dragover', e=>{ e.preventDefault(); lockEl.classList.add('dragover'); });
+  lockEl.addEventListener('dragleave', ()=> lockEl.classList.remove('dragover'));
+  lockEl.addEventListener('drop', e=>{
+    e.preventDefault();
+    lockEl.classList.remove('dragover');
+    attemptUnlock();
+  });
+
+  document.getElementById('hintBtn').addEventListener('click', ()=>{
+    state.hintsUsed++;
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback hint';
+    fb.textContent = '💡 ' + p.hint;
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    state.room++;
+    resetValuesForRoom(Math.min(state.room, PUZZLES.length-1));
+    renderAll();
+  });
+
+  if(alreadySolved){
+    lockEl.classList.add('unlocked');
+    document.getElementById('nextBtn').classList.add('show');
+    const fb = document.getElementById('feedback');
+    fb.className='feedback ok';
+    fb.textContent = '✓ Door already cleared. Move on when ready.';
+  }
+
+  updateLiveReadout();
+}
+
+function updateLiveReadout(){
+  const p = PUZZLES[state.room];
+  const liveExpr = document.getElementById('liveExpr');
+  const chip = document.getElementById('resultChip');
+  if(!liveExpr) return;
+  const substituted = p.template(state.values);
+  const result = p.evaluate(state.values);
+  liveExpr.textContent = substituted;
+  chip.textContent = result ? 'TRUE' : 'FALSE';
+  chip.className = 'result-chip ' + (result ? 'true':'false');
+}
+
+function attemptUnlock(){
+  const p = PUZZLES[state.room];
+  const lockEl = document.getElementById('lockEl');
+  const fb = document.getElementById('feedback');
+  const result = p.evaluate(state.values);
+  const success = result === p.target;
+
+  if(success){
+    state.solved[state.room] = true;
+    lockEl.classList.add('unlocked');
+    fb.className='feedback ok';
+    fb.textContent = '✓ The circuit reads ' + (result?'TRUE':'FALSE') + ' — the lock disengages.';
+    document.getElementById('nextBtn').classList.add('show');
+    renderTrail();
+  } else {
+    lockEl.classList.remove('shake');
+    void lockEl.offsetWidth;
+    lockEl.classList.add('shake');
+    fb.className='feedback bad';
+    fb.textContent = '✗ Circuit reads ' + (result?'TRUE':'FALSE') + ', door needs ' + (p.target?'TRUE':'FALSE') + '. Try again.';
+  }
+}
+
+function renderAll(){
+  renderTrail();
+  renderStage();
+}
+renderAll();
+</script>
+</body>
+</html>
