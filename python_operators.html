@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sort It Out: Python Operators</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22223b;
+    --sub:#6b6b83;
+    --paper:#ffffff;
+    --panel:#fafafa;
+    --line:#e7e7ee;
+
+    --ar-accent:#43a047;  --ar-tint:#eaf7ec;
+    --cmp-accent:#2196f3; --cmp-tint:#e8f4ff;
+    --log-accent:#7c4dff; --log-tint:#f1ebff;
+    --asn-accent:#ff7043; --asn-tint:#fff0ea;
+    --bit-accent:#00acc1; --bit-tint:#e5f8fa;
+    --idn-accent:#ec407a; --idn-tint:#fdeaf1;
+    --mem-accent:#ffb300; --mem-tint:#fff6e0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Baloo 2', sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .wrap{
+    max-width:1150px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:6px;
+  }
+
+  header h1{
+    font-size:clamp(1.6rem, 4vw, 2.4rem);
+    font-weight:800;
+    margin:0 0 6px;
+    letter-spacing:0.2px;
+  }
+
+  header h1 .py{
+    background:linear-gradient(90deg,#3776ab,#ffd43b);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  header p{
+    margin:0;
+    color:var(--sub);
+    font-size:1rem;
+    font-weight:500;
+  }
+
+  .scoreboard{
+    display:flex;
+    justify-content:center;
+    gap:22px;
+    margin:18px 0 24px;
+    flex-wrap:wrap;
+  }
+
+  .pill{
+    background:var(--panel);
+    border:2px solid var(--line);
+    border-radius:999px;
+    padding:8px 18px;
+    font-weight:700;
+    font-size:0.95rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .pill span{ font-family:'JetBrains Mono', monospace; }
+
+  #resetBtn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:0.95rem;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:8px 20px;
+    cursor:pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  #resetBtn:hover{ transform:translateY(-1px); background:#3f3f5c; }
+  #resetBtn:active{ transform:translateY(0); }
+
+  .bins{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+    margin-bottom:30px;
+  }
+
+  @media (max-width: 900px){
+    .bins{ grid-template-columns:repeat(2, 1fr); }
+  }
+  @media (max-width: 460px){
+    .bins{ grid-template-columns:1fr; }
+  }
+
+  .bin{
+    background:var(--tint);
+    border:3px solid var(--accent);
+    border-radius:18px 18px 22px 22px;
+    padding:0;
+    overflow:hidden;
+    min-height:160px;
+    display:flex;
+    flex-direction:column;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    position:relative;
+  }
+
+  .bin-label{
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    font-size:0.95rem;
+    padding:8px 12px;
+    text-align:center;
+    letter-spacing:0.3px;
+  }
+
+  .bin-hint{
+    font-size:0.72rem;
+    color:var(--sub);
+    text-align:center;
+    padding:6px 8px 2px;
+    font-weight:500;
+  }
+
+  .bin-slots{
+    flex:1;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-content:flex-start;
+    padding:8px 10px 12px;
+  }
+
+  .bin.correct-flash{
+    box-shadow:0 0 0 5px rgba(67,160,71,0.35);
+  }
+  .bin.wrong-flash{
+    animation: shakeBin 0.4s ease;
+    box-shadow:0 0 0 5px rgba(229,57,53,0.3);
+  }
+
+  @keyframes shakeBin{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-6px); }
+    75%{ transform:translateX(6px); }
+  }
+
+  .bank{
+    background:var(--panel);
+    border:2px dashed var(--line);
+    border-radius:20px;
+    padding:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    min-height:110px;
+    justify-content:center;
+  }
+
+  .chip{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:0.92rem;
+    background:#ffffff;
+    color:var(--ink);
+    border:2px solid #d9d9e6;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:grab;
+    box-shadow:0 3px 0 #d9d9e6;
+    user-select:none;
+    touch-action:none;
+    transition: box-shadow 0.12s ease, transform 0.12s ease;
+    white-space:nowrap;
+  }
+  .chip:active{ cursor:grabbing; }
+
+  .chip.dragging{
+    position:fixed;
+    z-index:999;
+    box-shadow:0 8px 16px rgba(0,0,0,0.18);
+    transform:scale(1.06) rotate(-2deg);
+    pointer-events:none;
+  }
+
+  .chip.placed{
+    background:#ffffffcc;
+    cursor:default;
+    box-shadow:none;
+    font-size:0.8rem;
+    padding:6px 10px;
+    opacity:0.9;
+  }
+
+  .chip.shake{
+    animation: shakeChip 0.35s ease;
+  }
+  @keyframes shakeChip{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(-8px); }
+    75%{ transform:translateX(8px); }
+  }
+
+  .win-banner{
+    margin-top:22px;
+    text-align:center;
+    background:linear-gradient(90deg, var(--log-tint), var(--idn-tint));
+    border:3px solid var(--log-accent);
+    border-radius:18px;
+    padding:18px;
+    font-weight:800;
+    font-size:1.2rem;
+  }
+  .win-banner[hidden]{ display:none; }
+
+  footer{
+    text-align:center;
+    margin-top:26px;
+    color:var(--sub);
+    font-size:0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Sort It Out: <span class="py">Python</span> Operators</h1>
+    <p>Drag each example down into the operator category it belongs to.</p>
+  </header>
+
+  <div class="scoreboard">
+    <div class="pill">✅ Sorted: <span id="score">0</span>/39</div>
+    <div class="pill">❌ Mistakes: <span id="mistakes">0</span></div>
+    <button id="resetBtn">🔄 Reset</button>
+  </div>
+
+  <div class="bins" id="bins"></div>
+
+  <div class="bank" id="bank"></div>
+
+  <div class="win-banner" id="winBanner" hidden>🎉 Nice work — every operator is sorted into the right category!</div>
+
+  <footer>Tip: ask what the operator <em>does</em> — does it calculate, compare, combine true/false, store a value, work on bits, check identity, or check membership?</footer>
+</div>
+
+<script>
+const categories = [
+  { key:'arithmetic', label:'Arithmetic',  hint:'do math',              accentVar:'--ar-accent',  tintVar:'--ar-tint' },
+  { key:'Relational (Comparision)', label:'Relational (Comparision)',  hint:'compare two values',   accentVar:'--cmp-accent', tintVar:'--cmp-tint' },
+  { key:'logical',    label:'Logical',     hint:'combine True/False',  accentVar:'--log-accent', tintVar:'--log-tint' },
+  { key:'assignment', label:'Assignment',  hint:'store a value',        accentVar:'--asn-accent', tintVar:'--asn-tint' },
+  { key:'bitwise',    label:'Bitwise',     hint:'work on bits',         accentVar:'--bit-accent', tintVar:'--bit-tint' },
+  { key:'identity',   label:'Identity',    hint:'same object?',         accentVar:'--idn-accent', tintVar:'--idn-tint' },
+  { key:'membership', label:'Membership',  hint:'is it inside?',        accentVar:'--mem-accent', tintVar:'--mem-tint' },
+];
+
+const items = [
+  { text:'+',           cat:'arithmetic' },
+  { text:'-',           cat:'arithmetic' },
+  { text:'*',           cat:'arithmetic' },
+  { text:'/',           cat:'arithmetic' },
+  { text:'//',          cat:'arithmetic' },
+  { text:'%',           cat:'arithmetic' },
+  { text:'**',          cat:'arithmetic' },
+
+  { text:'==',          cat:'Relational (Comparision)' },
+  { text:'!=',          cat:'Relational (Comparision)' },
+  { text:'>',           cat:'Relational (Comparision)' },
+  { text:'<',           cat:'Relational (Comparision)' },
+  { text:'>=',          cat:'Relational (Comparision)' },
+  { text:'<=',          cat:'Relational (Comparision)' },
+
+  { text:'and',         cat:'logical' },
+  { text:'or',          cat:'logical' },
+  { text:'not',         cat:'logical' },
+
+  { text:'=',           cat:'assignment' },
+  { text:'+=',          cat:'assignment' },
+  { text:'-=',          cat:'assignment' },
+  { text:'*=',          cat:'assignment' },
+  { text:'/=',          cat:'assignment' },
+  { text:'//=',         cat:'assignment' },
+  { text:'%=',          cat:'assignment' },
+  { text:'**=',         cat:'assignment' },
+  { text:'&=',          cat:'assignment' },
+  { text:'|=',          cat:'assignment' },
+  { text:'^=',          cat:'assignment' },
+  { text:'>>=',         cat:'assignment' },
+  { text:'<<=',         cat:'assignment' },
+
+  { text:'&',           cat:'bitwise' },
+  { text:'|',           cat:'bitwise' },
+  { text:'^',           cat:'bitwise' },
+  { text:'~',           cat:'bitwise' },
+  { text:'<<',          cat:'bitwise' },
+  { text:'>>',          cat:'bitwise' },
+
+  { text:'is',          cat:'identity' },
+  { text:'is not',      cat:'identity' },
+
+  { text:'in',          cat:'membership' },
+  { text:'not in',      cat:'membership' },
+];
+
+const binsEl = document.getElementById('bins');
+const bankEl = document.getElementById('bank');
+const scoreEl = document.getElementById('score');
+const mistakesEl = document.getElementById('mistakes');
+const winBanner = document.getElementById('winBanner');
+const resetBtn = document.getElementById('resetBtn');
+
+let score = 0;
+let mistakes = 0;
+const total = items.length;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function buildBins(){
+  binsEl.innerHTML = '';
+  categories.forEach(cat=>{
+    const bin = document.createElement('div');
+    bin.className = 'bin';
+    bin.dataset.category = cat.key;
+    bin.style.setProperty('--accent', `var(${cat.accentVar})`);
+    bin.style.setProperty('--tint', `var(${cat.tintVar})`);
+    bin.innerHTML = `
+      <div class="bin-label">${cat.label}</div>
+      <div class="bin-hint">${cat.hint}</div>
+      <div class="bin-slots"></div>
+    `;
+    binsEl.appendChild(bin);
+  });
+}
+
+function buildBank(){
+  bankEl.innerHTML = '';
+  const shuffled = shuffle(items);
+  shuffled.forEach((item, idx)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = item.text;
+    chip.dataset.cat = item.cat;
+    chip.dataset.id = 'chip-'+idx;
+    bankEl.appendChild(chip);
+    makeDraggable(chip);
+  });
+}
+
+function resetGame(){
+  score = 0;
+  mistakes = 0;
+  scoreEl.textContent = score;
+  mistakesEl.textContent = mistakes;
+  winBanner.hidden = true;
+  buildBins();
+  buildBank();
+}
+
+let dragState = null;
+
+function makeDraggable(chip){
+  chip.addEventListener('pointerdown', (e)=>{
+    if(chip.classList.contains('placed')) return;
+    e.preventDefault();
+    const rect = chip.getBoundingClientRect();
+    dragState = {
+      chip,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+    };
+    chip.setPointerCapture(e.pointerId);
+    chip.classList.add('dragging');
+    chip.style.width = rect.width + 'px';
+    chip.style.left = rect.left + 'px';
+    chip.style.top = rect.top + 'px';
+
+    chip.addEventListener('pointermove', onPointerMove);
+    chip.addEventListener('pointerup', onPointerUp);
+    chip.addEventListener('pointercancel', onPointerUp);
+  });
+}
+
+function onPointerMove(e){
+  if(!dragState) return;
+  const { chip, offsetX, offsetY } = dragState;
+  chip.style.left = (e.clientX - offsetX) + 'px';
+  chip.style.top = (e.clientY - offsetY) + 'px';
+}
+
+function onPointerUp(e){
+  if(!dragState) return;
+  const { chip } = dragState;
+  chip.classList.remove('dragging');
+  chip.removeEventListener('pointermove', onPointerMove);
+  chip.removeEventListener('pointerup', onPointerUp);
+  chip.removeEventListener('pointercancel', onPointerUp);
+
+  chip.style.position = '';
+  chip.style.left = '';
+  chip.style.top = '';
+  chip.style.width = '';
+
+  chip.style.visibility = 'hidden';
+  const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+  chip.style.visibility = '';
+
+  const bin = dropTarget ? dropTarget.closest('.bin') : null;
+
+  if(bin){
+    const binCat = bin.dataset.category;
+    if(binCat === chip.dataset.cat){
+      const slots = bin.querySelector('.bin-slots');
+      chip.classList.add('placed');
+      slots.appendChild(chip);
+      score++;
+      scoreEl.textContent = score;
+      flashBin(bin, 'correct-flash');
+      if(score === total){
+        winBanner.hidden = false;
+      }
+    } else {
+      mistakes++;
+      mistakesEl.textContent = mistakes;
+      flashBin(bin, 'wrong-flash');
+      chip.classList.add('shake');
+      setTimeout(()=>chip.classList.remove('shake'), 400);
+    }
+  }
+
+  dragState = null;
+}
+
+function flashBin(bin, cls){
+  bin.classList.add(cls);
+  setTimeout(()=>bin.classList.remove(cls), 450);
+}
+
+resetBtn.addEventListener('click', resetGame);
+
+resetGame();
+</script>
+
+</body>
+</html>
