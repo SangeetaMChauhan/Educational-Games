@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>precedence.py — Python Operator Precedence Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f1e;
+    --bg-grid: rgba(255,255,255,0.025);
+    --panel:#121a30;
+    --panel-2:#0d1424;
+    --border:#26314f;
+    --border-soft:#1b2440;
+    --text:#e7ecf7;
+    --muted:#8b9ac0;
+    --muted-2:#5d6c93;
+    --blue:#5aa1e3;
+    --yellow:#ffd43b;
+    --green:#3ddc97;
+    --red:#ff6b6b;
+
+    /* precedence spectrum: cool = loose binding, hot = tight binding */
+    --t0:#c084fc; /* ternary if/else */
+    --t1:#8b5cf6; /* or / and / not */
+    --t2:#3b82f6; /* comparisons */
+    --t3:#14b8a6; /* | */
+    --t4:#10b981; /* ^ */
+    --t5:#22c55e; /* & */
+    --t6:#84cc16; /* << >> */
+    --t7:#f59e0b; /* + - */
+    --t8:#fb923c; /* * / // % */
+    --t9:#ef4444; /* ** / unary */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/100% 42px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/42px 100%,
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(90,161,227,0.12), transparent),
+      radial-gradient(ellipse 900px 600px at 100% 10%, rgba(255,212,59,0.07), transparent),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:17px;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+
+  /* ---------- header ---------- */
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);}
+  .brand-label{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:.06em;}
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(28px,5vw,42px);
+    margin:4px 0 6px;
+    font-weight:700;
+    line-height:1.1;
+  }
+  h1 .accent{color:var(--yellow);}
+  .sub{color:var(--muted);font-size:16px;font-weight:500;max-width:60ch;margin-bottom:22px;}
+
+  /* ---------- precedence legend (signature element) ---------- */
+  .legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    background:var(--panel-2);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:26px;
+  }
+  .legend-title{
+    width:100%;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--muted-2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:4px;
+  }
+  .legend-chip{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    padding:4px 9px;
+    border-radius:999px;
+    color:#0a0f1e;
+    font-weight:700;
+    opacity:.92;
+    transition:transform .15s, opacity .15s;
+  }
+  .legend-chip.dim{opacity:.35;}
+  .legend-chip.active{transform:scale(1.12);opacity:1;box-shadow:0 0 0 2px rgba(255,255,255,0.35);}
+
+  /* ---------- terminal card ---------- */
+  .terminal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 14px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--border);
+  }
+  .term-dot{width:10px;height:10px;border-radius:50%;}
+  .term-title{
+    margin-left:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  .term-body{padding:26px 26px 22px;}
+
+  /* ---------- start screen ---------- */
+  #start-screen .feature{
+    display:flex;gap:10px;align-items:flex-start;
+    padding:10px 0;
+    border-top:1px solid var(--border-soft);
+  }
+  #start-screen .feature:first-of-type{border-top:none;}
+  .feature b{color:var(--text);}
+  .feature span.tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:#0a0f1e;
+    background:var(--blue);
+    padding:2px 7px;
+    border-radius:6px;
+    font-weight:700;
+    flex-shrink:0;
+    margin-top:2px;
+  }
+  .btn{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    border:none;
+    border-radius:10px;
+    padding:13px 22px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(135deg,var(--blue),#3d7cc9);color:#fff;box-shadow:0 8px 20px -8px rgba(90,161,227,0.6);}
+  .btn-primary:hover{box-shadow:0 10px 24px -6px rgba(90,161,227,0.75);}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted-2);}
+  .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;}
+  .btn-yellow{background:linear-gradient(135deg,var(--yellow),#e0ad1f);color:#0a0f1e;box-shadow:0 8px 20px -8px rgba(255,212,59,0.5);}
+
+  /* ---------- quiz header row ---------- */
+  .quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+  .qcount{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
+  .score{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);}
+  .progress-track{height:6px;background:var(--border-soft);border-radius:999px;overflow:hidden;margin-bottom:22px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .35s ease;}
+
+  .type-badge{
+    display:inline-block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:3px 9px;
+    border-radius:6px;
+    margin-bottom:14px;
+    font-weight:600;
+  }
+  .type-badge.evaluate{background:rgba(90,161,227,0.15);color:var(--blue);border:1px solid rgba(90,161,227,0.4);}
+  .type-badge.complete{background:rgba(255,212,59,0.15);color:var(--yellow);border:1px solid rgba(255,212,59,0.4);}
+
+  .prompt-label{color:var(--muted);font-size:13px;margin-bottom:10px;}
+
+  /* ---------- expression display ---------- */
+  .expr-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:clamp(18px,3.6vw,24px);
+    background:var(--panel-2);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:22px 20px;
+    margin-bottom:22px;
+    min-height:78px;
+  }
+  .token-literal{color:var(--text);white-space:pre;}
+  .token-literal.kw{color:var(--yellow);}
+  .expr-eq{color:var(--muted);margin:0 4px;}
+
+  /* ---------- drop zones ---------- */
+  .dropzone{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:52px;
+    height:40px;
+    padding:0 10px;
+    border:2px dashed var(--border);
+    border-radius:9px;
+    background:rgba(255,255,255,0.02);
+    transition:border-color .15s, background .15s;
+    vertical-align:middle;
+  }
+  .dropzone.hover{border-color:var(--yellow);background:rgba(255,212,59,0.08);}
+  .dropzone.filled{border-style:solid;border-color:var(--border-soft);}
+  .dropzone.correct{border-color:var(--green);background:rgba(61,220,151,0.1);}
+  .dropzone.incorrect{border-color:var(--red);background:rgba(255,107,107,0.1);animation:shake .35s;}
+  .dropzone.answer-slot{min-width:90px;height:46px;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-5px);}
+    75%{transform:translateX(5px);}
+  }
+
+  /* ---------- pool / tray ---------- */
+  .pool-label{color:var(--muted);font-size:13px;margin:0 0 10px;}
+  .pool{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    padding:16px;
+    background:var(--panel-2);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    min-height:66px;
+  }
+
+  /* ---------- tiles ---------- */
+  .tile{
+    touch-action:none;
+    user-select:none;
+    cursor:grab;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:600;
+    font-size:15px;
+    padding:9px 16px;
+    border-radius:9px;
+    color:#0a0f1e;
+    background:var(--muted);
+    box-shadow:0 4px 10px -3px rgba(0,0,0,0.5);
+    transition:box-shadow .12s, transform .08s;
+    white-space:nowrap;
+  }
+  .tile:hover{box-shadow:0 6px 16px -3px rgba(0,0,0,0.6);}
+  .tile.dragging{cursor:grabbing;opacity:.85;box-shadow:0 14px 30px -8px rgba(0,0,0,0.7);}
+  .tile.value-tile{background:#cfd8ee;color:#101830;}
+  .tile.selected{outline:3px solid var(--yellow);outline-offset:2px;transform:translateY(-2px);}
+  .dropzone.armed{border-color:var(--yellow);}
+
+  /* ---------- feedback / controls ---------- */
+  .feedback{
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    padding:12px 14px;
+    border-radius:10px;
+    margin:18px 0 0;
+    display:none;
+    line-height:1.5;
+  }
+  .feedback.show{display:block;}
+  .feedback.good{background:rgba(61,220,151,0.1);color:var(--green);border:1px solid rgba(61,220,151,0.35);}
+  .feedback.bad{background:rgba(255,107,107,0.1);color:var(--red);border:1px solid rgba(255,107,107,0.35);}
+
+  .controls{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+
+  /* ---------- results ---------- */
+  #result-screen{display:none;text-align:center;}
+  .result-score{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;margin:10px 0 4px;}
+  .result-msg{color:var(--muted);margin-bottom:24px;}
+  .review{text-align:left;margin:0 0 26px;max-height:340px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:12px;}
+  .review-item{padding:14px 16px;border-bottom:1px solid var(--border-soft);}
+  .review-item:last-child{border-bottom:none;}
+  .review-expr{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);margin-bottom:4px;}
+  .review-note{font-size:13px;color:var(--muted);}
+  .review-title{font-size:13px;color:var(--muted);margin:26px 0 10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;}
+
+  #quiz-screen{display:none;}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+
+  footer.note{
+    text-align:center;color:var(--muted-2);font-size:12px;margin-top:22px;
+    font-family:'JetBrains Mono',monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <div class="brand-label">~/precedence-lab $ python3 quiz.py</div>
+  </div>
+  <h1>Operator Precedence <span class="accent">Lab</span></h1>
+  <p class="sub">Drag tiles to evaluate Python expressions or complete broken ones — exactly the way the interpreter reads them, tightest-binding operator first.</p>
+
+  <div class="legend" id="legend">
+    <div class="legend-title">binding strength — loose → tight</div>
+  </div>
+
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="term-dot" style="background:#ff5f57;"></div>
+      <div class="term-dot" style="background:#febc2e;"></div>
+      <div class="term-dot" style="background:#28c840;"></div>
+      <div class="term-title">precedence.py</div>
+    </div>
+    <div class="term-body">
+
+      <!-- START SCREEN -->
+      <div id="start-screen">
+        <div class="feature"><span class="tag">01</span><div><b>Evaluate</b> — read the expression and drag the correct result into the blank.</div></div>
+        <div class="feature"><span class="tag">02</span><div><b>Complete</b> — the output is given; drag the missing operators or numbers into the gaps.</div></div>
+        <div class="feature"><span class="tag">03</span><div><b>Color = precedence</b> — every operator tile is tinted by how tightly it binds. Check the legend above as you go.</div></div>
+        <div class="feature"><span class="tag">04</span><div><b>No mouse? No problem</b> — tap a tile to pick it up, then tap the slot to drop it in.</div></div>
+        <div style="margin-top:22px;">
+          <button class="btn btn-primary" id="start-btn">Start the lab →</button>
+        </div>
+      </div>
+
+      <!-- QUIZ SCREEN -->
+      <div id="quiz-screen">
+        <div class="quiz-top">
+          <div class="qcount" id="qcount">Question 1 / 51</div>
+          <div class="score" id="score">Score: 0 / 51</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+        <div id="type-badge" class="type-badge evaluate">Evaluate</div>
+        <div class="prompt-label" id="prompt-label">What does this expression evaluate to?</div>
+
+        <div class="expr-row" id="expr-row"></div>
+
+        <div class="pool-label">Drag from here:</div>
+        <div class="pool" id="pool"></div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="controls">
+          <button class="btn btn-primary" id="check-btn" disabled>Check answer</button>
+          <button class="btn btn-ghost" id="reset-btn">Reset tiles</button>
+          <button class="btn btn-yellow" id="next-btn" style="display:none;">Next question →</button>
+        </div>
+      </div>
+
+      <!-- RESULT SCREEN -->
+      <div id="result-screen">
+        <div class="pool-label">Session complete</div>
+        <div class="result-score" id="result-score">0 / 51</div>
+        <div class="result-msg" id="result-msg"></div>
+        <div id="review-wrap"></div>
+        <button class="btn btn-primary" id="restart-btn">Run again →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="note">// tip: drag a tile onto a filled slot to swap it out — or tap-tap on touch devices</footer>
+</div>
+
+<script>
+/* =========================================================
+   PRECEDENCE TIERS  (0 = loosest, 9 = tightest binding)
+   ========================================================= */
+const TIERS = [
+  {label:'if / else', color:'var(--t0)', ops:['if','else']},
+  {label:'or / and / not', color:'var(--t1)', ops:['or','and','not']},
+  {label:'comparisons', color:'var(--t2)', ops:['==','!=','<','<=','>','>=']},
+  {label:'|', color:'var(--t3)', ops:['|']},
+  {label:'^', color:'var(--t4)', ops:['^']},
+  {label:'&', color:'var(--t5)', ops:['&']},
+  {label:'<< >>', color:'var(--t6)', ops:['<<','>>']},
+  {label:'+ −', color:'var(--t7)', ops:['+','-']},
+  {label:'* / // %', color:'var(--t8)', ops:['*','/','//','%']},
+  {label:'**', color:'var(--t9)', ops:['**']},
+];
+function tierOf(op){
+  for(const t of TIERS){ if(t.ops.includes(op)) return t; }
+  return null;
+}
+
+/* =========================================================
+   QUESTION BANK
+   ========================================================= */
+function ev(expr, correct, options, note){
+  return {type:'evaluate', expr, correct, options, note};
+}
+function cp(tokens, correct, pool, output, note){
+  return {type:'complete', tokens, correct, pool, output, note};
+}
+
+const QUESTIONS = [
+  ev("3 + 4 * 2", "11", ["11","14","24","20"], "* binds tighter than +, so 4*2 first."),
+  ev("(3 + 4) * 2", "14", ["14","11","24","9"], "Parentheses override precedence."),
+  ev("2 ** 3 ** 2", "512", ["512","64","36","81"], "** is right-associative: 2 ** (3 ** 2) = 2 ** 9."),
+  ev("10 - 2 - 3", "5", ["5","11","9","-5"], "Left-to-right: (10-2)-3."),
+  ev("10 / 2 + 3", "8.0", ["8.0","5.0","6.5","3.33"], "/ before +, and / always gives a float."),
+  ev("10 // 3", "3", ["3","3.33","4","1"], "Floor division drops the remainder."),
+  ev("10 % 3", "1", ["1","3","0","10"], "Remainder of 10÷3."),
+  ev("-3 ** 2", "-9", ["-9","9","-6","6"], "** binds tighter than unary minus: -(3**2)."),
+  ev("(-3) ** 2", "9", ["9","-9","6","-6"], "Parentheses force the negative to be squared."),
+  ev("2 + 3 * 4 ** 2", "50", ["50","146","196","44"], "** first (16), then * (48), then +."),
+  ev("7 % 3 + 2", "3", ["3","9","1","5"], "% before +: 1 + 2."),
+  ev("7 % -3", "-2", ["-2","2","-1","1"], "Python's % takes the sign of the divisor."),
+  ev("-7 % 3", "2", ["2","-2","-1","1"], "Result takes the sign of the divisor (positive)."),
+  ev("5 == 5 and 3 < 4", "True", ["True","False"], "Comparisons happen before 'and'."),
+  ev("True or False and False", "True", ["True","False"], "'and' binds tighter than 'or'."),
+  ev("False and False or True", "True", ["True","False"], "(False and False) or True."),
+  ev("not True and False", "False", ["True","False"], "'not' binds tighter than 'and': (not True) and False."),
+  ev("not (True and False)", "True", ["True","False"], "Parentheses force the 'and' first."),
+  ev("1 < 2 < 3", "True", ["True","False"], "Chained comparison: (1<2) and (2<3)."),
+  ev("3 > 2 > 1", "True", ["True","False"], "Chained comparison, both true."),
+  ev("1 < 2 > 0", "True", ["True","False"], "(1<2) and (2>0)."),
+  ev("5 & 3", "1", ["1","7","2","8"], "0101 & 0011 = 0001."),
+  ev("5 | 2", "7", ["7","3","5","2"], "0101 | 0010 = 0111."),
+  ev("5 ^ 1", "4", ["4","5","1","6"], "0101 ^ 0001 = 0100."),
+  ev("1 << 3", "8", ["8","3","4","16"], "Shift 1 left by 3 bits: 1*2^3."),
+  ev("16 >> 2", "4", ["4","8","2","64"], "Shift 16 right by 2 bits: 16/2^2."),
+  ev("2 | 3 & 1", "3", ["3","1","2","0"], "& before |: 3&1=1, then 2|1=3."),
+  ev("3 ^ 1 | 2", "2", ["2","0","1","3"], "^ before |: 3^1=2, then 2|2=2."),
+  ev('"ab" * 3', "ababab", ["ababab","ab3","aaabbb","ab ab ab"], "String repetition binds like multiplication."),
+  ev('"a" + "b" * 2', "abb", ["abb","aabb","ab2","bba"], "* before +: 'a' + ('b'*2)."),
+  ev("2 * 3 + 4 * 5", "26", ["26","70","46","20"], "Both multiplications happen before the addition."),
+  ev("(2 + 3) * (4 + 5)", "45", ["45","23","20","29"], "Both parenthesized sums resolve first."),
+  ev("10 - (2 + 3)", "5", ["5","9","15","-5"], "Parentheses force addition first."),
+  ev("10 - 2 + 3", "11", ["11","5","15","1"], "Same precedence, left-to-right: (10-2)+3."),
+  ev("2 ** 2 * 3", "12", ["12","64","8","36"], "** before *: 4*3."),
+  ev("8 / 4 / 2", "1.0", ["1.0","4.0","2.0","0.5"], "Left-to-right: (8/4)/2."),
+  ev("8 // 4 // 2", "1", ["1","4","2","0"], "Left-to-right floor division."),
+  ev("2 + 3 == 5", "True", ["True","False"], "+ before ==: 5 == 5."),
+  ev("2 + 3 == 4 and 1", "False", ["False","True","1","0"], "(2+3==4) is False, so 'and 1' is never truthy."),
+  ev("not 0", "True", ["True","False"], "0 is falsy, so 'not 0' is True."),
+  ev("not 1", "False", ["True","False"], "1 is truthy, so 'not 1' is False."),
+  ev("5 if 3 > 2 else 10", "5", ["5","10","True","3"], "Condition is True, so the left value is used."),
+  ev("5 if 3 < 2 else 10", "10", ["10","5","False","2"], "Condition is False, so the else value is used."),
+  ev("len('hello') + 2 * 3", "11", ["11","21","35","13"], "* before +: 5 + 6."),
+  ev("3 < 5 and 5 < 2 or 1 == 1", "True", ["True","False"], "'and' before 'or': (True and False) or True."),
+  ev("10 % 3 ** 2", "1", ["1","9","0","4"], "** before %: 10 % 9."),
+  ev("(10 % 3) ** 2", "1", ["1","9","4","100"], "Parentheses force % first, then square."),
+  ev("4 + 5 * 6 // 2", "19", ["19","27","15","4"], "* and // (same tier, left-to-right) before +: 5*6=30, 30//2=15, 4+15."),
+  ev("100 - 50 / 5 * 2", "80.0", ["80.0","20.0","0.0","100.0"], "/ and * left-to-right: 50/5=10.0, *2=20.0, then subtract."),
+  ev("2 + 2 * 2 - 2 / 2", "5.0", ["5.0","4.0","6.0","1.0"], "* and / first: 2+4-1.0."),
+  ev("bool(0) or bool(5)", "True", ["True","False"], "bool(0) is False, bool(5) is True; or picks the truthy one."),
+  ev("3 == 3.0", "True", ["True","False"], "Python compares numeric value, not type."),
+  ev('"5" * 2 + "1"', "551", ["551","511","10","15"], "* before +: '55' + '1'."),
+  ev('"Py" + "thon" * 2', "Pythonthon", ["Pythonthon","PythonPython","Pythonthonn","PyPythonthon"], "* before +: 'Py' + ('thon'*2)."),
+  ev("1 << 2 + 1", "8", ["8","3","5","6"], "+ binds tighter than <<: 1 << (2+1)."),
+  ev("8 >> 1 + 1", "2", ["2","4","3","16"], "+ binds tighter than >>: 8 >> (1+1)."),
+
+  cp(["5","_","3"], ["+"], ["+","-","*","/"], "8", "5 + 3 = 8."),
+  cp(["2","_","3","_","4"], ["+","*"], ["+","*","-","//","%"], "14", "2 + (3*4) = 14 — * runs first even though it's written second."),
+  cp(["10","_","3"], ["%"], ["%","//","+","*"], "1", "10 % 3 leaves a remainder of 1."),
+  cp(["2","_","3"], ["**"], ["**","*","+","//"], "8", "2 ** 3 = 8."),
+  cp(["7","_","2"], ["//"], ["//","/","%","-"], "3", "7 // 2 floors down to 3."),
+  cp(["True","_","False"], ["and"], ["and","or","not","=="], "False", "True and False = False."),
+  cp(["True","_","False"], ["or"], ["or","and","==","!="], "True", "True or False = True."),
+  cp(["5","_","5"], ["=="], ["==","!=","<",">"], "True", "5 == 5 is True."),
+  cp(["5","_","3"], [">"], [">","<","==",">="], "True", "5 > 3 is True."),
+  cp(["(","2","+","3",")","_","2"], ["*"], ["*","+","-","/"], "10", "(2+3) * 2 = 10."),
+  cp(["2","_","(","3","+","2",")"], ["*"], ["*","+","-","**"], "10", "2 * (3+2) = 10."),
+  cp(["9","_","2","_","3"], ["-","-"], ["-","-","+","*"], "4", "9 - 2 - 3 = 4, evaluated left to right."),
+  cp(["4","_","2","_","3"], ["+","*"], ["+","*","-","//"], "10", "4 + (2*3) = 10 — multiplication first."),
+  cp(["20","_","4","_","2"], ["//","-"], ["//","-","+","*"], "3", "(20 // 4) - 2 = 5 - 2 = 3."),
+  cp(["6","_","2","_","1"], ["-","*"], ["-","*","+","//"], "4", "6 - (2*1) = 4 — multiplication first."),
+  cp(["_","True"], ["not"], ["not","and","or","=="], "False", "not True = False."),
+];
+
+/* attach ids */
+QUESTIONS.forEach((q,i)=>q.id=i);
+
+/* =========================================================
+   LEGEND RENDER
+   ========================================================= */
+const legendEl = document.getElementById('legend');
+TIERS.forEach((t,i)=>{
+  const chip = document.createElement('div');
+  chip.className = 'legend-chip';
+  chip.dataset.tier = i;
+  chip.style.background = t.color;
+  chip.textContent = t.label;
+  legendEl.appendChild(chip);
+});
+function highlightTiers(ops){
+  const active = new Set(ops.map(o=>{const t=tierOf(o); return t ? TIERS.indexOf(t) : -1;}).filter(x=>x>=0));
+  document.querySelectorAll('.legend-chip').forEach(chip=>{
+    const idx = Number(chip.dataset.tier);
+    chip.classList.toggle('active', active.has(idx));
+    chip.classList.toggle('dim', active.size>0 && !active.has(idx));
+  });
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let session = [];
+let current = 0;
+let score = 0;
+let scoredThisQuestion = false;
+let poolId = 0;
+let missed = [];
+let selectedTile = null;
+
+const startScreen = document.getElementById('start-screen');
+const quizScreen = document.getElementById('quiz-screen');
+const resultScreen = document.getElementById('result-screen');
+
+document.getElementById('start-btn').addEventListener('click', startSession);
+document.getElementById('restart-btn').addEventListener('click', startSession);
+document.getElementById('reset-btn').addEventListener('click', resetTiles);
+document.getElementById('check-btn').addEventListener('click', checkAnswer);
+document.getElementById('next-btn').addEventListener('click', nextQuestion);
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function startSession(){
+  session = shuffle(QUESTIONS);
+  current = 0;
+  score = 0;
+  missed = [];
+  selectedTile = null;
+  startScreen.style.display='none';
+  resultScreen.style.display='none';
+  quizScreen.style.display='block';
+  renderQuestion();
+}
+
+/* =========================================================
+   RENDER A QUESTION
+   ========================================================= */
+function makeDropzone(extraClass, slot){
+  const dz = document.createElement('span');
+  dz.className = 'dropzone' + (extraClass ? ' ' + extraClass : '');
+  dz.dataset.slot = String(slot);
+  dz.addEventListener('click', ()=>{
+    if(!selectedTile) return;
+    if(dz.firstElementChild && dz.firstElementChild !== selectedTile){
+      const bumped = dz.firstElementChild;
+      const home = document.getElementById(bumped.dataset.poolId) || document.getElementById('pool');
+      home.appendChild(bumped);
+    }
+    dz.classList.remove('correct','incorrect');
+    dz.appendChild(selectedTile);
+    dz.classList.add('filled');
+    selectedTile.classList.remove('selected');
+    selectedTile = null;
+    updateCheckButton();
+  });
+  return dz;
+}
+
+function renderQuestion(){
+  scoredThisQuestion = false;
+  selectedTile = null;
+  const q = session[current];
+  document.getElementById('qcount').textContent = `Question ${current+1} / ${session.length}`;
+  document.getElementById('score').textContent = `Score: ${score} / ${session.length}`;
+  document.getElementById('progress-fill').style.width = `${(current/session.length)*100}%`;
+
+  const badge = document.getElementById('type-badge');
+  const promptLabel = document.getElementById('prompt-label');
+  const exprRow = document.getElementById('expr-row');
+  const pool = document.getElementById('pool');
+  const feedback = document.getElementById('feedback');
+  feedback.className = 'feedback';
+  feedback.textContent = '';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('check-btn').style.display = 'inline-block';
+  document.getElementById('check-btn').disabled = true;
+
+  exprRow.innerHTML = '';
+  pool.innerHTML = '';
+
+  let relevantOps = [];
+
+  if(q.type === 'evaluate'){
+    badge.textContent = 'Evaluate';
+    badge.className = 'type-badge evaluate';
+    promptLabel.textContent = 'Drag the correct result into the slot:';
+
+    q.expr.split(' ').forEach(tok=>{
+      const span = document.createElement('span');
+      span.className = 'token-literal';
+      if(['and','or','not','if','else'].includes(tok)) span.classList.add('kw');
+      span.textContent = tok + ' ';
+      exprRow.appendChild(span);
+      relevantOps.push(tok);
+    });
+    const eq = document.createElement('span');
+    eq.className = 'expr-eq';
+    eq.textContent = '=';
+    exprRow.appendChild(eq);
+
+    exprRow.appendChild(makeDropzone('answer-slot', 0));
+
+    shuffle(q.options).forEach(opt=>{
+      pool.appendChild(makeTile(opt, true));
+    });
+
+  } else {
+    badge.textContent = 'Complete the expression';
+    badge.className = 'type-badge complete';
+    promptLabel.textContent = `Drag tiles into the gaps so the expression evaluates to ${q.output}:`;
+
+    let slot = 0;
+    q.tokens.forEach(tok=>{
+      if(tok === '_'){
+        exprRow.appendChild(makeDropzone('', slot));
+        slot++;
+      } else {
+        const span = document.createElement('span');
+        span.className = 'token-literal';
+        if(['and','or','not','if','else'].includes(tok)) span.classList.add('kw');
+        if(tok === '(' || tok === ')') span.style.margin = '0 1px';
+        span.textContent = tok;
+        exprRow.appendChild(span);
+      }
+    });
+    const eq = document.createElement('span');
+    eq.className = 'expr-eq';
+    eq.textContent = '= ' + q.output;
+    exprRow.appendChild(eq);
+
+    relevantOps = q.correct;
+    shuffle(q.pool).forEach((opt,idx)=>{
+      pool.appendChild(makeTile(opt, false, idx));
+    });
+  }
+
+  highlightTiers(relevantOps);
+}
+
+/* =========================================================
+   TILE FACTORY + DRAG LOGIC
+   ========================================================= */
+function makeTile(value, isValueTile, uniq){
+  const tile = document.createElement('div');
+  tile.dataset.value = value;
+  const tier = tierOf(value);
+  if(isValueTile || !tier){
+    tile.className = 'tile value-tile';
+    tile.textContent = value;
+  } else {
+    tile.className = 'tile';
+    tile.style.background = tier.color;
+    tile.textContent = value;
+  }
+  tile.dataset.poolId = document.getElementById('pool').id;
+  if(uniq !== undefined) tile.dataset.uniq = uniq;
+  attachDrag(tile);
+  return tile;
+}
+
+function selectTile(tile){
+  if(selectedTile === tile){
+    tile.classList.remove('selected');
+    selectedTile = null;
+    return;
+  }
+  if(selectedTile) selectedTile.classList.remove('selected');
+  selectedTile = tile;
+  tile.classList.add('selected');
+}
+
+function attachDrag(tile){
+  tile.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    const rect = tile.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    const originalParent = tile.parentElement;
+    const startX = e.clientX, startY = e.clientY;
+    let moved = false;
+
+    // picking a tile back up clears any leftover right/wrong styling on its old slot
+    if(originalParent.classList.contains('dropzone')){
+      originalParent.classList.remove('correct','incorrect','filled');
+    }
+
+    tile.classList.add('dragging');
+    document.body.appendChild(tile);
+    tile.style.position = 'fixed';
+    tile.style.left = rect.left + 'px';
+    tile.style.top = rect.top + 'px';
+    tile.style.width = rect.width + 'px';
+    tile.style.zIndex = 1000;
+    tile.style.pointerEvents = 'none';
+    tile.setPointerCapture(e.pointerId);
+
+    let lastHover = null;
+
+    function onMove(ev){
+      if(Math.abs(ev.clientX-startX) > 6 || Math.abs(ev.clientY-startY) > 6) moved = true;
+      tile.style.left = (ev.clientX - offsetX) + 'px';
+      tile.style.top = (ev.clientY - offsetY) + 'px';
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const dz = under ? under.closest('.dropzone') : null;
+      if(lastHover && lastHover !== dz) lastHover.classList.remove('hover');
+      if(dz){ dz.classList.add('hover'); lastHover = dz; }
+      else lastHover = null;
+    }
+
+    function cleanupVisualDrag(){
+      tile.style.position = '';
+      tile.style.left = '';
+      tile.style.top = '';
+      tile.style.width = '';
+      tile.style.zIndex = '';
+      tile.style.pointerEvents = '';
+      tile.classList.remove('dragging');
+      if(lastHover) lastHover.classList.remove('hover');
+    }
+
+    function onUp(ev){
+      tile.releasePointerCapture(ev.pointerId);
+      tile.removeEventListener('pointermove', onMove);
+      tile.removeEventListener('pointerup', onUp);
+      tile.removeEventListener('pointercancel', onUp);
+      cleanupVisualDrag();
+
+      if(!moved){
+        // a tap, not a drag: put the tile back and arm/disarm tap-to-place instead
+        originalParent.appendChild(tile);
+        selectTile(tile);
+        return;
+      }
+
+      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const dz = under ? under.closest('.dropzone') : null;
+      const poolTarget = under ? under.closest('.pool') : null;
+
+      if(poolTarget){
+        poolTarget.appendChild(tile);
+      } else if(dz){
+        dz.classList.remove('correct','incorrect');
+        if(dz.firstElementChild && dz.firstElementChild !== tile){
+          const bumped = dz.firstElementChild;
+          const home = document.getElementById(bumped.dataset.poolId) || originalParent;
+          home.appendChild(bumped);
+        }
+        dz.appendChild(tile);
+        dz.classList.add('filled');
+      } else {
+        originalParent.appendChild(tile);
+      }
+      if(selectedTile === tile){ selectedTile = null; }
+      updateCheckButton();
+    }
+
+    tile.addEventListener('pointermove', onMove);
+    tile.addEventListener('pointerup', onUp);
+    tile.addEventListener('pointercancel', onUp);
+  });
+}
+
+function updateCheckButton(){
+  const zones = document.querySelectorAll('#expr-row .dropzone');
+  const allFilled = Array.from(zones).every(z=>z.firstElementChild);
+  document.getElementById('check-btn').disabled = !allFilled;
+}
+
+function resetTiles(){
+  if(selectedTile){ selectedTile.classList.remove('selected'); selectedTile = null; }
+  const pool = document.getElementById('pool');
+  document.querySelectorAll('#expr-row .dropzone').forEach(dz=>{
+    dz.classList.remove('correct','incorrect','filled');
+    if(dz.firstElementChild) pool.appendChild(dz.firstElementChild);
+  });
+  const feedback = document.getElementById('feedback');
+  feedback.className = 'feedback';
+  feedback.textContent = '';
+  updateCheckButton();
+}
+
+/* =========================================================
+   CHECK / NEXT
+   ========================================================= */
+function checkAnswer(){
+  const q = session[current];
+  const zones = Array.from(document.querySelectorAll('#expr-row .dropzone')).sort((a,b)=>Number(a.dataset.slot)-Number(b.dataset.slot));
+  const correctArr = q.type === 'evaluate' ? [q.correct] : q.correct;
+
+  let allCorrect = true;
+  zones.forEach((z,i)=>{
+    const val = z.firstElementChild ? z.firstElementChild.dataset.value : null;
+    const ok = val === correctArr[i];
+    z.classList.toggle('correct', ok);
+    z.classList.toggle('incorrect', !ok);
+    if(!ok) allCorrect = false;
+  });
+
+  const feedback = document.getElementById('feedback');
+  feedback.classList.add('show');
+  if(allCorrect){
+    feedback.classList.remove('bad');
+    feedback.classList.add('good');
+    feedback.textContent = '✓ Correct! ' + (q.note || '');
+    if(!scoredThisQuestion){
+      score++;
+      scoredThisQuestion = true;
+      if(q._hadWrongAttempt){
+        missed.push({
+          expr: q.type === 'evaluate' ? q.expr : q.tokens.join(' ').replace(/_/g,'___'),
+          note: q.note || ''
+        });
+      }
+    }
+    document.getElementById('score').textContent = `Score: ${score} / ${session.length}`;
+    document.getElementById('check-btn').style.display = 'none';
+    document.getElementById('next-btn').style.display = 'inline-block';
+  } else {
+    q._hadWrongAttempt = true;
+    feedback.classList.remove('good');
+    feedback.classList.add('bad');
+    feedback.textContent = '✗ Not quite — rearrange the tiles and try again.';
+  }
+}
+
+function nextQuestion(){
+  if(current < session.length - 1){
+    current++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults(){
+  document.getElementById('progress-fill').style.width = '100%';
+  quizScreen.style.display = 'none';
+  resultScreen.style.display = 'block';
+  document.getElementById('result-score').textContent = `${score} / ${session.length}`;
+  const pct = Math.round((score/session.length)*100);
+  let msg;
+  if(pct === 100) msg = "Flawless. You read Python like the interpreter does.";
+  else if(pct >= 80) msg = "Strong grasp of precedence — a couple of edge cases to review.";
+  else if(pct >= 50) msg = "Solid start. Revisit the color legend and try again.";
+  else msg = "Precedence takes practice — run it again to lock it in.";
+  document.getElementById('result-msg').textContent = `${pct}% — ${msg}`;
+
+  const reviewWrap = document.getElementById('review-wrap');
+  reviewWrap.innerHTML = '';
+  if(missed.length){
+    const title = document.createElement('div');
+    title.className = 'review-title';
+    title.textContent = `Worth a second look (${missed.length})`;
+    reviewWrap.appendChild(title);
+
+    const list = document.createElement('div');
+    list.className = 'review';
+    missed.forEach(m=>{
+      const item = document.createElement('div');
+      item.className = 'review-item';
+      const expr = document.createElement('div');
+      expr.className = 'review-expr';
+      expr.textContent = m.expr;
+      const note = document.createElement('div');
+      note.className = 'review-note';
+      note.textContent = m.note;
+      item.appendChild(expr);
+      item.appendChild(note);
+      list.appendChild(item);
+    });
+    reviewWrap.appendChild(list);
+  }
+}
+</script>
+</body>
+</html>
