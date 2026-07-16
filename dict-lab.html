@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dict.lab() — Learn Python Dictionary Methods</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#1a1424;
+    --bg-1:#241a30;
+    --card:#2c2038;
+    --card-edge:#3d2d4d;
+    --card-hi:#372943;
+    --text:#f6f1fa;
+    --muted:#b4a0c4;
+    --muted-dim:#836f93;
+
+    --gold:#ffb454;
+    --violet:#9d7bff;
+    --rose:#ff6f91;
+    --mint:#63e6be;
+
+    --font-display:'Baloo 2', system-ui, sans-serif;
+    --font-body:'Inter', system-ui, sans-serif;
+    --font-code:'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 10% 6%, rgba(255,180,84,0.10), transparent 40%),
+      radial-gradient(circle at 90% 12%, rgba(157,123,255,0.12), transparent 45%),
+      radial-gradient(circle at 50% 100%, rgba(255,111,145,0.10), transparent 50%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    color:var(--text);
+    font-family:var(--font-body);
+    overflow-x:hidden;
+    padding-bottom:60px;
+  }
+
+  .bg-decor{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
+  .bg-decor span{
+    position:absolute; font-family:var(--font-code); color:rgba(255,255,255,0.035);
+    font-size:58px; font-weight:700; user-select:none;
+    animation:drift 24s linear infinite;
+  }
+  @keyframes drift{
+    0%{transform:translateY(0) rotate(0deg);}
+    100%{transform:translateY(-60px) rotate(5deg);}
+  }
+
+  main, header{position:relative; z-index:1;}
+
+  header{ max-width:1100px; margin:0 auto; padding:36px 24px 18px; text-align:center; }
+  .eyebrow{
+    font-family:var(--font-code); letter-spacing:2px; text-transform:uppercase;
+    font-size:12px; color:var(--violet); font-weight:600;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:800; font-size:clamp(32px,6vw,54px);
+    margin:8px 0 6px; line-height:1.05;
+    background:linear-gradient(95deg, var(--gold), var(--rose) 55%, var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  h1 .bracket{color:var(--muted-dim); -webkit-text-fill-color:var(--muted-dim);}
+  .subtitle{ color:var(--muted); font-size:16px; max-width:580px; margin:0 auto; line-height:1.5; }
+
+  .statbar{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:22px; }
+  .stat-pill{
+    background:var(--card); border:1px solid var(--card-edge); border-radius:999px;
+    padding:8px 16px; font-family:var(--font-code); font-size:13px; color:var(--muted);
+    display:flex; align-items:center; gap:7px;
+  }
+  .stat-pill b{color:var(--text); font-weight:700;}
+  .stat-dot{width:8px; height:8px; border-radius:50%;}
+  .btn{
+    font-family:var(--font-body); font-weight:600; font-size:14px; cursor:pointer;
+    border-radius:999px; border:1px solid var(--card-edge); background:var(--card);
+    color:var(--text); padding:9px 18px; transition:transform .15s ease, border-color .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px); border-color:var(--gold);}
+  .btn:active{transform:translateY(0);}
+  .btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .btn.primary{background:linear-gradient(95deg, var(--gold), #e79a3a); color:#2a1a05; border:none; font-weight:700;}
+  .btn.ghost{background:transparent;}
+
+  .level-wrap{max-width:1100px; margin:26px auto 0; padding:0 24px;}
+  .level-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+  .level-title-block .kicker{
+    font-family:var(--font-code); font-size:12px; color:var(--muted-dim); letter-spacing:1px; text-transform:uppercase;
+  }
+  .level-title-block h2{ font-family:var(--font-display); font-size:26px; margin:2px 0 0; font-weight:700; }
+  .dots{display:flex; gap:8px;}
+  .dot{ width:12px; height:12px; border-radius:50%; background:var(--card-edge); border:2px solid var(--card-edge); transition:all .25s ease; }
+  .dot.done{background:var(--gold); border-color:var(--gold);}
+  .dot.active{border-color:var(--rose); box-shadow:0 0 0 4px rgba(255,111,145,0.18);}
+
+  .progress-track{
+    width:100%; height:8px; border-radius:999px; background:var(--card);
+    border:1px solid var(--card-edge); overflow:hidden; margin-bottom:26px;
+  }
+  .progress-fill{
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg, var(--gold), var(--rose));
+    transition:width .4s cubic-bezier(.4,0,.2,1);
+  }
+
+  .bins{ display:grid; grid-template-columns:repeat(auto-fit, minmax(290px,1fr)); gap:18px; margin-bottom:30px; }
+  .bin{
+    background:var(--card); border:1px solid var(--card-edge); border-radius:18px;
+    padding:18px 18px 16px; position:relative; overflow:hidden;
+    transition:box-shadow .2s ease, border-color .2s ease, transform .12s ease;
+  }
+  .bin::before{ content:""; position:absolute; top:0; left:0; right:0; height:5px; background:var(--accent, var(--gold)); }
+  .bin.drag-over{
+    border-color:var(--accent, var(--gold));
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent, var(--gold)) 30%, transparent);
+    transform:scale(1.015);
+  }
+  .bin.hint-glow{ animation:hintPulse 1.5s ease; }
+  @keyframes hintPulse{
+    0%,100%{box-shadow:0 0 0 0 transparent;}
+    30%{box-shadow:0 0 0 8px color-mix(in srgb, var(--accent, var(--gold)) 35%, transparent);}
+  }
+  .bin-sig{ font-family:var(--font-code); font-weight:600; font-size:16.5px; color:var(--accent, var(--gold)); }
+  .bin-desc{ font-size:13.5px; color:var(--muted); line-height:1.45; margin:6px 0 14px; }
+  .bin-slot{
+    min-height:56px; border:1.5px dashed var(--card-edge); border-radius:12px;
+    padding:10px; display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.015);
+  }
+  .bin-slot .placeholder{
+    font-size:12.5px; color:var(--muted-dim); font-family:var(--font-code); text-align:center; padding:6px 0;
+  }
+  .bin-count{ position:absolute; top:14px; right:16px; font-family:var(--font-code); font-size:12px; color:var(--muted-dim); }
+  .resolved-chip{
+    font-family:var(--font-code); font-size:12.5px; color:#241531;
+    background:var(--accent, var(--gold)); border-radius:8px; padding:8px 10px;
+    animation:pop .35s ease; word-break:break-word;
+  }
+  @keyframes pop{
+    0%{transform:scale(.7); opacity:0;}
+    60%{transform:scale(1.06); opacity:1;}
+    100%{transform:scale(1);}
+  }
+
+  .pool-label{
+    font-family:var(--font-code); font-size:12px; text-transform:uppercase; letter-spacing:1.5px;
+    color:var(--muted-dim); margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .pool-label::after{content:""; flex:1; height:1px; background:var(--card-edge);}
+  .pool{ display:flex; flex-wrap:wrap; gap:12px; min-height:70px; padding:6px 0 10px; }
+  .chip{
+    font-family:var(--font-code); font-size:13.5px; color:var(--text);
+    background:var(--card-hi); border:1px solid var(--card-edge); border-radius:12px;
+    padding:12px 16px; cursor:grab; user-select:none; touch-action:none;
+    box-shadow:0 2px 0 rgba(0,0,0,0.28);
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .chip:hover{transform:translateY(-2px); border-color:var(--muted-dim);}
+  .chip:active{cursor:grabbing;}
+  .chip.dragging{
+    position:fixed; z-index:999; pointer-events:none; box-shadow:0 12px 30px rgba(0,0,0,0.55);
+    transform:scale(1.05) rotate(-2deg);
+  }
+  .chip.wrong{ animation:shake .4s ease; border-color:var(--rose); }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-8px);}
+    40%{transform:translateX(7px);}
+    60%{transform:translateX(-5px);}
+    80%{transform:translateX(4px);}
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--card); border:1px solid var(--card-edge); color:var(--text);
+    padding:12px 20px; border-radius:12px; font-size:14px; font-weight:600;
+    opacity:0; pointer-events:none; transition:all .25s ease; z-index:500;
+    display:flex; align-items:center; gap:8px; max-width:90vw;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.good{border-color:var(--gold);}
+  .toast.bad{border-color:var(--rose);}
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,6,16,0.7); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:600; padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .overlay-card{
+    background:var(--card); border:1px solid var(--card-edge); border-radius:22px;
+    padding:38px 34px; max-width:420px; text-align:center; animation:pop .35s ease;
+  }
+  .overlay-card .emoji{font-size:48px; margin-bottom:6px;}
+  .overlay-card h3{font-family:var(--font-display); font-size:26px; margin:6px 0 8px;}
+  .overlay-card p{color:var(--muted); font-size:14.5px; line-height:1.5; margin:0 0 20px;}
+  .overlay-stats{ display:flex; justify-content:center; gap:22px; margin-bottom:22px; }
+  .overlay-stats div{font-family:var(--font-code);}
+  .overlay-stats .n{font-size:24px; font-weight:700; color:var(--gold);}
+  .overlay-stats .l{font-size:11px; color:var(--muted-dim); text-transform:uppercase; letter-spacing:1px;}
+
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(6,4,10,0.55); z-index:400;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .sheet-backdrop.show{opacity:1; pointer-events:auto;}
+  .cheatsheet{
+    position:fixed; top:0; right:0; height:100%; width:min(400px,92vw);
+    background:var(--bg-1); border-left:1px solid var(--card-edge);
+    z-index:450; transform:translateX(100%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+    overflow-y:auto; padding:26px 22px 40px;
+  }
+  .cheatsheet.show{transform:translateX(0);}
+  .cheatsheet h3{font-family:var(--font-display); font-size:22px; margin:0 0 4px;}
+  .cheatsheet .sub{color:var(--muted); font-size:13px; margin-bottom:20px;}
+  .sheet-item{
+    border:1px solid var(--card-edge); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+    border-left:3px solid var(--accent, var(--gold));
+  }
+  .sheet-item .sig{font-family:var(--font-code); font-size:14px; color:var(--accent, var(--gold)); font-weight:600;}
+  .sheet-item .desc{font-size:12.5px; color:var(--muted); margin-top:4px; line-height:1.4;}
+  .sheet-close{position:absolute; top:20px; right:20px;}
+
+  footer{ text-align:center; color:var(--muted-dim); font-size:12.5px; margin-top:50px; font-family:var(--font-code); }
+
+  @media(max-width:520px){ .overlay-card{padding:28px 22px;} }
+</style>
+</head>
+<body>
+
+<div class="bg-decor" id="bgDecor"></div>
+
+<header>
+  <div class="eyebrow">an interactive playground</div>
+  <h1><span class="bracket">{ : }</span> dict.lab()</h1>
+  <p class="subtitle">Drag each key-value clue into the method that produces it. No method names shown — you have to know your Python dictionary methods to win.</p>
+
+  <div class="statbar">
+    <div class="stat-pill"><span class="stat-dot" style="background:var(--gold)"></span>Score <b id="scoreVal">0</b></div>
+    <div class="stat-pill"><span class="stat-dot" style="background:var(--rose)"></span>Misses <b id="missVal">0</b></div>
+    <button class="btn ghost" id="cheatBtn">📖 Cheat sheet</button>
+    <button class="btn ghost" id="restartBtn">↺ Restart</button>
+  </div>
+</header>
+
+<main>
+  <div class="level-wrap">
+    <div class="level-head">
+      <div class="level-title-block">
+        <div class="kicker" id="levelKicker">Level 1 of 4</div>
+        <h2 id="levelTitle">Reading Values</h2>
+      </div>
+      <div class="dots" id="levelDots"></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="bins" id="binsContainer"></div>
+
+    <div class="pool-label">Drag from here</div>
+    <div class="pool" id="poolContainer"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="levelCompleteOverlay">
+  <div class="overlay-card">
+    <div class="emoji">🎉</div>
+    <h3>Level complete!</h3>
+    <p id="levelCompleteText">Every clue found its method.</p>
+    <div class="overlay-stats">
+      <div><div class="n" id="lcScore">0</div><div class="l">Score</div></div>
+      <div><div class="n" id="lcMiss">0</div><div class="l">Misses</div></div>
+    </div>
+    <button class="btn primary" id="nextLevelBtn">Next level →</button>
+  </div>
+</div>
+
+<div class="overlay" id="gameCompleteOverlay">
+  <div class="overlay-card">
+    <div class="emoji">🏆</div>
+    <h3>Dict Lab cleared!</h3>
+    <p>You matched every clue across all the dictionary methods. Keys, values, and everything in between — you've got it.</p>
+    <div class="overlay-stats">
+      <div><div class="n" id="gcScore">0</div><div class="l">Final score</div></div>
+      <div><div class="n" id="gcMiss">0</div><div class="l">Total misses</div></div>
+    </div>
+    <button class="btn primary" id="playAgainBtn">Play again</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="cheatsheet" id="cheatsheet">
+  <button class="btn ghost sheet-close" id="sheetCloseBtn">✕</button>
+  <h3>Method reference</h3>
+  <div class="sub">Every dictionary method used in this lab, with signature and what it does.</div>
+  <div id="sheetList"></div>
+</div>
+
+<footer>built for learning · drag, drop, and check your Python dictionary knowledge</footer>
+
+<script>
+/* ============ DATA ============ */
+const COLORS = ['var(--gold)','var(--rose)','var(--violet)','var(--mint)'];
+
+const methods = [
+  {id:'get',        sig:'d.get(key, default)',    desc:'Returns the value for a key, or a default if the key is missing — never raises an error.'},
+  {id:'keys',       sig:'d.keys()',                desc:'Returns a view of all the keys in the dictionary.'},
+  {id:'values',     sig:'d.values()',              desc:'Returns a view of all the values in the dictionary.'},
+  {id:'items',      sig:'d.items()',                desc:'Returns a view of all key-value pairs as tuples.'},
+  {id:'update',     sig:'d.update(other)',          desc:'Merges another dictionary in, overwriting existing keys and adding new ones.'},
+  {id:'pop',        sig:'d.pop(key)',               desc:'Removes a key and returns its value.'},
+  {id:'popitem',    sig:'d.popitem()',              desc:'Removes and returns the most recently inserted key-value pair.'},
+  {id:'clear',      sig:'d.clear()',                desc:'Removes every key-value pair, leaving an empty dictionary.'},
+  {id:'setdefault', sig:'d.setdefault(key, default)', desc:'Returns the value for a key if it exists; otherwise inserts the key with a default value and returns that.'},
+  {id:'copy',       sig:'d.copy()',                 desc:'Returns a new, separate dictionary with the same key-value pairs.'},
+  {id:'fromkeys',   sig:'dict.fromkeys(keys, value)', desc:'Builds a brand new dictionary from a list of keys, all set to the same value.'},
+];
+
+const examples = {
+  get:[
+    {clue:'{"a": 1, "b": 2} get "a"  →  1', reveal:'d = {"a": 1, "b": 2}\\nd.get("a")  # 1'},
+    {clue:'{"a": 1} get "z" (default 0)  →  0', reveal:'d = {"a": 1}\\nd.get("z", 0)  # 0'},
+  ],
+  keys:[
+    {clue:'{"a": 1, "b": 2}  →  dict_keys(["a", "b"])', reveal:'d = {"a": 1, "b": 2}\\nd.keys()'},
+    {clue:'{"x": 10}  →  dict_keys(["x"])', reveal:'d = {"x": 10}\\nd.keys()'},
+  ],
+  values:[
+    {clue:'{"a": 1, "b": 2}  →  dict_values([1, 2])', reveal:'d = {"a": 1, "b": 2}\\nd.values()'},
+    {clue:'{"x": 10, "y": 20}  →  dict_values([10, 20])', reveal:'d = {"x": 10, "y": 20}\\nd.values()'},
+  ],
+  items:[
+    {clue:'{"a": 1, "b": 2}  →  dict_items([("a",1), ("b",2)])', reveal:'d = {"a": 1, "b": 2}\\nd.items()'},
+    {clue:'{"x": 10}  →  dict_items([("x",10)])', reveal:'d = {"x": 10}\\nd.items()'},
+  ],
+  update:[
+    {clue:'{"a": 1} merged with {"b": 2}  →  {"a": 1, "b": 2}', reveal:'d = {"a": 1}\\nd.update({"b": 2})'},
+    {clue:'{"a": 1, "b": 2} merged with {"b": 5}  →  {"a": 1, "b": 5}', reveal:'d = {"a": 1, "b": 2}\\nd.update({"b": 5})'},
+  ],
+  pop:[
+    {clue:'{"a": 1, "b": 2} remove "a"  →  returns 1, left with {"b": 2}', reveal:'d = {"a": 1, "b": 2}\\nd.pop("a")  # 1'},
+    {clue:'{"x": 10, "y": 20} remove "y"  →  returns 20, left with {"x": 10}', reveal:'d = {"x": 10, "y": 20}\\nd.pop("y")  # 20'},
+  ],
+  popitem:[
+    {clue:'{"a": 1, "b": 2}  →  returns ("b", 2), left with {"a": 1}  (last one in)', reveal:'d = {"a": 1, "b": 2}\\nd.popitem()  # ("b", 2)'},
+    {clue:'{"x":10,"y":20,"z":30}  →  returns ("z", 30), left with {"x":10,"y":20}', reveal:'d = {"x":10,"y":20,"z":30}\\nd.popitem()  # ("z", 30)'},
+  ],
+  clear:[
+    {clue:'{"a": 1, "b": 2}  →  {}', reveal:'d = {"a": 1, "b": 2}\\nd.clear()'},
+    {clue:'{"x": 10}  →  {}', reveal:'d = {"x": 10}\\nd.clear()'},
+  ],
+  setdefault:[
+    {clue:'{"a": 1} setdefault "a" to 99  →  returns 1, dict unchanged', reveal:'d = {"a": 1}\\nd.setdefault("a", 99)  # 1'},
+    {clue:'{"a": 1} setdefault "b" to 99  →  returns 99, dict becomes {"a":1,"b":99}', reveal:'d = {"a": 1}\\nd.setdefault("b", 99)  # 99'},
+  ],
+  copy:[
+    {clue:'{"a": 1, "b": 2}  →  a separate new dict {"a": 1, "b": 2}', reveal:'d = {"a": 1, "b": 2}\\ne = d.copy()'},
+    {clue:'{"x": 10}  →  a separate new dict {"x": 10}', reveal:'d = {"x": 10}\\ne = d.copy()'},
+  ],
+  fromkeys:[
+    {clue:'["a", "b"] all set to 0  →  {"a": 0, "b": 0}', reveal:'dict.fromkeys(["a", "b"], 0)'},
+    {clue:'["x", "y", "z"] all set to None  →  {"x": None, "y": None, "z": None}', reveal:'dict.fromkeys(["x", "y", "z"], None)'},
+  ],
+};
+
+const levels = [
+  {title:'Reading Values', methodIds:['get','keys','values']},
+  {title:'Viewing Pairs & Merging', methodIds:['items','update']},
+  {title:'Removing Items', methodIds:['pop','popitem','clear']},
+  {title:'Defaults & Copies', methodIds:['setdefault','copy','fromkeys']},
+];
+
+const methodColor = {};
+methods.forEach((m,i)=> methodColor[m.id] = COLORS[i % COLORS.length]);
+
+/* ============ STATE ============ */
+let state = { levelIndex:0, score:0, misses:0, pool:[], resolvedCount:0, totalInLevel:0 };
+let dragCtx = null;
+
+/* ============ DOM refs ============ */
+const binsContainer = document.getElementById('binsContainer');
+const poolContainer = document.getElementById('poolContainer');
+const levelKicker = document.getElementById('levelKicker');
+const levelTitle = document.getElementById('levelTitle');
+const levelDots = document.getElementById('levelDots');
+const progressFill = document.getElementById('progressFill');
+const scoreVal = document.getElementById('scoreVal');
+const missVal = document.getElementById('missVal');
+const toast = document.getElementById('toast');
+
+/* ============ INIT ============ */
+function buildBgDecor(){
+  const syms = ['.get()','.items()','{ }','.keys()',':','.update()','.pop()','.values()'];
+  const wrap = document.getElementById('bgDecor');
+  for(let i=0;i<10;i++){
+    const s = document.createElement('span');
+    s.textContent = syms[i % syms.length];
+    s.style.left = (Math.random()*95)+'vw';
+    s.style.top = (Math.random()*100)+'vh';
+    s.style.animationDuration = (18+Math.random()*14)+'s';
+    s.style.animationDelay = (-Math.random()*20)+'s';
+    wrap.appendChild(s);
+  }
+}
+
+function buildDots(){
+  levelDots.innerHTML = '';
+  levels.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < state.levelIndex ? ' done' : '') + (i === state.levelIndex ? ' active' : '');
+    levelDots.appendChild(d);
+  });
+}
+
+function buildSheet(){
+  const list = document.getElementById('sheetList');
+  list.innerHTML = '';
+  methods.forEach(m=>{
+    const item = document.createElement('div');
+    item.className = 'sheet-item';
+    item.style.setProperty('--accent', methodColor[m.id]);
+    item.innerHTML = `<div class="sig">${m.sig}</div><div class="desc">${m.desc}</div>`;
+    list.appendChild(item);
+  });
+}
+
+function loadLevel(idx){
+  state.levelIndex = idx;
+  const level = levels[idx];
+  levelKicker.textContent = `Level ${idx+1} of ${levels.length}`;
+  levelTitle.textContent = level.title;
+  buildDots();
+
+  binsContainer.innerHTML = '';
+  state.pool = [];
+  let uidCounter = 0;
+
+  level.methodIds.forEach(mid=>{
+    const m = methods.find(x=>x.id===mid);
+    const color = methodColor[mid];
+
+    const bin = document.createElement('div');
+    bin.className = 'bin';
+    bin.dataset.methodId = mid;
+    bin.style.setProperty('--accent', color);
+    bin.innerHTML = `
+      <div class="bin-count">0/${examples[mid].length}</div>
+      <div class="bin-sig">${m.sig}</div>
+      <div class="bin-desc">${m.desc}</div>
+      <div class="bin-slot"><div class="placeholder">drop matching clues here</div></div>
+    `;
+    binsContainer.appendChild(bin);
+
+    examples[mid].forEach((ex, exIdx)=>{
+      state.pool.push({
+        uid:'c'+(uidCounter++)+'_'+mid,
+        methodId:mid,
+        exIndex:exIdx,
+        clue:ex.clue,
+        reveal:ex.reveal,
+        wrongTries:0,
+      });
+    });
+  });
+
+  state.totalInLevel = state.pool.length;
+  state.resolvedCount = 0;
+  progressFill.style.width = '0%';
+  renderPool();
+}
+
+function renderPool(){
+  poolContainer.innerHTML = '';
+  const shuffled = [...state.pool].sort(()=>Math.random()-0.5);
+  shuffled.forEach(item=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = item.clue;
+    chip.dataset.uid = item.uid;
+    chip.addEventListener('pointerdown', onChipPointerDown);
+    poolContainer.appendChild(chip);
+  });
+  if(shuffled.length === 0){
+    setTimeout(showLevelComplete, 350);
+  }
+}
+
+/* ============ DRAG LOGIC ============ */
+function onChipPointerDown(e){
+  const chip = e.currentTarget;
+  const rect = chip.getBoundingClientRect();
+  dragCtx = {
+    chipEl: chip,
+    uid: chip.dataset.uid,
+    offsetX: e.clientX - rect.left,
+    offsetY: e.clientY - rect.top,
+    width: rect.width,
+  };
+  chip.setPointerCapture(e.pointerId);
+  chip.classList.add('dragging');
+  chip.style.left = rect.left + 'px';
+  chip.style.top = rect.top + 'px';
+  chip.style.width = rect.width + 'px';
+
+  document.addEventListener('pointermove', onChipPointerMove);
+  document.addEventListener('pointerup', onChipPointerUp);
+}
+
+function onChipPointerMove(e){
+  if(!dragCtx) return;
+  const { chipEl, offsetX, offsetY } = dragCtx;
+  chipEl.style.left = (e.clientX - offsetX) + 'px';
+  chipEl.style.top = (e.clientY - offsetY) + 'px';
+
+  document.querySelectorAll('.bin').forEach(b=>b.classList.remove('drag-over'));
+  chipEl.style.pointerEvents = 'none';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  chipEl.style.pointerEvents = '';
+  const bin = under ? under.closest('.bin') : null;
+  if(bin) bin.classList.add('drag-over');
+}
+
+function onChipPointerUp(e){
+  if(!dragCtx) return;
+  const { chipEl, uid } = dragCtx;
+
+  chipEl.style.pointerEvents = 'none';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  chipEl.style.pointerEvents = '';
+  const bin = under ? under.closest('.bin') : null;
+  document.querySelectorAll('.bin').forEach(b=>b.classList.remove('drag-over'));
+
+  chipEl.classList.remove('dragging');
+  chipEl.style.left = ''; chipEl.style.top = ''; chipEl.style.width = '';
+
+  document.removeEventListener('pointermove', onChipPointerMove);
+  document.removeEventListener('pointerup', onChipPointerUp);
+
+  const item = state.pool.find(p=>p.uid === uid);
+  dragCtx = null;
+
+  if(!bin || !item) return;
+
+  const targetMethod = bin.dataset.methodId;
+  if(targetMethod === item.methodId){
+    handleCorrect(item, bin);
+  } else {
+    handleWrong(item, chipEl);
+  }
+}
+
+/* ============ MATCH RESULTS ============ */
+function handleCorrect(item, bin){
+  state.score += 10;
+  state.resolvedCount++;
+  scoreVal.textContent = state.score;
+  showToast('✓ Correct — ' + item.reveal.split('\\n').join('  '), 'good');
+
+  state.pool = state.pool.filter(p=>p.uid !== item.uid);
+  const chipEl = poolContainer.querySelector(`[data-uid="${item.uid}"]`);
+  if(chipEl) chipEl.remove();
+
+  const slot = bin.querySelector('.bin-slot');
+  const placeholder = slot.querySelector('.placeholder');
+  if(placeholder) placeholder.remove();
+  const resolved = document.createElement('div');
+  resolved.className = 'resolved-chip';
+  resolved.textContent = item.reveal.split('\\n').join('   ');
+  slot.appendChild(resolved);
+
+  const countEl = bin.querySelector('.bin-count');
+  const [done,total] = countEl.textContent.split('/');
+  countEl.textContent = `${parseInt(done)+1}/${total}`;
+
+  progressFill.style.width = Math.round((state.resolvedCount/state.totalInLevel)*100) + '%';
+
+  if(state.pool.length === 0){
+    setTimeout(showLevelComplete, 400);
+  }
+}
+
+function handleWrong(item, chipEl){
+  state.misses++;
+  missVal.textContent = state.misses;
+  item.wrongTries++;
+  showToast('✗ Not quite — try another jar', 'bad');
+  chipEl.classList.add('wrong');
+  setTimeout(()=>chipEl.classList.remove('wrong'), 400);
+
+  if(item.wrongTries >= 2){
+    const target = [...document.querySelectorAll('.bin')].find(b=>b.dataset.methodId === item.methodId);
+    if(target){
+      target.classList.add('hint-glow');
+      setTimeout(()=>target.classList.remove('hint-glow'), 1500);
+    }
+    item.wrongTries = 0;
+  }
+}
+
+/* ============ TOAST ============ */
+let toastTimer = null;
+function showToast(msg, kind){
+  toast.textContent = msg;
+  toast.className = 'toast show ' + kind;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toast.className = 'toast', 1900);
+}
+
+/* ============ LEVEL / GAME COMPLETE ============ */
+function showLevelComplete(){
+  document.getElementById('lcScore').textContent = state.score;
+  document.getElementById('lcMiss').textContent = state.misses;
+  const isLast = state.levelIndex === levels.length - 1;
+  document.getElementById('levelCompleteText').textContent = isLast
+    ? 'Every clue found its method. That was the final level.'
+    : 'Every clue found its method. On to the next set.';
+  document.getElementById('nextLevelBtn').textContent = isLast ? 'See final results →' : 'Next level →';
+  document.getElementById('levelCompleteOverlay').classList.add('show');
+  launchConfetti();
+}
+
+function launchConfetti(){
+  const colors = ['#ffb454','#ff6f91','#9d7bff','#63e6be'];
+  for(let i=0;i<40;i++){
+    const p = document.createElement('div');
+    const size = 6 + Math.random()*6;
+    p.style.position='fixed';
+    p.style.left = (Math.random()*100)+'vw';
+    p.style.top = '-20px';
+    p.style.width = size+'px';
+    p.style.height = size+'px';
+    p.style.background = colors[i % colors.length];
+    p.style.borderRadius = Math.random()>0.5 ? '50%' : '3px';
+    p.style.zIndex = 700;
+    p.style.opacity = '0.9';
+    p.style.pointerEvents = 'none';
+    document.body.appendChild(p);
+    const duration = 1800 + Math.random()*1400;
+    const drift = (Math.random()-0.5)*200;
+    p.animate([
+      {transform:`translate(0,0) rotate(0deg)`, opacity:0.9},
+      {transform:`translate(${drift}px, 100vh) rotate(${360+Math.random()*360}deg)`, opacity:0}
+    ], {duration, easing:'cubic-bezier(.3,.6,.7,1)'});
+    setTimeout(()=>p.remove(), duration+50);
+  }
+}
+
+document.getElementById('nextLevelBtn').addEventListener('click', ()=>{
+  document.getElementById('levelCompleteOverlay').classList.remove('show');
+  if(state.levelIndex < levels.length - 1){
+    loadLevel(state.levelIndex + 1);
+  } else {
+    document.getElementById('gcScore').textContent = state.score;
+    document.getElementById('gcMiss').textContent = state.misses;
+    document.getElementById('gameCompleteOverlay').classList.add('show');
+    launchConfetti();
+  }
+});
+
+document.getElementById('playAgainBtn').addEventListener('click', ()=>{
+  document.getElementById('gameCompleteOverlay').classList.remove('show');
+  fullRestart();
+});
+
+document.getElementById('restartBtn').addEventListener('click', fullRestart);
+
+function fullRestart(){
+  state.score = 0;
+  state.misses = 0;
+  scoreVal.textContent = 0;
+  missVal.textContent = 0;
+  document.getElementById('levelCompleteOverlay').classList.remove('show');
+  document.getElementById('gameCompleteOverlay').classList.remove('show');
+  loadLevel(0);
+}
+
+/* ============ CHEATSHEET ============ */
+const cheatBtn = document.getElementById('cheatBtn');
+const cheatsheet = document.getElementById('cheatsheet');
+const sheetBackdrop = document.getElementById('sheetBackdrop');
+function openSheet(){ cheatsheet.classList.add('show'); sheetBackdrop.classList.add('show'); }
+function closeSheet(){ cheatsheet.classList.remove('show'); sheetBackdrop.classList.remove('show'); }
+cheatBtn.addEventListener('click', openSheet);
+document.getElementById('sheetCloseBtn').addEventListener('click', closeSheet);
+sheetBackdrop.addEventListener('click', closeSheet);
+
+/* ============ BOOT ============ */
+buildBgDecor();
+buildSheet();
+loadLevel(0);
+</script>
+</body>
+</html>
