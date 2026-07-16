@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disk Defragmentation Simulator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 22px 14px 60px;
+    background: linear-gradient(180deg, #ffffff 0%, #f4f7ff 100%);
+    color: #111111;
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+
+  h1 {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg, #ff6b6b, #4d96ff, #51cf66, #ffa94d);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 900;
+  }
+  p.subtitle {
+    text-align: center;
+    font-size: 18px;
+    color: #333333;
+    margin-top: 0;
+    margin-bottom: 22px;
+  }
+
+  .scenario-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .scenario-btn {
+    font-size: 16px;
+    font-weight: 800;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 3px solid #111111;
+    color: #111111;
+    cursor: pointer;
+    background: #ffffff;
+    transition: transform .1s ease, box-shadow .1s ease;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+  }
+  .scenario-btn:hover { transform: translateY(-2px); }
+  .scenario-btn.active {
+    color: #ffffff;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.35);
+    outline: 3px solid #111111;
+  }
+
+  .desc-panel {
+    background: #fff9db;
+    border: 3px solid #111111;
+    border-radius: 14px;
+    padding: 14px 18px;
+    font-size: 17px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    color: #111111;
+  }
+  .desc-panel strong { font-size: 19px; }
+
+  .main-panel {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .disk-panel {
+    flex: 2 1 480px;
+    background: #ffffff;
+    border: 3px solid #111111;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.08);
+  }
+
+  .disk-title {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  #disk-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 7px;
+  }
+
+  .cell {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    transition: background-color .25s ease, transform .25s ease;
+    border: 2px solid rgba(0,0,0,0.15);
+  }
+  .cell .emoji { font-size: 20px; line-height: 1; }
+  .cell .lbl { font-size: 10px; margin-top: 2px; letter-spacing: .5px; }
+  .cell.free {
+    color: #495057;
+    text-shadow: none;
+    border: 2px dashed #adb5bd;
+  }
+  .cell.active {
+    outline: 4px solid #111111;
+    transform: scale(1.12);
+    z-index: 2;
+  }
+
+  .side-panel {
+    flex: 1 1 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .legend, .stats, .controls-panel {
+    background: #ffffff;
+    border: 3px solid #111111;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.08);
+  }
+  .legend h3, .stats h3, .controls-panel h3 {
+    margin: 0 0 10px;
+    font-size: 17px;
+  }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid #111111;
+    flex-shrink: 0;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .stat-row span.val { font-weight: 800; }
+
+  .progress-outer {
+    background: #e9ecef;
+    border: 2px solid #111111;
+    border-radius: 10px;
+    height: 18px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-inner {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #51cf66, #4d96ff);
+    transition: width .3s ease;
+  }
+
+  .controls-panel { text-align: center; }
+  .nav-btn {
+    font-size: 16px;
+    font-weight: 800;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 3px solid #111111;
+    cursor: pointer;
+    margin: 4px;
+  }
+  #play-btn { background: #51cf66; color: #111111; }
+  #step-btn { background: #4d96ff; color: #ffffff; }
+  #reset-btn { background: #ffd43b; color: #111111; }
+  .speed-row { margin-top: 10px; }
+  .speed-btn {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 2px solid #111111;
+    background: #f1f3f5;
+    color: #111111;
+    cursor: pointer;
+    margin: 2px;
+  }
+  .speed-btn.active { background: #111111; color: #ffffff; }
+
+  #log-text {
+    font-size: 16px;
+    line-height: 1.5;
+    background: #f7f7f2;
+    border: 2px solid #111111;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    min-height: 50px;
+  }
+
+  #banner {
+    display: none;
+    text-align: center;
+    font-size: 19px;
+    font-weight: 800;
+    background: #d3f9d8;
+    border: 3px solid #111111;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 16px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 14px;
+    color: #444444;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Disk Defragmentation Simulator</h1>
+  <p class="subtitle">See how a defragmenter tidies up scattered file pieces on a disk -- for five different real-world situations.</p>
+
+  <div class="scenario-bar" id="scenario-bar"></div>
+
+  <div class="desc-panel">
+    <strong id="scenario-title"></strong>
+    <div id="scenario-desc" style="margin-top:6px;"></div>
+  </div>
+
+  <div class="main-panel">
+    <div class="disk-panel">
+      <div class="disk-title">Disk Sector Map</div>
+      <div id="disk-grid"></div>
+      <div id="log-text">Choose a situation above, then press Play or Step.</div>
+      <div id="banner"></div>
+    </div>
+
+    <div class="side-panel">
+      <div class="legend">
+        <h3>File Legend</h3>
+        <div id="legend-list"></div>
+      </div>
+
+      <div class="stats">
+        <h3>Live Stats</h3>
+        <div class="stat-row"><span>Files fragmented</span><span class="val" id="stat-fragfiles">--</span></div>
+        <div class="stat-row"><span>Total fragments</span><span class="val" id="stat-fragments">--</span></div>
+        <div class="stat-row"><span>Est. seek time saved</span><span class="val" id="stat-time">0 ms</span></div>
+        <div class="stat-row"><span>Swaps done</span><span class="val" id="stat-swaps">0 / 0</span></div>
+        <div class="progress-outer"><div class="progress-inner" id="progress-bar"></div></div>
+      </div>
+
+      <div class="controls-panel">
+        <h3>Controls</h3>
+        <button class="nav-btn" id="play-btn" onclick="togglePlay()">▶ Play</button>
+        <button class="nav-btn" id="step-btn" onclick="stepOnce()">⏭ Step</button>
+        <button class="nav-btn" id="reset-btn" onclick="resetScenario()">↺ Reset</button>
+        <div class="speed-row">
+          <button class="speed-btn" data-speed="1100" onclick="setSpeed(1100,this)">Slow</button>
+          <button class="speed-btn active" data-speed="600" onclick="setSpeed(600,this)">Normal</button>
+          <button class="speed-btn" data-speed="250" onclick="setSpeed(250,this)">Fast</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Colored blocks are file fragments. Free (dashed) blocks are empty disk space. Defragmenting moves fragments together and pushes free space to the end.</footer>
+</div>
+
+<script>
+/* ---------- File / color metadata ---------- */
+const fileMeta = {
+  A: { name: 'Photos',    emoji: '🖼️', color: '#ff6b6b' },
+  B: { name: 'Documents', emoji: '📄', color: '#4d96ff' },
+  C: { name: 'Music',     emoji: '🎵', color: '#51cf66' },
+  D: { name: 'Videos',    emoji: '🎬', color: '#ffa94d' },
+  free: { name: 'Free Space', emoji: '▫️', color: '#e9ecef' }
+};
+
+/* ---------- Scenarios ---------- */
+const scenarios = {
+  optimized: {
+    label: '✅ Already Optimized',
+    accent: '#51cf66',
+    title: 'Already Optimized Disk',
+    desc: "Every file's blocks already sit next to each other, with one clean block of free space at the end. This disk doesn't need defragmenting at all -- watch what happens when you press Play anyway!",
+    composition: [['A',10],['B',10],['C',10],['free',10]],
+    swaps: 0,
+    seed: 1
+  },
+  light: {
+    label: '🙂 Lightly Fragmented',
+    accent: '#4d96ff',
+    title: 'Lightly Fragmented Disk',
+    desc: "A few file pieces have drifted out of place after normal everyday use -- nothing serious, but defragmenting will still tidy things up quickly.",
+    composition: [['A',10],['B',10],['C',10],['free',10]],
+    swaps: 6,
+    seed: 7
+  },
+  heavy: {
+    label: '😰 Heavily Fragmented',
+    accent: '#ff6b6b',
+    title: 'Heavily Fragmented Disk',
+    desc: "Months of saving, deleting, and resaving files have scattered every file's pieces across the disk. Reading any file now means jumping all over the place -- this needs a serious defrag.",
+    composition: [['A',8],['B',8],['C',8],['D',8],['free',8]],
+    swaps: 45,
+    seed: 13
+  },
+  nearlyFull: {
+    label: '📦 Nearly Full Disk',
+    accent: '#ffa94d',
+    title: 'Nearly Full Disk',
+    desc: "With so little free space left, the disk has almost no room to rearrange files efficiently -- defragmentation has to work much harder to find places to shuffle blocks into.",
+    composition: [['A',12],['B',12],['C',12],['free',4]],
+    swaps: 35,
+    seed: 21
+  },
+  largeFile: {
+    label: '🎬 One Huge Fragmented File',
+    accent: '#b388eb',
+    title: 'One Huge Fragmented File',
+    desc: "A single large video file got saved in dozens of scattered pieces as the disk filled and emptied over time. Big fragmented files like this are some of the slowest to read.",
+    composition: [['A',24],['B',8],['free',8]],
+    swaps: 30,
+    seed: 33
+  }
+};
+
+/* ---------- Deterministic RNG (mulberry32) ---------- */
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildBase(composition) {
+  const arr = [];
+  composition.forEach(([id, count]) => { for (let i = 0; i < count; i++) arr.push(id); });
+  return arr;
+}
+
+function shuffleWithSwaps(arr, swaps, rng) {
+  const a = arr.slice();
+  for (let s = 0; s < swaps; s++) {
+    const i = Math.floor(rng() * a.length);
+    const j = Math.floor(rng() * a.length);
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function computeSteps(currentArr, targetArr) {
+  const arr = currentArr.slice();
+  const steps = [];
+  for (let pos = 0; pos < arr.length; pos++) {
+    if (arr[pos] !== targetArr[pos]) {
+      let j = -1;
+      for (let k = pos + 1; k < arr.length; k++) {
+        if (arr[k] === targetArr[pos]) { j = k; break; }
+      }
+      if (j !== -1) {
+        steps.push([pos, j]);
+        const tmp = arr[pos]; arr[pos] = arr[j]; arr[j] = tmp;
+      }
+    }
+  }
+  return steps;
+}
+
+function countFragments(arr) {
+  const runs = {};
+  let prev = null;
+  for (let i = 0; i < arr.length; i++) {
+    const v = arr[i];
+    if (v !== prev) runs[v] = (runs[v] || 0) + 1;
+    prev = v;
+  }
+  return runs;
+}
+
+/* ---------- State ---------- */
+let currentKey = null;
+let target = [];
+let current = [];
+let steps = [];
+let stepIndex = 0;
+let playing = false;
+let speedMs = 600;
+let initialFragFiles = 0;
+let initialFragments = 0;
+
+/* ---------- Build scenario buttons ---------- */
+const bar = document.getElementById('scenario-bar');
+Object.keys(scenarios).forEach(key => {
+  const s = scenarios[key];
+  const btn = document.createElement('button');
+  btn.className = 'scenario-btn';
+  btn.id = 'sbtn-' + key;
+  btn.textContent = s.label;
+  btn.style.background = '#ffffff';
+  btn.onclick = () => loadScenario(key);
+  bar.appendChild(btn);
+});
+
+/* ---------- Build legend ---------- */
+const legendList = document.getElementById('legend-list');
+Object.keys(fileMeta).forEach(id => {
+  const m = fileMeta[id];
+  const row = document.createElement('div');
+  row.className = 'legend-row';
+  row.innerHTML = '<span class="swatch" style="background:' + m.color + ';"></span><span>' + m.emoji + ' ' + m.name + '</span>';
+  legendList.appendChild(row);
+});
+
+/* ---------- Rendering ---------- */
+function renderGrid() {
+  const grid = document.getElementById('disk-grid');
+  grid.innerHTML = '';
+  current.forEach((val, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (val === 'free' ? ' free' : '');
+    cell.id = 'cell-' + idx;
+    const meta = fileMeta[val];
+    cell.style.background = meta.color;
+    cell.innerHTML = '<div class="emoji">' + meta.emoji + '</div><div class="lbl">' + (val === 'free' ? 'FREE' : val) + '</div>';
+    grid.appendChild(cell);
+  });
+}
+
+function updateStats() {
+  const runs = countFragments(current);
+  const fileIds = Object.keys(fileMeta).filter(id => id !== 'free');
+  const fragFiles = fileIds.filter(id => (runs[id] || 0) > 1).length;
+  const totalFragments = fileIds.reduce((sum, id) => sum + (runs[id] || 0), 0);
+
+  document.getElementById('stat-fragfiles').textContent = fragFiles + ' of ' + fileIds.filter(id => current.includes(id)).length;
+  document.getElementById('stat-fragments').textContent = totalFragments;
+
+  const saved = Math.max(0, (initialFragments - totalFragments)) * 15;
+  document.getElementById('stat-time').textContent = '~' + saved + ' ms';
+
+  document.getElementById('stat-swaps').textContent = stepIndex + ' / ' + steps.length;
+  const pct = steps.length === 0 ? 100 : Math.round((stepIndex / steps.length) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function setLog(text) {
+  document.getElementById('log-text').textContent = text;
+}
+
+function showBanner(text, color) {
+  const b = document.getElementById('banner');
+  b.style.display = 'block';
+  b.style.background = color || '#d3f9d8';
+  b.textContent = text;
+}
+function hideBanner() {
+  document.getElementById('banner').style.display = 'none';
+}
+
+/* ---------- Scenario loading ---------- */
+function loadScenario(key) {
+  playing = false;
+  updatePlayButton();
+  currentKey = key;
+  const s = scenarios[key];
+
+  target = buildBase(s.composition);
+  current = (s.swaps === 0) ? target.slice() : shuffleWithSwaps(target, s.swaps, mulberry32(s.seed));
+  steps = computeSteps(current, target);
+  stepIndex = 0;
+
+  const runs0 = countFragments(current);
+  const fileIds = Object.keys(fileMeta).filter(id => id !== 'free');
+  initialFragFiles = fileIds.filter(id => (runs0[id] || 0) > 1).length;
+  initialFragments = fileIds.reduce((sum, id) => sum + (runs0[id] || 0), 0);
+
+  document.getElementById('scenario-title').textContent = s.title;
+  document.getElementById('scenario-desc').textContent = s.desc;
+
+  Object.keys(scenarios).forEach(k => {
+    const b = document.getElementById('sbtn-' + k);
+    b.classList.toggle('active', k === key);
+    b.style.background = (k === key) ? scenarios[k].accent : '#ffffff';
+  });
+
+  hideBanner();
+  renderGrid();
+  updateStats();
+
+  if (steps.length === 0) {
+    setLog('This disk has no fragmentation. Every file is already contiguous, with free space consolidated at the end.');
+    showBanner('✅ No fragmentation detected -- this disk is already optimized!', '#d3f9d8');
+  } else {
+    setLog('Ready. This disk needs ' + steps.length + ' block moves to fully defragment. Press Play or Step to begin.');
+  }
+}
+
+/* ---------- Animation ---------- */
+function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+async function doStep() {
+  if (stepIndex >= steps.length) return false;
+  const [i, j] = steps[stepIndex];
+  const cellI = document.getElementById('cell-' + i);
+  const cellJ = document.getElementById('cell-' + j);
+  cellI.classList.add('active');
+  cellJ.classList.add('active');
+
+  const valI = current[i], valJ = current[j];
+  const desc = (valJ === 'free')
+    ? ('Moving free space from sector ' + j + ' to sector ' + i + '.')
+    : ('Moving a fragment of ' + fileMeta[valJ].name + ' (sector ' + j + ') into sector ' + i + ' to make it contiguous.');
+  setLog('Step ' + (stepIndex + 1) + ' of ' + steps.length + ': ' + desc);
+
+  await sleep(speedMs * 0.5);
+
+  const tmp = current[i]; current[i] = current[j]; current[j] = tmp;
+  const metaI = fileMeta[current[i]], metaJ = fileMeta[current[j]];
+  cellI.style.background = metaI.color;
+  cellI.className = 'cell active' + (current[i] === 'free' ? ' free' : '');
+  cellI.innerHTML = '<div class="emoji">' + metaI.emoji + '</div><div class="lbl">' + (current[i] === 'free' ? 'FREE' : current[i]) + '</div>';
+  cellJ.style.background = metaJ.color;
+  cellJ.className = 'cell active' + (current[j] === 'free' ? ' free' : '');
+  cellJ.innerHTML = '<div class="emoji">' + metaJ.emoji + '</div><div class="lbl">' + (current[j] === 'free' ? 'FREE' : current[j]) + '</div>';
+
+  await sleep(speedMs * 0.5);
+  cellI.classList.remove('active');
+  cellJ.classList.remove('active');
+
+  stepIndex++;
+  updateStats();
+
+  if (stepIndex >= steps.length) {
+    setLog('Defragmentation complete! Every file is now contiguous and free space is consolidated at the end.');
+    showBanner('🎉 Defragmentation complete! File access is now much faster.', '#d3f9d8');
+    return false;
+  }
+  return true;
+}
+
+async function stepOnce() {
+  if (playing) return;
+  if (steps.length === 0) { showBanner('✅ Nothing to do -- this disk is already optimized!', '#d3f9d8'); return; }
+  await doStep();
+}
+
+function updatePlayButton() {
+  document.getElementById('play-btn').textContent = playing ? '⏸ Pause' : '▶ Play';
+}
+
+async function togglePlay() {
+  if (steps.length === 0) { showBanner('✅ Nothing to do -- this disk is already optimized!', '#d3f9d8'); return; }
+  if (playing) { playing = false; updatePlayButton(); return; }
+  playing = true;
+  updatePlayButton();
+  while (playing && stepIndex < steps.length) {
+    const more = await doStep();
+    if (!more) { playing = false; updatePlayButton(); break; }
+  }
+  playing = false;
+  updatePlayButton();
+}
+
+function resetScenario() {
+  if (currentKey) loadScenario(currentKey);
+}
+
+function setSpeed(ms, btn) {
+  speedMs = ms;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ---------- Init ---------- */
+loadScenario('light');
+</script>
+</body>
+</html>
