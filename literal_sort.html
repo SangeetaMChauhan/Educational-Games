@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Literal Sort — Python Type Sorting Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14152b;
+    --bg-alt: #1b1d3a;
+    --panel: #21234a;
+    --panel-edge: #34376b;
+    --ink: #eef0ff;
+    --ink-dim: #9496c4;
+    --py-blue: #4b8bbe;
+    --py-blue-glow: #6fb7ee;
+    --py-yellow: #ffd43b;
+    --str-color: #7ee787;
+    --int-color: #79c0ff;
+    --float-color: #d2a8ff;
+    --bool-color: #ff9d5c;
+    --none-color: #ff7b9c;
+    --coll-color: #ffd43b;
+    --good: #4ade80;
+    --bad: #f87171;
+    --radius: 16px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(75,139,190,0.25), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(255,212,59,0.10), transparent 55%),
+      var(--bg);
+    font-family:'Space Grotesk', sans-serif;
+    color:var(--ink);
+    padding:28px 20px 60px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    max-width:1100px;
+    margin:0 auto 30px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand svg{width:46px; height:46px; flex-shrink:0;}
+  .brand h1{
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.55rem;
+    margin:0;
+    letter-spacing:-0.5px;
+  }
+  .brand h1 span{color:var(--py-yellow);}
+  .brand p{margin:2px 0 0; color:var(--ink-dim); font-size:0.85rem; font-family:'JetBrains Mono',monospace;}
+
+  .scoreboard{
+    display:flex; gap:10px;
+  }
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:12px;
+    padding:8px 16px;
+    text-align:center;
+    min-width:78px;
+  }
+  .stat .num{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.25rem;}
+  .stat .lbl{font-size:0.65rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.08em;}
+  #scoreNum{color:var(--good);}
+  #wrongNum{color:var(--bad);}
+
+  /* ---------- Progress bar ---------- */
+  .progress-wrap{
+    max-width:1100px; margin:0 auto 26px;
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:999px;
+    height:10px;
+    overflow:hidden;
+  }
+  .progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--py-blue), var(--py-yellow));
+    transition:width 0.4s ease;
+  }
+
+  /* ---------- Tray of draggable literals ---------- */
+  .tray{
+    max-width:1100px;
+    margin:0 auto 34px;
+    background:var(--bg-alt);
+    border:1px dashed var(--panel-edge);
+    border-radius:20px;
+    padding:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    min-height:90px;
+  }
+  .tray-empty-msg{
+    margin:auto;
+    color:var(--ink-dim);
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.95rem;
+  }
+
+  .chip{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:0.95rem;
+    background:#2a2c58;
+    border:1px solid #454880;
+    color:var(--ink);
+    padding:10px 16px;
+    border-radius:10px;
+    cursor:grab;
+    user-select:none;
+    box-shadow:0 3px 0 rgba(0,0,0,0.25);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, outline 0.15s ease;
+    outline:2px solid transparent;
+    outline-offset:2px;
+  }
+  .chip:hover{transform:translateY(-2px); box-shadow:0 5px 0 rgba(0,0,0,0.25);}
+  .chip:active{cursor:grabbing;}
+  .chip.selected{outline:2px solid var(--py-yellow);}
+  .chip.dragging{opacity:0.35;}
+  .chip.wrong-shake{animation:shake 0.4s ease;}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+
+  /* ---------- Bins ---------- */
+  .bins{
+    max-width:1100px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+    gap:16px;
+  }
+  .bin{
+    position:relative;
+    border-radius:var(--radius);
+    padding:18px 14px 22px;
+    background:var(--panel);
+    border:2px solid var(--panel-edge);
+    min-height:150px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    transition:transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .bin.dragover{
+    transform:scale(1.035);
+    border-color:var(--bin-accent);
+    background:var(--bg-alt);
+  }
+  .bin .icon{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:800;
+    font-size:1.6rem;
+    color:var(--bin-accent);
+    margin-bottom:6px;
+  }
+  .bin h3{
+    margin:0 0 2px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.95rem;
+    color:var(--bin-accent);
+  }
+  .bin p{
+    margin:0 0 10px;
+    color:var(--ink-dim);
+    font-size:0.72rem;
+  }
+  .bin .count{
+    margin-top:auto;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.7rem;
+    color:var(--ink-dim);
+    background:rgba(255,255,255,0.05);
+    border-radius:999px;
+    padding:3px 10px;
+  }
+  .bin[data-type="str"]{--bin-accent:var(--str-color);}
+  .bin[data-type="int"]{--bin-accent:var(--int-color);}
+  .bin[data-type="float"]{--bin-accent:var(--float-color);}
+  .bin[data-type="bool"]{--bin-accent:var(--bool-color);}
+  .bin[data-type="none"]{--bin-accent:var(--none-color);}
+  .bin[data-type="coll"]{--bin-accent:var(--coll-color);}
+
+  .bin-flash-good{animation:flashGood 0.5s ease;}
+  .bin-flash-bad{animation:flashBad 0.5s ease;}
+  @keyframes flashGood{
+    0%{box-shadow:0 0 0 0 rgba(74,222,128,0.6);}
+    100%{box-shadow:0 0 0 18px rgba(74,222,128,0);}
+  }
+  @keyframes flashBad{
+    0%{box-shadow:0 0 0 0 rgba(248,113,113,0.6);}
+    100%{box-shadow:0 0 0 18px rgba(248,113,113,0);}
+  }
+
+  /* ---------- Footer / win banner ---------- */
+  .banner{
+    max-width:1100px;
+    margin:26px auto 0;
+    background:linear-gradient(90deg, rgba(75,139,190,0.18), rgba(255,212,59,0.12));
+    border:1px solid var(--panel-edge);
+    border-radius:16px;
+    padding:18px 22px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .banner.show{display:flex;}
+  .banner strong{font-family:'JetBrains Mono',monospace; color:var(--py-yellow);}
+  .banner button{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:600;
+    background:var(--py-blue);
+    color:#0c1220;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .banner button:hover{background:var(--py-blue-glow);}
+
+  .hint{
+    max-width:1100px;
+    margin:16px auto 0;
+    color:var(--ink-dim);
+    font-size:0.78rem;
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  @media (max-width: 560px){
+    .brand h1{font-size:1.2rem;}
+    .bins{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 64 64" fill="none">
+      <path d="M32 4c-6 0-11 2-11 8v8h11v2H14c-6 0-9 4-9 10s3 10 9 10h5v-6c0-6 5-10 11-10h10c5 0 9-4 9-9V12c0-6-5-8-11-8h-6z" fill="#4B8BBE"/>
+      <path d="M32 60c6 0 11-2 11-8v-8H32v-2h18c6 0 9-4 9-10s-3-10-9-10h-5v6c0 6-5 10-11 10H24c-5 0-9 4-9 9v8c0 6 5 8 11 8h6z" fill="#FFD43B"/>
+      <circle cx="24" cy="14" r="2.2" fill="#14152b"/>
+      <circle cx="40" cy="50" r="2.2" fill="#14152b"/>
+    </svg>
+    <div>
+      <h1>literal<span>_sort</span>()</h1>
+      <p>drag each value into the type it belongs to</p>
+    </div>
+  </div>
+  <div class="scoreboard">
+    <div class="stat"><div class="num" id="scoreNum">0</div><div class="lbl">Correct</div></div>
+    <div class="stat"><div class="num" id="wrongNum">0</div><div class="lbl">Missed</div></div>
+    <div class="stat"><div class="num" id="leftNum">0</div><div class="lbl">Left</div></div>
+  </div>
+</header>
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<section class="tray" id="tray"></section>
+
+<section class="bins" id="bins">
+  <div class="bin" data-type="str">
+    <div class="icon">""</div>
+    <h3>str</h3>
+    <p>text in quotes</p>
+    <div class="count" id="count-str">0 sorted</div>
+  </div>
+  <div class="bin" data-type="int">
+    <div class="icon">#</div>
+    <h3>int</h3>
+    <p>whole numbers</p>
+    <div class="count" id="count-int">0 sorted</div>
+  </div>
+  <div class="bin" data-type="float">
+    <div class="icon">.0</div>
+    <h3>float</h3>
+    <p>decimal numbers</p>
+    <div class="count" id="count-float">0 sorted</div>
+  </div>
+  <div class="bin" data-type="bool">
+    <div class="icon">?!</div>
+    <h3>bool</h3>
+    <p>True / False</p>
+    <div class="count" id="count-bool">0 sorted</div>
+  </div>
+  <div class="bin" data-type="none">
+    <div class="icon">∅</div>
+    <h3>NoneType</h3>
+    <p>the None value</p>
+    <div class="count" id="count-none">0 sorted</div>
+  </div>
+  <div class="bin" data-type="coll">
+    <div class="icon">[ ]</div>
+    <h3>collection</h3>
+    <p>list · tuple · dict · set</p>
+    <div class="count" id="count-coll">0 sorted</div>
+  </div>
+</section>
+
+<p class="hint">Tip: on touch devices, tap a value to select it, then tap the correct bin. Desktop: click and drag.</p>
+
+<div class="banner" id="winBanner">
+  <div>🎉 <strong>All sorted!</strong> You correctly placed every literal (some after a retry).</div>
+  <button id="resetBtn">Play again</button>
+</div>
+
+<script>
+const LITERALS = [
+  { text: '"hello world"', type: 'str' },
+  { text: "'Python'", type: 'str' },
+  { text: '""', type: 'str' },
+  { text: "'42'", type: 'str' },
+  { text: '42', type: 'int' },
+  { text: '-7', type: 'int' },
+  { text: '0', type: 'int' },
+  { text: '1_000_000', type: 'int' },
+  { text: '3.14', type: 'float' },
+  { text: '-0.5', type: 'float' },
+  { text: '2.71828', type: 'float' },
+  { text: '1e10', type: 'float' },
+  { text: 'True', type: 'bool' },
+  { text: 'False', type: 'bool' },
+  { text: 'None', type: 'none' },
+  { text: '[1, 2, 3]', type: 'coll' },
+  { text: '(1, 2)', type: 'coll' },
+  { text: '{"a": 1}', type: 'coll' },
+  { text: '{1, 2, 3}', type: 'coll' },
+  { text: '[]', type: 'coll' },
+];
+
+let score = 0, wrong = 0, remaining = 0;
+let selectedChip = null;
+let draggedChip = null;
+
+const tray = document.getElementById('tray');
+const bins = document.querySelectorAll('.bin');
+const scoreNum = document.getElementById('scoreNum');
+const wrongNum = document.getElementById('wrongNum');
+const leftNum = document.getElementById('leftNum');
+const progressBar = document.getElementById('progressBar');
+const winBanner = document.getElementById('winBanner');
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildTray(){
+  tray.innerHTML = '';
+  winBanner.classList.remove('show');
+  score = 0; wrong = 0;
+  const items = shuffle(LITERALS);
+  remaining = items.length;
+  items.forEach(item => tray.appendChild(makeChip(item)));
+  updateStats();
+}
+
+function makeChip(item){
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.draggable = true;
+  chip.textContent = item.text;
+  chip.dataset.type = item.type;
+
+  chip.addEventListener('dragstart', e => {
+    draggedChip = chip;
+    chip.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', item.type);
+  });
+  chip.addEventListener('dragend', () => {
+    chip.classList.remove('dragging');
+    draggedChip = null;
+  });
+
+  // tap-to-select fallback for touch devices
+  chip.addEventListener('click', () => {
+    if(selectedChip === chip){
+      chip.classList.remove('selected');
+      selectedChip = null;
+      return;
+    }
+    document.querySelectorAll('.chip.selected').forEach(c => c.classList.remove('selected'));
+    selectedChip = chip;
+    chip.classList.add('selected');
+  });
+
+  return chip;
+}
+
+function updateStats(){
+  scoreNum.textContent = score;
+  wrongNum.textContent = wrong;
+  leftNum.textContent = remaining;
+  const total = LITERALS.length;
+  const done = total - remaining;
+  progressBar.style.width = (total ? (done/total*100) : 0) + '%';
+  if(remaining === 0){
+    winBanner.classList.add('show');
+  }
+}
+
+function handleDrop(bin, chip){
+  if(!chip) return;
+  const correct = chip.dataset.type === bin.dataset.type;
+  const countEl = document.getElementById('count-' + bin.dataset.type);
+
+  if(correct){
+    bin.classList.remove('bin-flash-bad');
+    void bin.offsetWidth;
+    bin.classList.add('bin-flash-good');
+    chip.remove();
+    score++;
+    remaining--;
+    const n = parseInt(countEl.textContent) || 0;
+    countEl.textContent = (n+1) + ' sorted';
+    updateStats();
+  } else {
+    bin.classList.remove('bin-flash-good');
+    void bin.offsetWidth;
+    bin.classList.add('bin-flash-bad');
+    chip.classList.add('wrong-shake');
+    wrong++;
+    setTimeout(() => chip.classList.remove('wrong-shake'), 400);
+    updateStats();
+  }
+  selectedChip = null;
+  chip.classList.remove('selected');
+}
+
+bins.forEach(bin => {
+  bin.addEventListener('dragover', e => {
+    e.preventDefault();
+    bin.classList.add('dragover');
+  });
+  bin.addEventListener('dragleave', () => bin.classList.remove('dragover'));
+  bin.addEventListener('drop', e => {
+    e.preventDefault();
+    bin.classList.remove('dragover');
+    handleDrop(bin, draggedChip);
+  });
+  bin.addEventListener('click', () => {
+    if(selectedChip) handleDrop(bin, selectedChip);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', buildTray);
+
+buildTray();
+</script>
+
+</body>
+</html>
