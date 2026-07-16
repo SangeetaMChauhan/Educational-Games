@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Tuple — Python Tuple Training Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#f5f8fc;
+    --ink:#132446;
+    --ink-soft:#5c6b8a;
+    --line: rgba(19,36,70,0.10);
+    --teal:#06a77d;
+    --orange:#ff6b35;
+    --gold:#f2ac2b;
+    --coral:#ff4d6d;
+    --purple:#7b61ff;
+    --teal-bg: rgba(6,167,125,0.10);
+    --orange-bg: rgba(255,107,53,0.10);
+    --gold-bg: rgba(242,172,43,0.12);
+    --coral-bg: rgba(255,77,109,0.10);
+    --purple-bg: rgba(123,97,255,0.10);
+    --radius: 18px;
+    --shadow: 0 8px 24px rgba(19,36,70,0.08);
+    --shadow-lift: 0 14px 34px rgba(19,36,70,0.16);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/40px 40px,
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding: 28px 20px 80px;
+  }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; }
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+    flex-wrap:wrap;
+    margin-bottom: 22px;
+  }
+  .brand{ display:flex; align-items:center; gap:16px; }
+  .brand svg{ width:64px; height:64px; flex-shrink:0; }
+  .brand h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: clamp(28px, 4vw, 42px);
+    margin:0;
+    letter-spacing: -0.5px;
+    line-height:1;
+  }
+  .brand h1 .paren{ color: var(--orange); }
+  .brand p{
+    margin: 6px 0 0;
+    color: var(--ink-soft);
+    font-size:14px;
+    font-weight:500;
+    letter-spacing: 0.3px;
+  }
+
+  .readout{
+    display:flex;
+    gap:10px;
+    background: var(--ink);
+    padding: 10px 12px;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+  }
+  .readout .stat{
+    text-align:center;
+    padding: 6px 14px;
+    min-width:76px;
+  }
+  .readout .stat + .stat{ border-left: 1px solid rgba(255,255,255,0.15); }
+  .readout .stat .n{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight:700;
+    color:#fff;
+    line-height:1.1;
+  }
+  .readout .stat .l{
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform:uppercase;
+    color: rgba(255,255,255,0.55);
+    font-weight:600;
+  }
+  .readout .stat.good .n{ color: var(--teal); }
+  .readout .stat.bad .n{ color: var(--coral); }
+
+  /* ---------- TABS ---------- */
+  .tabs{
+    display:flex;
+    gap:10px;
+    margin-bottom: 18px;
+    flex-wrap:wrap;
+  }
+  .tab-btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.4px;
+    padding: 12px 20px;
+    border-radius: 999px;
+    border: 2px solid var(--ink);
+    background: #fff;
+    color: var(--ink);
+    cursor:pointer;
+    transition: all .18s ease;
+  }
+  .tab-btn .dot{
+    display:inline-block; width:8px;height:8px;border-radius:50%;
+    background: var(--ink-soft); margin-right:8px; vertical-align:middle;
+  }
+  .tab-btn.active{
+    background: var(--ink);
+    color:#fff;
+  }
+  .tab-btn.active .dot{ background: var(--gold); }
+  .tab-btn:not(.active):hover{ background: var(--panel); }
+
+  /* ---------- INSTRUCTIONS ---------- */
+  .instructions{
+    background: var(--panel);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .instructions b{ color: var(--ink); }
+
+  /* ---------- STAGE ---------- */
+  .stage{ display:none; }
+  .stage.active{ display:block; animation: fadein .3s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  .stage-progress{
+    height: 8px;
+    background: var(--panel);
+    border-radius: 999px;
+    overflow:hidden;
+    margin-bottom: 26px;
+    border: 1px solid var(--line);
+  }
+  .stage-progress > div{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    transition: width .35s ease;
+  }
+
+  .zones{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .hatch{
+    position:relative;
+    border-radius: var(--radius);
+    padding: 16px 16px 14px;
+    background: var(--panel);
+    border: 2px solid var(--line);
+    min-height: 150px;
+    display:flex;
+    flex-direction:column;
+    transition: border-color .15s ease, transform .12s ease, box-shadow .15s ease;
+  }
+  .hatch.hover{ transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+  .hatch.wrong-flash{ animation: wrongflash .4s ease; }
+  @keyframes wrongflash{
+    0%,100%{ border-color: var(--line); }
+    30%{ border-color: var(--coral); background: var(--coral-bg); }
+  }
+  .hatch.complete{ box-shadow: var(--shadow); }
+
+  .hatch .ring{
+    width:38px; height:38px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    color:#fff;
+    margin-bottom:10px;
+  }
+  .hatch .label{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 17px;
+    margin: 0 0 2px;
+  }
+  .hatch .syntax{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .hatch .desc{
+    font-size:12.5px;
+    color: var(--ink-soft);
+    margin-bottom:10px;
+    line-height:1.4;
+  }
+  .hatch .docked{
+    margin-top:auto;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .hatch .fill{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    color: var(--ink-soft);
+    margin-top:8px;
+  }
+
+  .hatch.c-teal .ring{ background: var(--teal); }
+  .hatch.c-teal.filled{ border-color: var(--teal); background: var(--teal-bg); }
+  .hatch.c-orange .ring{ background: var(--orange); }
+  .hatch.c-orange.filled{ border-color: var(--orange); background: var(--orange-bg); }
+  .hatch.c-gold .ring{ background: var(--gold); }
+  .hatch.c-gold.filled{ border-color: var(--gold); background: var(--gold-bg); }
+  .hatch.c-coral .ring{ background: var(--coral); }
+  .hatch.c-coral.filled{ border-color: var(--coral); background: var(--coral-bg); }
+  .hatch.c-purple .ring{ background: var(--purple); }
+  .hatch.c-purple.filled{ border-color: var(--purple); background: var(--purple-bg); }
+
+  .docked-card{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    background:#fff;
+    border-radius:8px;
+    padding: 6px 8px;
+    white-space:pre-wrap;
+    line-height:1.35;
+    box-shadow: 0 2px 6px rgba(19,36,70,0.08);
+  }
+
+  /* ---------- POOL ---------- */
+  .pool-heading{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 12px;
+  }
+  .pool-heading h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:16px;
+    margin:0;
+  }
+  .pool-heading .badge{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    background: var(--ink);
+    color:#fff;
+    padding:3px 9px;
+    border-radius:999px;
+  }
+
+  .pool{
+    display:flex;
+    flex-wrap:wrap;
+    gap: 12px;
+    min-height: 70px;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: repeating-linear-gradient(135deg, rgba(19,36,70,0.02) 0 10px, transparent 10px 20px);
+    border: 2px solid var(--line);
+  }
+
+  .capsule{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height:1.4;
+    white-space:pre-wrap;
+    background:#fff;
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    padding: 10px 14px;
+    cursor:grab;
+    box-shadow: var(--shadow);
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, opacity .2s ease;
+    user-select:none;
+    max-width: 260px;
+  }
+  .capsule:hover{ transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+  .capsule.selected{
+    border-color: var(--orange);
+    box-shadow: 0 0 0 4px var(--orange-bg);
+    transform: translateY(-2px);
+  }
+  .capsule.dragging{ opacity: 0.35; }
+  .capsule.shake{ animation: shake .4s ease; border-color: var(--coral); }
+  @keyframes shake{
+    10%,90%{ transform: translateX(-3px); }
+    20%,80%{ transform: translateX(5px); }
+    30%,50%,70%{ transform: translateX(-7px); }
+    40%,60%{ transform: translateX(7px); }
+  }
+  .capsule.gone{ display:none; }
+
+  /* ---------- COMPLETE OVERLAY ---------- */
+  .complete-banner{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap: 16px;
+    flex-wrap:wrap;
+    margin-top: 22px;
+    padding: 20px 24px;
+    border-radius: var(--radius);
+    background: linear-gradient(120deg, var(--ink), #1d3868);
+    color:#fff;
+    box-shadow: var(--shadow-lift);
+  }
+  .complete-banner.show{ display:flex; animation: fadein .4s ease; }
+  .complete-banner h3{
+    font-family:'Space Grotesk', sans-serif;
+    margin:0 0 4px;
+    font-size:20px;
+  }
+  .complete-banner p{ margin:0; color: rgba(255,255,255,0.7); font-size:13px; }
+  .complete-banner button{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    background: var(--gold);
+    color: var(--ink);
+    border:none;
+    padding: 12px 22px;
+    border-radius: 999px;
+    cursor:pointer;
+    font-size:14px;
+    transition: transform .12s ease;
+  }
+  .complete-banner button:hover{ transform: scale(1.04); }
+
+  footer{
+    text-align:center;
+    margin-top: 46px;
+    color: var(--ink-soft);
+    font-size:12px;
+  }
+
+  @media (max-width: 640px){
+    .readout{ width:100%; justify-content:space-between; }
+    .readout .stat{ min-width:auto; flex:1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 6C50 6 74 26 74 54C74 66 66 76 58 82L54 94H46L42 82C34 76 26 66 26 54C26 26 50 6 50 6Z" fill="#FF6B35" stroke="#132446" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="50" cy="46" r="12" fill="#F5F8FC" stroke="#132446" stroke-width="3"/>
+        <circle cx="50" cy="46" r="5" fill="#06A77D"/>
+        <path d="M26 54C18 58 12 68 12 68L26 66" stroke="#132446" stroke-width="3" stroke-linejoin="round" fill="#F2AC2B"/>
+        <path d="M74 54C82 58 88 68 88 68L74 66" stroke="#132446" stroke-width="3" stroke-linejoin="round" fill="#F2AC2B"/>
+      </svg>
+      <div>
+        <h1><span class="paren">(</span>MISSION TUPLE<span class="paren">)</span></h1>
+        <p>PYTHON TUPLE TRAINING ACADEMY — DRAG-&amp;-DOCK LEARNING MODULE</p>
+      </div>
+    </div>
+
+    <div class="readout">
+      <div class="stat good"><div class="n" id="statMatched">0</div><div class="l">Docked</div></div>
+      <div class="stat"><div class="n" id="statTotal">0</div><div class="l">Total</div></div>
+      <div class="stat bad"><div class="n" id="statMisses">0</div><div class="l">Misfires</div></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-stage="methods"><span class="dot"></span>STAGE 1 — TUPLE METHODS</button>
+    <button class="tab-btn" data-stage="properties"><span class="dot"></span>STAGE 2 — TUPLE PROPERTIES</button>
+  </div>
+
+  <div class="instructions">
+    🚀 <span><b>Drag</b> each capsule into the hatch it belongs to — or on touch devices, <b>tap a capsule</b> to select it, then <b>tap the hatch</b> to dock it.</span>
+  </div>
+
+  <div id="stageMethods" class="stage active">
+    <div class="stage-progress"><div id="progMethods"></div></div>
+    <div class="zones" id="zonesMethods"></div>
+    <div class="pool-heading">
+      <h2>Loose capsules — where do they dock?</h2>
+      <span class="badge" id="poolCountMethods">20 remaining</span>
+    </div>
+    <div class="pool" id="poolMethods"></div>
+    <div class="complete-banner" id="bannerMethods">
+      <div>
+        <h3>🛰️ Stage 1 complete — all methods docked!</h3>
+        <p>Every example found its method. Switch to Stage 2, or launch again.</p>
+      </div>
+      <button data-restart="methods">Restart Stage</button>
+    </div>
+  </div>
+
+  <div id="stageProperties" class="stage">
+    <div class="stage-progress"><div id="progProperties"></div></div>
+    <div class="zones" id="zonesProperties"></div>
+    <div class="pool-heading">
+      <h2>Loose capsules — which property do they prove?</h2>
+      <span class="badge" id="poolCountProperties">20 remaining</span>
+    </div>
+    <div class="pool" id="poolProperties"></div>
+    <div class="complete-banner" id="bannerProperties">
+      <div>
+        <h3>🛰️ Stage 2 complete — every property confirmed!</h3>
+        <p>You matched every example to its correct tuple property.</p>
+      </div>
+      <button data-restart="properties">Restart Stage</button>
+    </div>
+  </div>
+
+  <footer>Mission Tuple · a hands-on way to learn Python tuple methods &amp; properties</footer>
+</div>
+
+<script>
+const DATA = {
+  methods: {
+    zones: [
+      { id:'count',  label:'count()', syntax:'t.count(x)', desc:'Counts how many times x appears in the tuple.', color:'teal' },
+      { id:'index',  label:'index()', syntax:'t.index(x)', desc:'Returns the position of the first match of x.', color:'orange' },
+      { id:'len',    label:'len()',   syntax:'len(t)',     desc:'Returns the total number of items in the tuple.', color:'gold' },
+      { id:'concat', label:'+ join',  syntax:'t1 + t2',    desc:'Concatenates two tuples into a new one.', color:'coral' },
+      { id:'repeat', label:'* repeat',syntax:'t * n',      desc:'Repeats a tuple items n times.', color:'purple' },
+    ],
+    cards: [
+      { a:'count', code:"t = (1, 2, 2, 3)\nt.count(2)      # 2" },
+      { a:'count', code:"colors = ('red','blue','red')\ncolors.count('red')  # 2" },
+      { a:'count', code:"t = (5, 5, 5, 5)\nt.count(5)      # 4" },
+      { a:'count', code:"t = ('a','b','c')\nt.count('z')    # 0" },
+
+      { a:'index', code:"t = (10, 20, 30)\nt.index(20)     # 1" },
+      { a:'index', code:"fruits = ('apple','mango','kiwi')\nfruits.index('kiwi')  # 2" },
+      { a:'index', code:"t = (7, 8, 9)\nt.index(7)      # 0" },
+      { a:'index', code:"t = ('x','y','x')\nt.index('x')    # 0 (first match)" },
+
+      { a:'len', code:"t = (1, 2, 3)\nlen(t)          # 3" },
+      { a:'len', code:"t = ()\nlen(t)          # 0" },
+      { a:'len', code:"t = ('a',)\nlen(t)          # 1" },
+      { a:'len', code:"t = (1,2,3,4,5)\nlen(t)          # 5" },
+
+      { a:'concat', code:"(1, 2) + (3, 4)\n# (1, 2, 3, 4)" },
+      { a:'concat', code:"('a',) + ('b','c')\n# ('a', 'b', 'c')" },
+      { a:'concat', code:"(1,) + (2,) + (3,)\n# (1, 2, 3)" },
+      { a:'concat', code:"() + (1, 2)\n# (1, 2)" },
+
+      { a:'repeat', code:"(1, 2) * 3\n# (1, 2, 1, 2, 1, 2)" },
+      { a:'repeat', code:"('x',) * 4\n# ('x','x','x','x')" },
+      { a:'repeat', code:"(0,) * 5\n# (0, 0, 0, 0, 0)" },
+      { a:'repeat', code:"2 * (1, 2)\n# (1, 2, 1, 2)" },
+    ]
+  },
+  properties: {
+    zones: [
+      { id:'ordered',   label:'Ordered',      syntax:'t[index]',     desc:'Items keep the order they were inserted in.', color:'teal' },
+      { id:'immutable', label:'Immutable',    syntax:'t[0] = x  ✗',  desc:'Cannot be changed once created.', color:'orange' },
+      { id:'dup',       label:'Allows Duplicates', syntax:'(x, x, x)', desc:'The same value can appear more than once.', color:'gold' },
+      { id:'hetero',    label:'Heterogeneous', syntax:'(1,\'a\',True)', desc:'Can store mixed data types together.', color:'coral' },
+      { id:'slice',     label:'Indexable / Sliceable', syntax:'t[a:b]', desc:'Access single items or ranges by position.', color:'purple' },
+    ],
+    cards: [
+      { a:'ordered', code:"t = ('a','b','c')\nt[0]            # 'a'" },
+      { a:'ordered', code:"days = ('Mon','Tue','Wed')\ndays[2]         # 'Wed'" },
+      { a:'ordered', code:"t = (10, 20, 30)\nt[-1]           # 30" },
+      { a:'ordered', code:"t = ('first','second')\nt[0] == 'first' # True" },
+
+      { a:'immutable', code:"t = (1, 2, 3)\nt[0] = 99\n# TypeError!" },
+      { a:'immutable', code:"t = (1, 2)\nt.append(3)\n# AttributeError!" },
+      { a:'immutable', code:"point = (4, 5)\ndel point[0]\n# TypeError!" },
+      { a:'immutable', code:"t = (1,2,3)\nnew_t = (0,) + t[1:]\n# must build a NEW tuple" },
+
+      { a:'dup', code:"t = (1, 1, 2, 2, 3)\n# repeats are fine" },
+      { a:'dup', code:"colors = ('red','red','blue')\n# 'red' appears twice" },
+      { a:'dup', code:"t = ('a','a','a')\n# all identical values" },
+      { a:'dup', code:"scores = (90, 85, 90, 90)\n# 90 repeats 3 times" },
+
+      { a:'hetero', code:"t = (1, 'two', 3.0, True)\n# int, str, float, bool" },
+      { a:'hetero', code:"person = ('Ravi', 25, 'Bhopal')\n# str, int, str" },
+      { a:'hetero', code:"t = (3.14, 'pi', [1,2])\n# float, str, list" },
+      { a:'hetero', code:"record = (101, 'Active', True)\n# int, str, bool" },
+
+      { a:'slice', code:"t = (10,20,30,40)\nt[1:3]          # (20, 30)" },
+      { a:'slice', code:"t = (1,2,3,4,5)\nt[::2]          # (1, 3, 5)" },
+      { a:'slice', code:"t = ('a','b','c')\nt[-2]           # 'b'" },
+      { a:'slice', code:"t = (1,2,3,4)\nt[:2]           # (1, 2)" },
+    ]
+  }
+};
+
+let selectedCard = null;
+const state = {}; // stage -> { matched, misses, total }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildStage(stageKey){
+  const cfg = DATA[stageKey];
+  state[stageKey] = { matched:0, misses:0, total: cfg.cards.length };
+
+  const zonesEl = document.getElementById('zones' + cap(stageKey));
+  zonesEl.innerHTML = '';
+  cfg.zones.forEach(z => {
+    const hatch = document.createElement('div');
+    hatch.className = 'hatch c-' + z.color;
+    hatch.dataset.id = z.id;
+    hatch.innerHTML = `
+      <div class="ring">${escapeHtml(z.label.replace(/[()]/g,'').slice(0,2))}</div>
+      <div class="label">${z.label}</div>
+      <div class="syntax">${escapeHtml(z.syntax)}</div>
+      <div class="desc">${z.desc}</div>
+      <div class="docked" data-docked></div>
+      <div class="fill" data-fill>0 / 4 docked</div>
+    `;
+    hatch.addEventListener('dragover', e => { e.preventDefault(); hatch.classList.add('hover'); });
+    hatch.addEventListener('dragleave', () => hatch.classList.remove('hover'));
+    hatch.addEventListener('drop', e => {
+      e.preventDefault();
+      hatch.classList.remove('hover');
+      const cardId = e.dataTransfer.getData('text/plain');
+      attemptDock(stageKey, cardId, z.id, hatch);
+    });
+    hatch.addEventListener('click', () => {
+      if(selectedCard && selectedCard.dataset.stage === stageKey){
+        attemptDock(stageKey, selectedCard.dataset.id, z.id, hatch);
+      }
+    });
+    zonesEl.appendChild(hatch);
+  });
+
+  const poolEl = document.getElementById('pool' + cap(stageKey));
+  poolEl.innerHTML = '';
+  const shuffled = shuffle(cfg.cards.map((c,i)=>({...c, id: stageKey+'_'+i})));
+  shuffled.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'capsule';
+    card.draggable = true;
+    card.dataset.id = c.id;
+    card.dataset.answer = c.a;
+    card.dataset.stage = stageKey;
+    card.textContent = c.code;
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', c.id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('click', () => {
+      if(card.classList.contains('gone')) return;
+      if(selectedCard === card){
+        card.classList.remove('selected');
+        selectedCard = null;
+        return;
+      }
+      if(selectedCard) selectedCard.classList.remove('selected');
+      selectedCard = card;
+      card.classList.add('selected');
+    });
+    poolEl.appendChild(card);
+  });
+
+  updateStats(stageKey);
+  document.getElementById('banner' + cap(stageKey)).classList.remove('show');
+  document.getElementById('prog' + cap(stageKey)).style.width = '0%';
+}
+
+function attemptDock(stageKey, cardId, hatchId, hatchEl){
+  const poolEl = document.getElementById('pool' + cap(stageKey));
+  const card = poolEl.querySelector(`[data-id="${cardId}"]`);
+  if(!card || card.classList.contains('gone')) return;
+
+  if(card.dataset.answer === hatchId){
+    // correct dock
+    card.classList.remove('selected','dragging');
+    card.classList.add('gone');
+    if(selectedCard === card) selectedCard = null;
+
+    const dockedWrap = hatchEl.querySelector('[data-docked]');
+    const mini = document.createElement('div');
+    mini.className = 'docked-card';
+    mini.textContent = card.textContent;
+    dockedWrap.appendChild(mini);
+
+    const count = dockedWrap.children.length;
+    hatchEl.querySelector('[data-fill]').textContent = count + ' / 4 docked';
+    if(count >= 4) hatchEl.classList.add('filled');
+
+    state[stageKey].matched++;
+    updateStats(stageKey);
+    checkComplete(stageKey);
+  } else {
+    // wrong
+    hatchEl.classList.add('wrong-flash');
+    card.classList.add('shake');
+    setTimeout(()=> hatchEl.classList.remove('wrong-flash'), 400);
+    setTimeout(()=> card.classList.remove('shake'), 400);
+    state[stageKey].misses++;
+    updateStats(stageKey);
+  }
+}
+
+function updateStats(stageKey){
+  const s = state[stageKey];
+  document.getElementById('statMatched').textContent = s.matched;
+  document.getElementById('statTotal').textContent = s.total;
+  document.getElementById('statMisses').textContent = s.misses;
+  document.getElementById('poolCount' + cap(stageKey)).textContent = (s.total - s.matched) + ' remaining';
+  document.getElementById('prog' + cap(stageKey)).style.width = Math.round((s.matched/s.total)*100) + '%';
+}
+
+function checkComplete(stageKey){
+  const s = state[stageKey];
+  if(s.matched >= s.total){
+    document.getElementById('banner' + cap(stageKey)).classList.add('show');
+  }
+}
+
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function escapeHtml(s){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const key = btn.dataset.stage;
+    document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));
+    document.getElementById('stage'+cap(key)).classList.add('active');
+    if(selectedCard){ selectedCard.classList.remove('selected'); selectedCard=null; }
+    updateStats(key);
+  });
+});
+
+document.querySelectorAll('[data-restart]').forEach(btn=>{
+  btn.addEventListener('click', ()=> buildStage(btn.dataset.restart));
+});
+
+buildStage('methods');
+buildStage('properties');
+// initialize readout to methods stage totals
+updateStats('methods');
+</script>
+</body>
+</html>
