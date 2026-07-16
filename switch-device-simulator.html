@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSim — Networking Device Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0A0F1C;
+    --bg-panel: #131B2E;
+    --bg-panel-alt: #0E1626;
+    --border: #3A4C68;
+    --border-soft: #253347;
+    --text: #F7FAFF;
+    --text-muted: #C3D0E6;
+    --text-dim: #8A9CBB;
+
+    --hub-color: #FFB525;
+    --switch-color: #2FE8C9;
+    --modem-color: #B39BFF;
+
+    --accent-flood: #FFB525;
+    --accent-unicast: #2FE8C9;
+    --accent-collision: #FF6B7F;
+    --accent-accept: #4ADE80;
+    --accent-download: #B39BFF;
+
+    --pc-fill: #FFFFFF;
+    --pc-fill-hover: #FFFFFF;
+    --pc-text: #0A0F1C;
+    --pc-mac-text: #3D4C68;
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(71,215,192,0.06), transparent 45%),
+      radial-gradient(ellipse at 85% 100%, rgba(139,124,246,0.06), transparent 45%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+  }
+
+  a{ color:inherit; }
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,18,32,0.9);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+    padding:16px 28px;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:14px;
+  }
+  .brand{ display:flex; flex-direction:column; gap:2px; }
+  .brand .eyebrow{
+    font-family:var(--font-mono); font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .brand h1{
+    font-family:var(--font-display); font-weight:700; font-size:24px; margin:0;
+    letter-spacing:.02em;
+  }
+  .brand h1 span{ color:var(--switch-color); }
+
+  .tabs{ display:flex; gap:8px; background:var(--bg-panel); border:1px solid var(--border-soft); border-radius:12px; padding:4px; }
+  .tab-btn{
+    display:flex; align-items:center; gap:8px;
+    font-family:var(--font-mono); font-size:14.5px; letter-spacing:.03em;
+    background:transparent; border:none; color:var(--text-muted);
+    padding:9px 16px; border-radius:9px; cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .tab-btn .led{ width:7px; height:7px; border-radius:50%; background:var(--text-dim); transition:.15s; }
+  .tab-btn:hover{ color:var(--text); }
+  .tab-btn.active{ background:var(--bg-panel-alt); color:var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+  .tab-btn[data-target="hub-panel"].active .led{ background:var(--hub-color); box-shadow:0 0 8px var(--hub-color); }
+  .tab-btn[data-target="switch-panel"].active .led{ background:var(--switch-color); box-shadow:0 0 8px var(--switch-color); }
+  .tab-btn[data-target="modem-panel"].active .led{ background:var(--modem-color); box-shadow:0 0 8px var(--modem-color); }
+
+  /* ---------- Layout ---------- */
+  main{ max-width:1320px; margin:0 auto; padding:28px; }
+  .device-panel{ display:none; grid-template-columns: 1.65fr 1fr; gap:22px; }
+  .device-panel.active{ display:grid; animation:fadeIn .35s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .col{ display:flex; flex-direction:column; gap:18px; min-width:0; }
+
+  .card{
+    background:var(--bg-panel);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:20px;
+  }
+  .card h2{
+    font-family:var(--font-display); font-size:17px; margin:0 0 4px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card .card-sub{ font-family:var(--font-mono); font-size:13px; color:var(--text-dim); margin-bottom:14px; }
+
+  /* topology */
+  .topo-wrap svg{ width:100%; height:auto; display:block; }
+  .link-line{ stroke:var(--border); stroke-width:3px; transition:stroke .18s, filter .18s; }
+  .link-line.active-flood{ stroke:var(--accent-flood); filter:drop-shadow(0 0 6px var(--accent-flood)); }
+  .link-line.active-unicast{ stroke:var(--accent-unicast); filter:drop-shadow(0 0 6px var(--accent-unicast)); }
+  .link-line.active-collision{ stroke:var(--accent-collision); filter:drop-shadow(0 0 6px var(--accent-collision)); }
+
+  .port-dot{ fill:var(--bg-panel-alt); stroke:var(--border); stroke-width:2px; transition:.18s; }
+  .port-dot.active-flood{ fill:var(--accent-flood); filter:drop-shadow(0 0 5px var(--accent-flood)); }
+  .port-dot.active-unicast{ fill:var(--accent-unicast); filter:drop-shadow(0 0 5px var(--accent-unicast)); }
+  .port-dot.active-collision{ fill:var(--accent-collision); filter:drop-shadow(0 0 5px var(--accent-collision)); }
+
+  .pc-rect{ fill:var(--pc-fill); stroke:#B9C7E0; stroke-width:2px; transition:stroke .2s, filter .2s; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
+  .pc-rect.accept{ stroke:var(--accent-accept); stroke-width:3px; filter:drop-shadow(0 0 10px var(--accent-accept)); }
+  .pc-rect.drop{ stroke:var(--text-dim); stroke-dasharray:3 3; }
+  .pc-label{ font-family:var(--font-mono); font-size:15px; font-weight:600; fill:var(--pc-text); }
+  .pc-mac{ font-family:var(--font-mono); font-size:12.5px; font-weight:500; fill:var(--pc-mac-text); }
+
+  .device-box{ fill:var(--bg-panel-alt); stroke-width:2.5px; transition:filter .25s; }
+  .device-box-hub{ stroke:var(--hub-color); }
+  .device-box-switch{ stroke:var(--switch-color); }
+  .device-box.flash-flood{ filter:drop-shadow(0 0 16px var(--accent-flood)); }
+  .device-box.flash-collision{ filter:drop-shadow(0 0 18px var(--accent-collision)); }
+  .device-label{ font-family:var(--font-display); font-size:21px; font-weight:700; fill:var(--text); }
+  .device-sublabel{ font-family:var(--font-mono); font-size:12.5px; fill:var(--text-muted); }
+
+  .packet{ pointer-events:none; }
+
+  .status-banner{
+    display:flex; align-items:center; gap:10px;
+    margin-top:14px; padding:11px 14px;
+    background:var(--bg-panel-alt); border:1px solid var(--border-soft); border-radius:9px;
+    font-family:var(--font-mono); font-size:14.5px; color:var(--text-muted);
+    min-height:20px;
+  }
+  .status-banner .pulse-dot{ width:8px; height:8px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:background .2s, box-shadow .2s; }
+  .status-banner .pulse-dot.live{ background:var(--switch-color); box-shadow:0 0 8px var(--switch-color); animation:pulseBeat 1s ease-in-out infinite; }
+  @keyframes pulseBeat{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.35); } }
+  .status-banner .status-text{ color:var(--text); }
+
+  .packet-label{ font-family:var(--font-mono); font-size:13px; font-weight:600; fill:var(--text); pointer-events:none; text-anchor:middle; paint-order:stroke; stroke:var(--bg); stroke-width:3px; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-family:var(--font-mono); font-size:13px; color:var(--text-muted); }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+
+  /* controls */
+  .controls{ display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin-top:16px; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-family:var(--font-mono); font-size:13px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; }
+  select{
+    background:var(--bg-panel-alt); color:var(--text); border:1px solid var(--border);
+    border-radius:8px; padding:9px 10px; font-family:var(--font-mono); font-size:14.5px; min-width:110px;
+  }
+  select:focus, button:focus-visible{ outline:2px solid var(--switch-color); outline-offset:2px; }
+
+  button{
+    font-family:var(--font-mono); font-size:14.5px; letter-spacing:.02em;
+    padding:10px 16px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-panel-alt); color:var(--text); cursor:pointer;
+    transition:background .15s, border-color .15s, transform .1s;
+  }
+  button:hover{ border-color:var(--text-muted); }
+  button:active{ transform:scale(.97); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  button.primary{ background:var(--switch-color); color:#04211C; border-color:var(--switch-color); font-weight:600; }
+  button.primary:hover{ filter:brightness(1.08); }
+  button.warn{ background:var(--accent-collision); color:#2B0709; border-color:var(--accent-collision); font-weight:600; }
+  button.ghost{ background:transparent; border-color:var(--border); color:var(--text-muted); }
+  button.ghost:hover{ color:var(--text); }
+
+  .hub-theme button.primary{ background:var(--hub-color); color:#2B1A00; border-color:var(--hub-color); }
+  .modem-theme button.primary{ background:var(--modem-color); color:#170F35; border-color:var(--modem-color); }
+  .modem-theme button.secondary{ background:var(--accent-download); color:#170F35; border-color:var(--accent-download); font-weight:600; }
+
+  /* stats */
+  .stat-row{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .stat{ flex:1; min-width:100px; background:var(--bg-panel-alt); border:1px solid var(--border-soft); border-radius:9px; padding:10px 12px; }
+  .stat .num{ font-family:var(--font-display); font-size:22px; font-weight:700; }
+  .stat .cap{ font-family:var(--font-mono); font-size:12.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+
+  /* mac table */
+  table{ width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:14px; }
+  th{ text-align:left; color:var(--text-muted); font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.05em; padding-bottom:8px; border-bottom:1px solid var(--border-soft); }
+  td{ padding:9px 4px; border-bottom:1px solid var(--border-soft); color:var(--text-muted); }
+  td.learned{ color:var(--switch-color); }
+  .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:6px; background:var(--text-dim); }
+  .dot.on{ background:var(--accent-accept); box-shadow:0 0 6px var(--accent-accept); }
+
+  /* log */
+  .log-box{ max-height:220px; overflow-y:auto; list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  .log-box li{ display:flex; align-items:flex-start; gap:8px; font-size:14px; line-height:1.4; }
+  .log-time{ font-family:var(--font-mono); font-size:12.5px; color:var(--text-dim); flex-shrink:0; padding-top:2px; }
+  .log-dot{ width:6px; height:6px; border-radius:50%; margin-top:5px; flex-shrink:0; background:var(--text-dim); }
+  .log-msg{ color:var(--text-muted); font-family:var(--font-body); }
+  li.log-flood .log-dot{ background:var(--accent-flood); }
+  li.log-unicast .log-dot{ background:var(--accent-unicast); }
+  li.log-learn .log-dot{ background:var(--switch-color); }
+  li.log-accept .log-dot{ background:var(--accent-accept); }
+  li.log-drop .log-dot{ background:var(--text-dim); }
+  li.log-collision .log-dot{ background:var(--accent-collision); }
+  li.log-collision .log-msg{ color:var(--accent-collision); }
+  li.log-warn .log-dot{ background:var(--accent-collision); }
+  li.log-mod .log-dot, li.log-demod .log-dot{ background:var(--modem-color); }
+  li.log-digital .log-dot{ background:var(--text-muted); }
+
+  /* info */
+  .facts{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .fact{ font-family:var(--font-mono); font-size:13px; color:var(--text-muted); background:var(--bg-panel-alt); border:1px solid var(--border-soft); padding:6px 10px; border-radius:20px; }
+  .fact b{ color:var(--text); font-weight:600; }
+  .info-text p{ font-size:15px; line-height:1.65; color:var(--text-muted); margin:0 0 10px; }
+  .info-text p:last-child{ margin-bottom:0; }
+
+  /* modem specific */
+  .wave-path{ stroke-width:2.5px; fill:none; stroke:var(--border-soft); transition:stroke .2s; }
+  .wave-path.flowing{ stroke-dasharray:8 6; filter:drop-shadow(0 0 5px currentColor); }
+  .wave-path.flowing.dir-up{ stroke:var(--accent-unicast); color:var(--accent-unicast); animation:dashfwd .55s linear infinite; }
+  .wave-path.flowing.dir-down{ stroke:var(--accent-download); color:var(--accent-download); animation:dashrev .55s linear infinite; }
+  @keyframes dashfwd{ to{ stroke-dashoffset:-28; } }
+  @keyframes dashrev{ to{ stroke-dashoffset:28; } }
+
+  .mod-badge{ font-family:var(--font-mono); font-size:12.5px; font-weight:600; fill:var(--text-muted); transition:fill .2s, filter .2s; }
+  .mod-badge.active{ fill:var(--modem-color); filter:drop-shadow(0 0 6px var(--modem-color)); }
+
+  .wave-title{ font-family:var(--font-mono); font-size:13.5px; font-weight:700; letter-spacing:.04em; fill:var(--text); }
+  .wave-title-analog{ fill:var(--modem-color); }
+  .wave-caption{ font-family:var(--font-mono); font-size:11.5px; fill:var(--text-muted); transition:fill .2s; }
+  .wave-caption.active{ fill:var(--modem-color); }
+
+  .bits-text{ font-family:var(--font-mono); font-size:15px; font-weight:600; fill:var(--text); }
+  .bits-text.pulse{ fill:var(--switch-color); }
+  .bits-text-pc{ fill:var(--pc-mac-text); }
+  .bits-text-pc.pulse{ fill:var(--modem-color); }
+
+  footer{ text-align:center; padding:30px 20px 50px; font-family:var(--font-mono); font-size:13px; color:var(--text-dim); }
+
+  @media (max-width:960px){
+    .device-panel{ grid-template-columns:1fr; }
+    header{ padding:14px 16px; }
+    main{ padding:16px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="eyebrow">Interactive networking lab</span>
+    <h1>NET<span>SIM</span></h1>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Choose a device">
+    <button class="tab-btn active" data-target="hub-panel"><span class="led"></span>Hub</button>
+    <button class="tab-btn" data-target="switch-panel"><span class="led"></span>Switch</button>
+    <button class="tab-btn" data-target="modem-panel"><span class="led"></span>Modem</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ============ HUB PANEL ============ -->
+  <section id="hub-panel" class="device-panel active hub-theme">
+    <div class="col">
+      <div class="card topo-wrap">
+        <h2>Hub topology</h2>
+        <div class="card-sub">4 PCs share one physical segment</div>
+        <svg id="hub-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="status-banner" id="hub-status"><span class="pulse-dot"></span><span class="status-text">Idle — waiting for a frame</span></div>
+        <div class="legend">
+          <span><i style="background:var(--accent-flood)"></i>Flooded to every port</span>
+          <span><i style="background:var(--accent-accept)"></i>Accepted (correct address)</span>
+          <span><i style="background:var(--text-dim)"></i>Discarded (wrong address)</span>
+          <span><i style="background:var(--accent-collision)"></i>Collision</span>
+        </div>
+        <div class="controls">
+          <div class="field">
+            <label for="hub-src">From</label>
+            <select id="hub-src"></select>
+          </div>
+          <div class="field">
+            <label for="hub-dest">To</label>
+            <select id="hub-dest"></select>
+          </div>
+          <button class="primary" id="hub-send">Send frame</button>
+          <button class="warn" id="hub-collide">Simulate collision</button>
+          <button class="ghost" id="hub-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <h2>How a hub works</h2>
+        <div class="facts">
+          <span class="fact">Layer <b>1</b> · Physical</span>
+          <span class="fact">Intelligence: <b>none</b></span>
+          <span class="fact">Collision domain: <b>shared</b></span>
+        </div>
+        <div class="info-text">
+          <p>A hub is an electrical repeater. It has no idea what a MAC address is — whatever bits arrive on one port are simply copied out to <b>every other port</b>, at the same time.</p>
+          <p>Because every device shares the same electrical segment, only one PC can transmit at a moment without corrupting another signal. If two send together, their signals collide and both frames are destroyed — the reason hubs were retired in favor of switches.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Activity</h2>
+        <div class="stat-row">
+          <div class="stat"><div class="num" id="hub-stat-flood">0</div><div class="cap">Frames flooded</div></div>
+          <div class="stat"><div class="num" id="hub-stat-collision">0</div><div class="cap">Collisions</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Console</h2>
+        <ul class="log-box" id="hub-log"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SWITCH PANEL ============ -->
+  <section id="switch-panel" class="device-panel">
+    <div class="col">
+      <div class="card topo-wrap">
+        <h2>Switch topology</h2>
+        <div class="card-sub">Each port is its own collision domain</div>
+        <svg id="switch-svg" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="status-banner" id="switch-status"><span class="pulse-dot"></span><span class="status-text">Idle — MAC table is empty</span></div>
+        <div class="legend">
+          <span><i style="background:var(--accent-flood)"></i>Flooded (destination unknown)</span>
+          <span><i style="background:var(--accent-unicast)"></i>Unicast (destination learned)</span>
+          <span><i style="background:var(--accent-accept)"></i>Accepted</span>
+          <span><i style="background:var(--text-dim)"></i>Discarded</span>
+        </div>
+        <div class="controls">
+          <div class="field">
+            <label for="switch-src">From</label>
+            <select id="switch-src"></select>
+          </div>
+          <div class="field">
+            <label for="switch-dest">To</label>
+            <select id="switch-dest"></select>
+          </div>
+          <button class="primary" id="switch-send">Send frame</button>
+          <button class="ghost" id="switch-reset">Reset / clear table</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <h2>How a switch works</h2>
+        <div class="facts">
+          <span class="fact">Layer <b>2</b> · Data Link</span>
+          <span class="fact">Intelligence: <b>MAC learning</b></span>
+          <span class="fact">Collision domain: <b>per port</b></span>
+        </div>
+        <div class="info-text">
+          <p>A switch reads the <b>source MAC address</b> of every incoming frame and records which port it arrived on — that's the MAC address table (also called a CAM table) shown below.</p>
+          <p>When it needs to forward a frame, it checks the table for the destination's MAC. Unknown yet? It floods, just like a hub. Already learned? It sends the frame straight to that one port — no one else even sees it.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>MAC address table</h2>
+        <table>
+          <thead><tr><th>Port</th><th>PC</th><th>MAC address</th></tr></thead>
+          <tbody id="switch-mac-body"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h2>Activity</h2>
+        <div class="stat-row">
+          <div class="stat"><div class="num" id="switch-stat-flood">0</div><div class="cap">Flooded</div></div>
+          <div class="stat"><div class="num" id="switch-stat-unicast">0</div><div class="cap">Unicast</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Console</h2>
+        <ul class="log-box" id="switch-log"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MODEM PANEL ============ -->
+  <section id="modem-panel" class="device-panel modem-theme">
+    <div class="col">
+      <div class="card topo-wrap">
+        <h2>Modem topology</h2>
+        <div class="card-sub">PC 1 ⇄ Modem 1 ⇄ ISP ⇄ Modem 2 ⇄ PC 2 — the full path data takes between two computers</div>
+        <svg id="modem-svg" viewBox="0 0 920 380" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="status-banner" id="modem-status"><span class="pulse-dot"></span><span class="status-text">Idle — send data from either PC</span></div>
+        <div class="legend">
+          <span><i style="background:var(--accent-unicast)"></i>PC 1 → PC 2</span>
+          <span><i style="background:var(--accent-download)"></i>PC 2 → PC 1</span>
+        </div>
+        <div class="controls">
+          <button class="primary" id="modem-send-12">Send PC 1 → PC 2</button>
+          <button class="secondary" id="modem-send-21">Send PC 2 → PC 1</button>
+          <button class="ghost" id="modem-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <h2>How a modem works</h2>
+        <div class="facts">
+          <span class="fact">Layer <b>1</b> · Physical</span>
+          <span class="fact">Full name: <b>MOdulator‑DEModulator</b></span>
+          <span class="fact">Job: <b>signal conversion</b></span>
+        </div>
+        <div class="info-text">
+          <p>Each PC only speaks in digital square waves — clean 0s and 1s. Telephone and cable lines were built to carry continuous analog waves, not sharp digital pulses, so a modem sits between every PC and that line.</p>
+          <p>When PC 1 sends data to PC 2, Modem 1 <b>modulates</b> PC 1's digital bits onto an analog carrier wave that travels to the <b>ISP</b>. The ISP receives and relays that signal onward to Modem 2, which <b>demodulates</b> it back into digital bits for PC 2. Sending the other way just reverses the roles — Modem 2 modulates, the ISP relays, and Modem 1 demodulates.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Console</h2>
+        <ul class="log-box" id="modem-log"></ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>NetSim — a visual sandbox for how Hubs, Switches and Modems move your data.</footer>
+
+<script>
+(function(){
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const COLORS = {
+    flood:'#F5A623', unicast:'#47D7C0', collision:'#F0596B', accept:'#34D399', download:'#8B7CF6'
+  };
+
+  function el(tag, attrs){
+    const e = document.createElementNS(NS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  function logTo(listEl, message, type){
+    const li = document.createElement('li');
+    li.className = 'log-' + (type||'info');
+    const time = document.createElement('span');
+    time.className = 'log-time';
+    time.textContent = new Date().toLocaleTimeString([], {hour12:false});
+    const dot = document.createElement('span');
+    dot.className = 'log-dot';
+    const msg = document.createElement('span');
+    msg.className = 'log-msg';
+    msg.textContent = message;
+    li.appendChild(time); li.appendChild(dot); li.appendChild(msg);
+    listEl.appendChild(li);
+    listEl.scrollTop = listEl.scrollHeight;
+    while(listEl.children.length > 60) listEl.removeChild(listEl.firstChild);
+  }
+
+  function setStatus(mode, text, live){
+    const banner = document.getElementById(mode+'-status');
+    if(!banner) return;
+    banner.querySelector('.status-text').textContent = text;
+    banner.querySelector('.pulse-dot').classList.toggle('live', !!live);
+  }
+
+  function tweenPoint(svg, x1,y1,x2,y2,duration,color,labelText){
+    return new Promise(resolve=>{
+      const packet = el('circle',{cx:x1,cy:y1,r:9,fill:color,class:'packet','fill-opacity':'0.95'});
+      packet.style.filter = 'drop-shadow(0 0 6px ' + color + ')';
+      svg.appendChild(packet);
+      let label = null;
+      if(labelText){
+        label = el('text',{x:x1,y:y1-14,class:'packet-label'});
+        label.textContent = labelText;
+        svg.appendChild(label);
+      }
+      const start = performance.now();
+      function frame(now){
+        const t = Math.min(1, (now-start)/duration);
+        const e = 1 - Math.pow(1-t, 2);
+        const cx = x1 + (x2-x1)*e, cy = y1 + (y2-y1)*e;
+        packet.setAttribute('cx', cx);
+        packet.setAttribute('cy', cy);
+        if(label){ label.setAttribute('x', cx); label.setAttribute('y', cy-14); }
+        if(t < 1){ requestAnimationFrame(frame); }
+        else { if(label) label.remove(); resolve(packet); }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  /* ===================== LAN topology (shared by Hub + Switch) ===================== */
+
+  const PCS = [
+    {id:'A', label:'PC · A', mac:'A0:1B:2C:00:00:01', angle:'top'},
+    {id:'B', label:'PC · B', mac:'A0:1B:2C:00:00:02', angle:'right'},
+    {id:'C', label:'PC · C', mac:'A0:1B:2C:00:00:03', angle:'bottom'},
+    {id:'D', label:'PC · D', mac:'A0:1B:2C:00:00:04', angle:'left'}
+  ];
+
+  const POS = {
+    top:    {cx:400, cy:95,  portx:400, porty:245, linex1:400, liney1:127, linex2:400, liney2:245},
+    right:  {cx:690, cy:300, portx:485, porty:300, linex1:630, liney1:300, linex2:485, liney2:300},
+    bottom: {cx:400, cy:505, portx:400, porty:355, linex1:400, liney1:473, linex2:400, liney2:355},
+    left:   {cx:110, cy:300, portx:315, porty:300, linex1:170, liney1:300, linex2:315, liney2:300}
+  };
+
+  function buildLAN(svg, mode){
+    const box = el('rect',{x:315,y:245,width:170,height:110,rx:14,class:'device-box device-box-'+mode, id:mode+'-box'});
+    svg.appendChild(box);
+    const label = el('text',{x:400,y:296,class:'device-label','text-anchor':'middle'});
+    label.textContent = mode === 'hub' ? 'HUB' : 'SWITCH';
+    svg.appendChild(label);
+    const sub = el('text',{x:400,y:313,class:'device-sublabel','text-anchor':'middle'});
+    sub.textContent = mode === 'hub' ? 'repeats to all ports' : 'learns & forwards';
+    svg.appendChild(sub);
+
+    const portPoints = {}, lineStarts = {}, lineEls = {}, portEls = {}, pcEls = {};
+
+    PCS.forEach(pc=>{
+      const p = POS[pc.angle];
+      const line = el('line',{x1:p.linex1,y1:p.liney1,x2:p.linex2,y2:p.liney2,class:'link-line',id:mode+'-line-'+pc.id});
+      svg.appendChild(line);
+      const port = el('circle',{cx:p.portx,cy:p.porty,r:7,class:'port-dot',id:mode+'-port-'+pc.id});
+      svg.appendChild(port);
+      const rect = el('rect',{x:p.cx-60,y:p.cy-32,width:120,height:64,rx:10,class:'pc-rect',id:mode+'-pc-'+pc.id});
+      svg.appendChild(rect);
+      const lbl = el('text',{x:p.cx,y:p.cy-6,class:'pc-label','text-anchor':'middle'});
+      lbl.textContent = pc.label;
+      svg.appendChild(lbl);
+      const mac = el('text',{x:p.cx,y:p.cy+16,class:'pc-mac','text-anchor':'middle'});
+      mac.textContent = pc.mac;
+      svg.appendChild(mac);
+
+      portPoints[pc.id] = {x:p.portx, y:p.porty};
+      lineStarts[pc.id] = {x:p.linex1, y:p.liney1};
+      lineEls[pc.id] = line; portEls[pc.id] = port; pcEls[pc.id] = rect;
+    });
+
+    return {portPoints, lineStarts, lineEls, portEls, pcEls, boxEl: box};
+  }
+
+  class LANSim{
+    constructor(mode){
+      this.mode = mode;
+      this.svg = document.getElementById(mode+'-svg');
+      this.logEl = document.getElementById(mode+'-log');
+      this.srcSel = document.getElementById(mode+'-src');
+      this.destSel = document.getElementById(mode+'-dest');
+      this.topo = buildLAN(this.svg, mode);
+      this.macTable = {}; // pcId -> true once learned
+      this.counts = {flood:0, unicast:0, collision:0};
+      this.busy = false;
+      this.populateSelects();
+      if(mode === 'switch'){ this.renderMacTable(); }
+      this.updateStats();
+    }
+    portNum(id){ return PCS.findIndex(p=>p.id===id) + 1; }
+    pc(id){ return PCS.find(p=>p.id===id); }
+    populateSelects(){
+      [this.srcSel, this.destSel].forEach((sel, idx)=>{
+        sel.innerHTML = '';
+        PCS.forEach(pc=>{
+          const opt = document.createElement('option');
+          opt.value = pc.id; opt.textContent = pc.label;
+          sel.appendChild(opt);
+        });
+        sel.selectedIndex = idx === 0 ? 0 : 1;
+      });
+    }
+    log(msg, type){ logTo(this.logEl, msg, type); }
+    updateStats(){
+      const f = document.getElementById(this.mode+'-stat-flood');
+      if(f) f.textContent = this.counts.flood;
+      if(this.mode === 'hub'){
+        const c = document.getElementById('hub-stat-collision');
+        if(c) c.textContent = this.counts.collision;
+      } else {
+        const u = document.getElementById('switch-stat-unicast');
+        if(u) u.textContent = this.counts.unicast;
+      }
+    }
+    setLine(id, cls){
+      const line = this.topo.lineEls[id], port = this.topo.portEls[id];
+      ['active-flood','active-unicast','active-collision'].forEach(c=>{ line.classList.remove(c); port.classList.remove(c); });
+      if(cls){ line.classList.add(cls); port.classList.add(cls); }
+    }
+    flashPC(id, kind){
+      const rect = this.topo.pcEls[id];
+      rect.classList.remove('accept','drop');
+      rect.classList.add(kind);
+      setTimeout(()=>rect.classList.remove(kind), 900);
+    }
+    flashBox(kind){
+      const box = this.topo.boxEl;
+      const cls = kind === 'collision' ? 'flash-collision' : 'flash-flood';
+      box.classList.add(cls);
+      setTimeout(()=>box.classList.remove(cls), 420);
+    }
+    renderMacTable(){
+      const body = document.getElementById('switch-mac-body');
+      body.innerHTML = '';
+      PCS.forEach(pc=>{
+        const tr = document.createElement('tr');
+        const learned = !!this.macTable[pc.id];
+        tr.innerHTML =
+          '<td><span class="dot ' + (learned?'on':'') + '"></span>Port ' + this.portNum(pc.id) + '</td>' +
+          '<td>' + pc.label + '</td>' +
+          '<td class="' + (learned?'learned':'') + '">' + (learned ? pc.mac : '— unlearned —') + '</td>';
+        body.appendChild(tr);
+      });
+    }
+    async deliver(id, isIntended, color){
+      const from = this.topo.portPoints[id], to = this.topo.lineStarts[id];
+      const cls = color === COLORS.unicast ? 'active-unicast' : 'active-flood';
+      this.setLine(id, cls);
+      const tag = color === COLORS.unicast ? 'UNICAST' : 'FLOOD';
+      await wait(400);
+      const packet = await tweenPoint(this.svg, from.x, from.y, to.x, to.y, 950, color, tag);
+      packet.remove();
+      if(isIntended){
+        this.flashPC(id, 'accept');
+        this.log(this.pc(id).label + ' accepts the frame — address matches.', 'accept');
+        setStatus(this.mode, this.pc(id).label + ' accepted the frame ✓', true);
+      } else {
+        this.flashPC(id, 'drop');
+        this.log(this.pc(id).label + ' discards the frame — not addressed to it.', 'drop');
+        setStatus(this.mode, this.pc(id).label + ' saw it, but discarded it (wrong address)', true);
+      }
+      await wait(500);
+      this.setLine(id, null);
+    }
+    async floodAll(srcId, destId){
+      const others = PCS.filter(p=>p.id !== srcId);
+      await Promise.all(others.map(pc=>this.deliver(pc.id, pc.id === destId, COLORS.flood)));
+    }
+    async sendFrame(){
+      if(this.busy) return;
+      const srcId = this.srcSel.value, destId = this.destSel.value;
+      if(srcId === destId){ this.log('Source and destination must be different PCs.', 'warn'); return; }
+      this.busy = true;
+      const src = this.pc(srcId), dest = this.pc(destId);
+      this.log(src.label + ' transmits a frame addressed to ' + dest.mac, 'info');
+      setStatus(this.mode, src.label + ' is transmitting a frame to ' + dest.label + '…', true);
+      await wait(500);
+      this.setLine(srcId, this.mode==='switch' ? 'active-unicast' : 'active-flood');
+      const p1 = await tweenPoint(this.svg, this.topo.lineStarts[srcId].x, this.topo.lineStarts[srcId].y, this.topo.portPoints[srcId].x, this.topo.portPoints[srcId].y, 800, this.mode==='switch'?COLORS.unicast:COLORS.flood, 'FRAME');
+      p1.remove();
+      this.setLine(srcId, null);
+
+      if(this.mode === 'switch'){
+        const wasNew = !this.macTable[srcId];
+        this.macTable[srcId] = true;
+        if(wasNew){ this.log('Switch learns: ' + src.mac + ' lives on Port ' + this.portNum(srcId) + '.', 'learn'); this.renderMacTable(); }
+        if(this.macTable[destId]){
+          this.counts.unicast++; this.updateStats();
+          this.flashBox();
+          this.log('Destination already learned → unicast straight to Port ' + this.portNum(destId) + '.', 'unicast');
+          setStatus(this.mode, 'Destination known — sending straight to ' + dest.label + ' only', true);
+          await wait(600);
+          await this.deliver(destId, true, COLORS.unicast);
+        } else {
+          this.counts.flood++; this.updateStats();
+          this.flashBox();
+          this.log('Destination unknown → flooding to every other port.', 'flood');
+          setStatus(this.mode, 'Destination not yet learned — flooding to every port', true);
+          await wait(600);
+          await this.floodAll(srcId, destId);
+        }
+      } else {
+        this.counts.flood++; this.updateStats();
+        this.flashBox();
+        this.log('Hub blindly repeats the signal to every other port.', 'flood');
+        setStatus(this.mode, 'Hub is repeating the signal to every port — no filtering', true);
+        await wait(600);
+        await this.floodAll(srcId, destId);
+      }
+      setStatus(this.mode, 'Done. ' + (this.mode==='hub' ? 'Every PC saw that frame.' : 'Ready for the next frame.'), false);
+      this.busy = false;
+    }
+    async simulateCollision(){
+      if(this.busy || this.mode !== 'hub') return;
+      this.busy = true;
+      const ids = PCS.map(p=>p.id);
+      const a = ids[Math.floor(Math.random()*ids.length)];
+      let b; do{ b = ids[Math.floor(Math.random()*ids.length)]; } while(b === a);
+      const pa = this.pc(a), pb = this.pc(b);
+      this.log(pa.label + ' and ' + pb.label + ' both start transmitting at the same instant…', 'warn');
+      setStatus(this.mode, pa.label + ' and ' + pb.label + ' are transmitting at once…', true);
+      await wait(600);
+      this.setLine(a, 'active-collision'); this.setLine(b, 'active-collision');
+      await Promise.all([
+        tweenPoint(this.svg, this.topo.lineStarts[a].x, this.topo.lineStarts[a].y, this.topo.portPoints[a].x, this.topo.portPoints[a].y, 800, COLORS.collision, 'FRAME').then(p=>p.remove()),
+        tweenPoint(this.svg, this.topo.lineStarts[b].x, this.topo.lineStarts[b].y, this.topo.portPoints[b].x, this.topo.portPoints[b].y, 800, COLORS.collision, 'FRAME').then(p=>p.remove())
+      ]);
+      this.counts.collision++; this.updateStats();
+      this.flashBox('collision');
+      this.log('⚡ Collision! The two electrical signals interfere and both frames are corrupted.', 'collision');
+      this.log('Each NIC detects it (CSMA/CD), waits a random backoff, and retransmits.', 'collision');
+      setStatus(this.mode, '⚡ Collision — both frames destroyed, both PCs must retransmit', false);
+      await wait(700);
+      this.setLine(a, null); this.setLine(b, null);
+      this.busy = false;
+    }
+    reset(){
+      this.counts = {flood:0, unicast:0, collision:0};
+      this.macTable = {};
+      this.updateStats();
+      this.logEl.innerHTML = '';
+      if(this.mode === 'switch') this.renderMacTable();
+      this.log('Simulation reset.', 'info');
+      setStatus(this.mode, this.mode === 'switch' ? 'Idle — MAC table is empty' : 'Idle — waiting for a frame', false);
+    }
+  }
+
+  const hubSim = new LANSim('hub');
+  const switchSim = new LANSim('switch');
+
+  document.getElementById('hub-send').addEventListener('click', ()=>hubSim.sendFrame());
+  document.getElementById('hub-collide').addEventListener('click', ()=>hubSim.simulateCollision());
+  document.getElementById('hub-reset').addEventListener('click', ()=>hubSim.reset());
+
+  document.getElementById('switch-send').addEventListener('click', ()=>switchSim.sendFrame());
+  document.getElementById('switch-reset').addEventListener('click', ()=>switchSim.reset());
+
+  hubSim.log('Ready. Pick a source and destination, then send a frame.', 'info');
+  switchSim.log('Ready. The MAC table starts empty — watch it fill in as PCs talk.', 'info');
+
+  /* ===================== Modem ===================== */
+
+  function wavePath(x1, x2, y, amp, cycles, square){
+    const pts = [];
+    const steps = square ? cycles * 2 : cycles * 20;
+    if(square){
+      const segLen = (x2 - x1) / (cycles*2);
+      let cx = x1;
+      pts.push('M ' + cx + ' ' + (y+amp));
+      for(let i=0;i<cycles*2;i++){
+        const ny = (i % 2 === 0) ? (y-amp) : (y+amp);
+        pts.push('L ' + cx + ' ' + ny);
+        cx += segLen;
+        pts.push('L ' + cx + ' ' + ny);
+      }
+      return pts.join(' ');
+    } else {
+      pts.push('M ' + x1 + ' ' + y);
+      for(let i=1;i<=steps;i++){
+        const t = i/steps;
+        const x = x1 + (x2-x1)*t;
+        const yy = y + Math.sin(t * Math.PI * 2 * cycles) * amp;
+        pts.push('L ' + x.toFixed(1) + ' ' + yy.toFixed(1));
+      }
+      return pts.join(' ');
+    }
+  }
+
+  function buildModem(svg){
+    // ---- PC 1 ----
+    svg.appendChild(el('rect',{x:10,y:150,width:130,height:90,rx:12,class:'pc-rect'}));
+    const pc1Label = el('text',{x:75,y:182,class:'pc-label','text-anchor':'middle'});
+    pc1Label.textContent = 'PC · 1';
+    svg.appendChild(pc1Label);
+    const pc1Bits = el('text',{x:75,y:206,class:'bits-text bits-text-pc','text-anchor':'middle',id:'modem-pc1-bits'});
+    pc1Bits.textContent = '— — — — — —';
+    svg.appendChild(pc1Bits);
+    const pc1Caption = el('text',{x:75,y:270,class:'wave-caption','text-anchor':'middle'});
+    pc1Caption.textContent = 'sends & receives data';
+    svg.appendChild(pc1Caption);
+
+    // digital square-wave line PC1 -> Modem1
+    const digital1Title = el('text',{x:175,y:118,class:'wave-title','text-anchor':'middle'});
+    digital1Title.textContent = 'DIGITAL';
+    svg.appendChild(digital1Title);
+    const digital1Sub = el('text',{x:175,y:134,class:'wave-caption','text-anchor':'middle'});
+    digital1Sub.textContent = 'square wave';
+    svg.appendChild(digital1Sub);
+    const digital1 = el('path',{d:wavePath(140,210,195,9,4,true), class:'wave-path', id:'modem-digital1-path'});
+    svg.appendChild(digital1);
+    const digital1Sub2 = el('text',{x:175,y:270,class:'wave-caption','text-anchor':'middle'});
+    digital1Sub2.textContent = 'PC 1 ⇄ Modem 1';
+    svg.appendChild(digital1Sub2);
+
+    // ---- Modem 1 ----
+    svg.appendChild(el('rect',{x:210,y:140,width:110,height:110,rx:14,class:'device-box device-box-switch',id:'modem1-box',style:'stroke:var(--modem-color)'}));
+    const mod1Badge = el('text',{x:265,y:160,class:'mod-badge','text-anchor':'middle',id:'modem1-mod-badge'});
+    mod1Badge.textContent = 'MODULATE ▸';
+    svg.appendChild(mod1Badge);
+    const mod1Caption = el('text',{x:265,y:174,class:'wave-caption','text-anchor':'middle',id:'modem1-mod-caption'});
+    mod1Caption.textContent = 'digital → analog';
+    svg.appendChild(mod1Caption);
+    const modem1Label = el('text',{x:265,y:200,class:'device-label','text-anchor':'middle'});
+    modem1Label.textContent = 'MODEM 1';
+    svg.appendChild(modem1Label);
+    const demod1Caption = el('text',{x:265,y:218,class:'wave-caption','text-anchor':'middle',id:'modem1-demod-caption'});
+    demod1Caption.textContent = 'analog → digital';
+    svg.appendChild(demod1Caption);
+    const demod1Badge = el('text',{x:265,y:232,class:'mod-badge','text-anchor':'middle',id:'modem1-demod-badge'});
+    demod1Badge.textContent = '◂ DEMODULATE';
+    svg.appendChild(demod1Badge);
+
+    // analog sine line Modem1 -> ISP
+    const analog1Title = el('text',{x:360,y:118,class:'wave-title wave-title-analog','text-anchor':'middle'});
+    analog1Title.textContent = 'ANALOG';
+    svg.appendChild(analog1Title);
+    const analog1Sub = el('text',{x:360,y:134,class:'wave-caption','text-anchor':'middle'});
+    analog1Sub.textContent = 'carrier wave';
+    svg.appendChild(analog1Sub);
+    const analog1 = el('path',{d:wavePath(320,400,195,15,4,false), class:'wave-path', id:'modem-analog1-path'});
+    svg.appendChild(analog1);
+    const analog1Sub2 = el('text',{x:360,y:270,class:'wave-caption','text-anchor':'middle'});
+    analog1Sub2.textContent = 'Modem 1 ⇄ ISP';
+    svg.appendChild(analog1Sub2);
+
+    // ---- ISP ----
+    svg.appendChild(el('rect',{x:400,y:145,width:120,height:100,rx:14,class:'device-box',id:'modem-isp-box',style:'stroke:var(--modem-color)'}));
+    const ispLabel = el('text',{x:460,y:186,class:'device-label','text-anchor':'middle'});
+    ispLabel.textContent = 'ISP';
+    svg.appendChild(ispLabel);
+    const ispSub = el('text',{x:460,y:203,class:'device-sublabel','text-anchor':'middle'});
+    ispSub.textContent = 'relays the signal onward';
+    svg.appendChild(ispSub);
+    const ispBits = el('text',{x:460,y:225,class:'bits-text','text-anchor':'middle',id:'modem-isp-bits'});
+    ispBits.textContent = '— — — — — —';
+    svg.appendChild(ispBits);
+
+    // analog sine line ISP -> Modem2
+    const analog2Title = el('text',{x:560,y:118,class:'wave-title wave-title-analog','text-anchor':'middle'});
+    analog2Title.textContent = 'ANALOG';
+    svg.appendChild(analog2Title);
+    const analog2Sub = el('text',{x:560,y:134,class:'wave-caption','text-anchor':'middle'});
+    analog2Sub.textContent = 'carrier wave';
+    svg.appendChild(analog2Sub);
+    const analog2 = el('path',{d:wavePath(520,600,195,15,4,false), class:'wave-path', id:'modem-analog2-path'});
+    svg.appendChild(analog2);
+    const analog2Sub2 = el('text',{x:560,y:270,class:'wave-caption','text-anchor':'middle'});
+    analog2Sub2.textContent = 'ISP ⇄ Modem 2';
+    svg.appendChild(analog2Sub2);
+
+    // ---- Modem 2 ----
+    svg.appendChild(el('rect',{x:600,y:140,width:110,height:110,rx:14,class:'device-box device-box-switch',id:'modem2-box',style:'stroke:var(--modem-color)'}));
+    const mod2Badge = el('text',{x:655,y:160,class:'mod-badge','text-anchor':'middle',id:'modem2-mod-badge'});
+    mod2Badge.textContent = 'MODULATE ▸';
+    svg.appendChild(mod2Badge);
+    const mod2Caption = el('text',{x:655,y:174,class:'wave-caption','text-anchor':'middle',id:'modem2-mod-caption'});
+    mod2Caption.textContent = 'digital → analog';
+    svg.appendChild(mod2Caption);
+    const modem2Label = el('text',{x:655,y:200,class:'device-label','text-anchor':'middle'});
+    modem2Label.textContent = 'MODEM 2';
+    svg.appendChild(modem2Label);
+    const demod2Caption = el('text',{x:655,y:218,class:'wave-caption','text-anchor':'middle',id:'modem2-demod-caption'});
+    demod2Caption.textContent = 'analog → digital';
+    svg.appendChild(demod2Caption);
+    const demod2Badge = el('text',{x:655,y:232,class:'mod-badge','text-anchor':'middle',id:'modem2-demod-badge'});
+    demod2Badge.textContent = '◂ DEMODULATE';
+    svg.appendChild(demod2Badge);
+
+    // digital square-wave line Modem2 -> PC2
+    const digital2Title = el('text',{x:745,y:118,class:'wave-title','text-anchor':'middle'});
+    digital2Title.textContent = 'DIGITAL';
+    svg.appendChild(digital2Title);
+    const digital2Sub = el('text',{x:745,y:134,class:'wave-caption','text-anchor':'middle'});
+    digital2Sub.textContent = 'square wave';
+    svg.appendChild(digital2Sub);
+    const digital2 = el('path',{d:wavePath(710,780,195,9,4,true), class:'wave-path', id:'modem-digital2-path'});
+    svg.appendChild(digital2);
+    const digital2Sub2 = el('text',{x:745,y:270,class:'wave-caption','text-anchor':'middle'});
+    digital2Sub2.textContent = 'Modem 2 ⇄ PC 2';
+    svg.appendChild(digital2Sub2);
+
+    // ---- PC 2 ----
+    svg.appendChild(el('rect',{x:780,y:150,width:130,height:90,rx:12,class:'pc-rect'}));
+    const pc2Label = el('text',{x:845,y:182,class:'pc-label','text-anchor':'middle'});
+    pc2Label.textContent = 'PC · 2';
+    svg.appendChild(pc2Label);
+    const pc2Bits = el('text',{x:845,y:206,class:'bits-text bits-text-pc','text-anchor':'middle',id:'modem-pc2-bits'});
+    pc2Bits.textContent = '— — — — — —';
+    svg.appendChild(pc2Bits);
+    const pc2Caption = el('text',{x:845,y:270,class:'wave-caption','text-anchor':'middle'});
+    pc2Caption.textContent = 'sends & receives data';
+    svg.appendChild(pc2Caption);
+  }
+
+  const modemSvg = document.getElementById('modem-svg');
+  buildModem(modemSvg);
+  const modemLog = document.getElementById('modem-log');
+  const digital1Path = document.getElementById('modem-digital1-path');
+  const analog1Path = document.getElementById('modem-analog1-path');
+  const analog2Path = document.getElementById('modem-analog2-path');
+  const digital2Path = document.getElementById('modem-digital2-path');
+  const modem1ModBadge = document.getElementById('modem1-mod-badge');
+  const modem1ModCaption = document.getElementById('modem1-mod-caption');
+  const modem1DemodBadge = document.getElementById('modem1-demod-badge');
+  const modem1DemodCaption = document.getElementById('modem1-demod-caption');
+  const modem2ModBadge = document.getElementById('modem2-mod-badge');
+  const modem2ModCaption = document.getElementById('modem2-mod-caption');
+  const modem2DemodBadge = document.getElementById('modem2-demod-badge');
+  const modem2DemodCaption = document.getElementById('modem2-demod-caption');
+  const pc1BitsEl = document.getElementById('modem-pc1-bits');
+  const pc2BitsEl = document.getElementById('modem-pc2-bits');
+  const ispBitsEl = document.getElementById('modem-isp-bits');
+  const ispBoxEl = document.getElementById('modem-isp-box');
+  let modemBusy = false;
+
+  function randomBits(n){ let s=''; for(let i=0;i<n;i++) s += Math.round(Math.random()); return s; }
+  function setBusyUI(state){
+    document.getElementById('modem-send-12').disabled = state;
+    document.getElementById('modem-send-21').disabled = state;
+  }
+
+  async function modemSend(direction){
+    // direction: 'forward' = PC1 -> PC2 (via Modem1 -> ISP -> Modem2)
+    //            'reverse' = PC2 -> PC1 (via Modem2 -> ISP -> Modem1)
+    if(modemBusy) return; modemBusy = true; setBusyUI(true);
+    const bits = randomBits(8);
+    const forward = direction === 'forward';
+    const fromPC = forward ? 'PC 1' : 'PC 2';
+    const toPC = forward ? 'PC 2' : 'PC 1';
+    const fromBitsEl = forward ? pc1BitsEl : pc2BitsEl;
+    const toBitsEl = forward ? pc2BitsEl : pc1BitsEl;
+    const nearDigitalPath = forward ? digital1Path : digital2Path;
+    const farDigitalPath = forward ? digital2Path : digital1Path;
+    const nearAnalogPath = forward ? analog1Path : analog2Path;
+    const farAnalogPath = forward ? analog2Path : analog1Path;
+    const modulatingNum = forward ? 1 : 2;
+    const demodulatingNum = forward ? 2 : 1;
+    const modBadge = forward ? modem1ModBadge : modem2ModBadge;
+    const modCaption = forward ? modem1ModCaption : modem2ModCaption;
+    const demodBadge = forward ? modem2DemodBadge : modem1DemodBadge;
+    const demodCaption = forward ? modem2DemodCaption : modem1DemodCaption;
+    const dirClass = forward ? 'dir-up' : 'dir-down';
+
+    fromBitsEl.textContent = bits; fromBitsEl.classList.add('pulse');
+    logTo(modemLog, fromPC + ' prepares digital data: ' + bits, 'digital');
+    setStatus('modem', fromPC + ' → Modem ' + modulatingNum + ': sending digital bits ' + bits, true);
+    await wait(400);
+    nearDigitalPath.classList.add('flowing', dirClass);
+    await wait(700);
+    nearDigitalPath.classList.remove('flowing', dirClass);
+    fromBitsEl.classList.remove('pulse');
+
+    modBadge.classList.add('active'); modCaption.classList.add('active');
+    logTo(modemLog, 'Modem ' + modulatingNum + ' MODULATES the digital bits onto an analog carrier wave.', 'mod');
+    setStatus('modem', 'Modem ' + modulatingNum + ' → ISP: analog wave traveling down the line…', true);
+    await wait(400);
+    nearAnalogPath.classList.add('flowing', dirClass);
+    await wait(1400);
+    nearAnalogPath.classList.remove('flowing', dirClass);
+    modBadge.classList.remove('active'); modCaption.classList.remove('active');
+
+    ispBitsEl.textContent = bits; ispBitsEl.classList.add('pulse');
+    ispBoxEl.classList.add('flash-flood');
+    setTimeout(()=>ispBoxEl.classList.remove('flash-flood'), 420);
+    logTo(modemLog, 'ISP receives the analog wave and relays it toward ' + toPC + '.', 'demod');
+    setStatus('modem', 'ISP is relaying the signal on to Modem ' + demodulatingNum + '…', true);
+    await wait(700);
+    ispBitsEl.classList.remove('pulse');
+
+    farAnalogPath.classList.add('flowing', dirClass);
+    await wait(1400);
+    farAnalogPath.classList.remove('flowing', dirClass);
+    demodBadge.classList.add('active'); demodCaption.classList.add('active');
+    logTo(modemLog, 'Modem ' + demodulatingNum + ' DEMODULATES the analog wave back into digital bits: ' + bits, 'demod');
+    setStatus('modem', 'Modem ' + demodulatingNum + ' → ' + toPC + ': demodulating back to digital bits ' + bits, true);
+    await wait(400);
+    farDigitalPath.classList.add('flowing', dirClass);
+    await wait(700);
+    farDigitalPath.classList.remove('flowing', dirClass);
+    demodBadge.classList.remove('active'); demodCaption.classList.remove('active');
+    toBitsEl.textContent = bits; toBitsEl.classList.add('pulse');
+    logTo(modemLog, toPC + ' receives the digital data: ' + bits, 'digital');
+    setStatus('modem', 'Done — ' + toPC + ' received ' + bits, false);
+    await wait(500);
+    toBitsEl.classList.remove('pulse');
+    modemBusy = false; setBusyUI(false);
+  }
+
+  document.getElementById('modem-send-12').addEventListener('click', ()=>modemSend('forward'));
+  document.getElementById('modem-send-21').addEventListener('click', ()=>modemSend('reverse'));
+  document.getElementById('modem-reset').addEventListener('click', ()=>{
+    pc1BitsEl.textContent = '— — — — — —';
+    pc2BitsEl.textContent = '— — — — — —';
+    ispBitsEl.textContent = '— — — — — —';
+    modemLog.innerHTML = '';
+    logTo(modemLog, 'Simulation reset.', 'info');
+    setStatus('modem', 'Idle — send data from either PC', false);
+  });
+
+  logTo(modemLog, 'Ready. Send data from PC 1 or PC 2 to watch it get modulated, relayed through the ISP, and demodulated at the other end.', 'info');
+
+  /* ===================== Tabs ===================== */
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.device-panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById(btn.dataset.target).classList.add('active');
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
