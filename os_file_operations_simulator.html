@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operating System File Operations Simulator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #ffffff;
+    color: #111111;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 24px 12px 60px;
+  }
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 30px;
+    text-align: center;
+    color: #111111;
+    margin-bottom: 6px;
+  }
+  p.subtitle {
+    font-size: 18px;
+    text-align: center;
+    color: #222222;
+    margin-top: 0;
+    margin-bottom: 26px;
+  }
+  .task-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .task-btn {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 20px;
+    border-radius: 10px;
+    border: 3px solid #111111;
+    color: #111111;
+    cursor: pointer;
+    transition: transform 0.08s ease;
+  }
+  .task-btn:hover { transform: translateY(-2px); }
+  .task-btn:active { transform: translateY(0); }
+  .task-btn.active { outline: 4px solid #111111; }
+
+  #btn-open   { background: #fff3b0; }
+  #btn-write  { background: #bde0fe; }
+  #btn-save   { background: #caffbf; }
+  #btn-print  { background: #ffd6a5; }
+  #btn-delete { background: #ffadad; }
+  #btn-rename { background: #d0bfff; }
+  #btn-copy   { background: #a0e8e0; }
+
+  .panel {
+    border: 3px solid #111111;
+    border-radius: 16px;
+    padding: 22px;
+    background: #f7f7f2;
+  }
+
+  svg { display: block; margin: 0 auto; }
+
+  #step-text {
+    font-size: 20px;
+    line-height: 1.6;
+    color: #111111;
+    background: #ffffff;
+    border: 2px solid #111111;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 20px 0 0;
+    min-height: 70px;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .nav-btn {
+    font-size: 19px;
+    font-weight: 700;
+    padding: 12px 26px;
+    border-radius: 10px;
+    border: 3px solid #111111;
+    cursor: pointer;
+  }
+  #prev-btn { background: #e0e0e0; color: #111111; }
+  #next-btn { background: #111111; color: #ffffff; }
+  #reset-btn { background: #ffffff; color: #111111; }
+
+  .progress {
+    text-align: center;
+    font-size: 16px;
+    color: #333333;
+    margin-top: 10px;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 26px;
+    font-size: 15px;
+    color: #222222;
+  }
+  .legend span.swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #111111;
+    border-radius: 4px;
+    margin-right: 6px;
+    vertical-align: -2px;
+    background: #fff3b0;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 14px;
+    color: #444444;
+    margin-top: 34px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>How an Operating System Handles File Operations</h1>
+  <p class="subtitle">Pick a task, then step through what the OS is doing behind the scenes.</p>
+
+  <div class="task-bar">
+    <button class="task-btn" id="btn-open" onclick="loadTask('open')">Open File</button>
+    <button class="task-btn" id="btn-write" onclick="loadTask('write')">Write to File</button>
+    <button class="task-btn" id="btn-save" onclick="loadTask('save')">Save File</button>
+    <button class="task-btn" id="btn-print" onclick="loadTask('print')">Print File</button>
+    <button class="task-btn" id="btn-delete" onclick="loadTask('delete')">Delete File</button>
+    <button class="task-btn" id="btn-rename" onclick="loadTask('rename')">Rename File</button>
+    <button class="task-btn" id="btn-copy" onclick="loadTask('copy')">Copy File</button>
+  </div>
+
+  <div class="panel">
+    <svg id="diagram" viewBox="0 0 680 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of operating system layers">
+      <defs>
+        <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#111111" stroke-width="2"/>
+        </marker>
+      </defs>
+
+      <g id="box-app">
+        <rect x="10" y="90" width="120" height="80" rx="10" fill="#e0e0e0" stroke="#111111" stroke-width="2"/>
+        <text x="70" y="122" text-anchor="middle" font-size="16" font-weight="700" fill="#111111">Application</text>
+        <text x="70" y="144" text-anchor="middle" font-size="13" fill="#333333">(the program)</text>
+      </g>
+
+      <line x1="130" y1="130" x2="172" y2="130" stroke="#111111" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+
+      <g id="box-os">
+        <rect x="175" y="90" width="150" height="80" rx="10" fill="#e0e0e0" stroke="#111111" stroke-width="2"/>
+        <text x="250" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#111111">Operating System</text>
+        <text x="250" y="140" text-anchor="middle" font-size="13" fill="#333333">System call interface</text>
+        <text x="250" y="158" text-anchor="middle" font-size="13" fill="#333333">+ Kernel</text>
+      </g>
+
+      <line x1="325" y1="130" x2="367" y2="130" stroke="#111111" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+
+      <g id="box-fs">
+        <rect x="370" y="90" width="150" height="80" rx="10" fill="#e0e0e0" stroke="#111111" stroke-width="2"/>
+        <text x="445" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#111111">File System</text>
+        <text x="445" y="140" text-anchor="middle" font-size="13" fill="#333333">+ Device driver</text>
+        <text x="445" y="158" text-anchor="middle" font-size="13" fill="#333333">manager</text>
+      </g>
+
+      <line x1="520" y1="130" x2="562" y2="130" stroke="#111111" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+
+      <g id="box-device">
+        <rect x="565" y="90" width="105" height="80" rx="10" fill="#e0e0e0" stroke="#111111" stroke-width="2"/>
+        <text id="device-label1" x="617" y="122" text-anchor="middle" font-size="15" font-weight="700" fill="#111111">Disk</text>
+        <text id="device-label2" x="617" y="144" text-anchor="middle" font-size="13" fill="#333333">storage</text>
+      </g>
+
+      <text id="step-caption" x="340" y="215" text-anchor="middle" font-size="17" font-weight="700" fill="#111111"></text>
+      <text id="step-num" x="340" y="240" text-anchor="middle" font-size="14" fill="#444444"></text>
+    </svg>
+
+    <p id="step-text">Pick a task above to begin.</p>
+
+    <div class="controls">
+      <button class="nav-btn" id="prev-btn" onclick="prevStep()">Previous</button>
+      <button class="nav-btn" id="reset-btn" onclick="resetTask()">Restart</button>
+      <button class="nav-btn" id="next-btn" onclick="nextStep()">Next Step</button>
+    </div>
+    <div class="progress" id="progress-text"></div>
+  </div>
+
+  <div class="legend">
+    <div><span class="swatch" style="background:#e0e0e0;"></span>Inactive layer</div>
+    <div><span class="swatch" style="background:#fff3b0;"></span>Active layer (currently working)</div>
+  </div>
+
+  <footer>Click Next Step to walk through each task one layer at a time.</footer>
+</div>
+
+<script>
+const tasks = {
+  open: {
+    label: 'Open File',
+    device: ['Disk', 'storage'],
+    steps: [
+      { box: 'box-app', text: "You double-click report.txt. The application asks the OS to open it via the open() system call." },
+      { box: 'box-os', text: "The OS checks permissions: does this user or process have the right to read this file?" },
+      { box: 'box-fs', text: "The file system looks up the filename in its directory structure to find where the file's data blocks live on disk." },
+      { box: 'box-device', text: "The device driver reads the actual data blocks off the disk into a memory buffer." },
+      { box: 'box-os', text: "The OS creates a file descriptor (a handle) and hands it back to the application so it can now read the contents." },
+      { box: 'box-app', text: "The application receives the file descriptor and displays the file's contents on screen." }
+    ]
+  },
+  write: {
+    label: 'Write to File',
+    device: ['Disk', 'storage'],
+    steps: [
+      { box: 'box-app', text: "You type new text. The application calls write() with the new data and the open file descriptor." },
+      { box: 'box-os', text: "The OS checks the file is open for writing, then copies your data into a kernel-managed buffer (page cache)." },
+      { box: 'box-fs', text: "The file system marks these buffered blocks as \"dirty\" -- changed but not yet on disk." },
+      { box: 'box-os', text: "For speed, the OS keeps working from memory instead of touching the disk on every keystroke." },
+      { box: 'box-app', text: "The application keeps running instantly, since the write() call already returned. The disk update happens later." }
+    ]
+  },
+  save: {
+    label: 'Save File',
+    device: ['Disk', 'storage'],
+    steps: [
+      { box: 'box-app', text: "You press Ctrl+S. The application calls a flush/save function to make sure changes are permanent." },
+      { box: 'box-os', text: "The OS locates all the \"dirty\" (changed) blocks sitting in memory for this file." },
+      { box: 'box-fs', text: "The file system decides exactly which disk blocks need updating, and updates its records (like file size, timestamp)." },
+      { box: 'box-device', text: "The device driver physically writes those blocks from memory onto the disk platters or flash cells." },
+      { box: 'box-os', text: "The OS confirms the write succeeded and reports success back to the application." },
+      { box: 'box-app', text: "The application shows \"Saved\" -- your file is now safely on permanent storage, even if the power goes out." }
+    ]
+  },
+  print: {
+    label: 'Print File',
+    device: ['Printer', 'spooler'],
+    steps: [
+      { box: 'box-app', text: "You click Print. The application sends the document data to the OS printing subsystem." },
+      { box: 'box-os', text: "The OS print spooler accepts the job and places it in a queue, so the app doesn't have to wait for the printer." },
+      { box: 'box-fs', text: "The spooler temporarily stores the print job as a file on disk, formatted for the target printer." },
+      { box: 'box-device', text: "The printer driver converts the job into commands the physical printer understands, and sends it over USB or network." },
+      { box: 'box-os', text: "The OS tracks job status (printing, paused, done) and can let you cancel a queued job." },
+      { box: 'box-app', text: "Once the printer confirms completion, the application is free to continue -- printing ran in the background the whole time." }
+    ]
+  },
+  delete: {
+    label: 'Delete File',
+    device: ['Disk', 'storage'],
+    steps: [
+      { box: 'box-app', text: "You press Delete. The application calls the OS to remove the file, e.g. unlink()." },
+      { box: 'box-os', text: "The OS checks permissions: is this user allowed to delete this file?" },
+      { box: 'box-fs', text: "The file system removes the filename's entry from the directory, so the file is no longer visible or reachable." },
+      { box: 'box-device', text: "The disk blocks are marked as free space -- the old data usually isn't erased yet, just no longer tracked." },
+      { box: 'box-app', text: "The file disappears from view. The freed space can be reused later for new files." }
+    ]
+  },
+  rename: {
+    label: 'Rename File',
+    device: ['Disk', 'storage'],
+    steps: [
+      { box: 'box-app', text: "You type a new name and hit Enter. The application calls a rename() system call with the old and new names." },
+      { box: 'box-os', text: "The OS checks permissions and whether a file with the new name already exists in that folder." },
+      { box: 'box-fs', text: "The file system just updates the directory entry's name field -- the actual data blocks on disk don't move at all." },
+      { box: 'box-app', text: "The file now shows the new name instantly, since only a small label changed, not the file's contents." }
+    ]
+  },
+  copy: {
+    label: 'Copy File',
+    device: ['Disk', 'storage'],
+    steps: [
+      { box: 'box-app', text: "You choose Copy, then Paste. The application will read the whole file and write it out under a new name." },
+      { box: 'box-os', text: "The OS opens the source file for reading and creates a brand-new destination file for writing." },
+      { box: 'box-fs', text: "The file system allocates fresh disk blocks for the new file, separate from the original's blocks." },
+      { box: 'box-device', text: "The driver reads each block from the source location and writes a matching copy to the new blocks on disk." },
+      { box: 'box-os', text: "The OS repeats read-then-write for the whole file, then confirms both files now exist independently." },
+      { box: 'box-app', text: "You now have two separate files with identical contents -- editing one never affects the other." }
+    ]
+  }
+};
+
+let currentTask = null;
+let stepIndex = 0;
+
+function setDeviceLabel(labels) {
+  document.getElementById('device-label1').textContent = labels[0];
+  document.getElementById('device-label2').textContent = labels[1];
+}
+
+function highlightBox(boxId) {
+  ['box-app', 'box-os', 'box-fs', 'box-device'].forEach(function(id) {
+    const rect = document.querySelector('#' + id + ' rect');
+    if (!rect) return;
+    if (id === boxId) {
+      rect.setAttribute('fill', '#fff3b0');
+      rect.setAttribute('stroke-width', '4');
+    } else {
+      rect.setAttribute('fill', '#e0e0e0');
+      rect.setAttribute('stroke-width', '2');
+    }
+  });
+}
+
+function render() {
+  const t = tasks[currentTask];
+  const s = t.steps[stepIndex];
+  highlightBox(s.box);
+  document.getElementById('step-text').textContent = s.text;
+  document.getElementById('step-caption').textContent = t.label;
+  document.getElementById('step-num').textContent = 'Step ' + (stepIndex + 1) + ' of ' + t.steps.length;
+  document.getElementById('progress-text').textContent = t.label + ' -- step ' + (stepIndex + 1) + ' of ' + t.steps.length;
+  setDeviceLabel(t.device);
+  Object.keys(tasks).forEach(function(k) {
+    const btn = document.getElementById('btn-' + k);
+    if (btn) btn.classList.toggle('active', k === currentTask);
+  });
+}
+
+function loadTask(name) {
+  currentTask = name;
+  stepIndex = 0;
+  render();
+}
+
+function nextStep() {
+  if (!currentTask) return;
+  const t = tasks[currentTask];
+  if (stepIndex < t.steps.length - 1) stepIndex++;
+  render();
+}
+
+function prevStep() {
+  if (!currentTask) return;
+  if (stepIndex > 0) stepIndex--;
+  render();
+}
+
+function resetTask() {
+  if (!currentTask) return;
+  stepIndex = 0;
+  render();
+}
+
+loadTask('open');
+</script>
+</body>
+</html>
