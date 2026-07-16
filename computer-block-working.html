@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How a Computer Works — block diagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#f8f9fc;
+    --ink:#000000;
+    --ink-soft:#3d4250;
+    --line:#e6e8f0;
+    --cpu:#4f46e5;      --cpu-soft:#eeecfd;
+    --cache:#f59e0b;    --cache-soft:#fef3e0;
+    --ram:#0ea472;      --ram-soft:#e6f7f0;
+    --sec:#c026a3;      --sec-soft:#fbe9f7;
+    --io:#64748b;       --io-soft:#eef1f5;
+    --shadow: 0 1px 2px rgba(20,20,40,.04), 0 10px 28px rgba(20,20,40,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:17px;
+    -webkit-font-smoothing:antialiased;
+    padding:32px 20px 90px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  header.top{margin-bottom:36px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    font-weight:500;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:14px;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--ram);box-shadow:0 0 0 3px var(--ram-soft);animation:pulse 2.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  h1{
+    font-family:'Sora',sans-serif;
+    font-weight:800;
+    font-size:clamp(32px,4.6vw,48px);
+    line-height:1.1;
+    margin:0 0 16px;
+    letter-spacing:-0.01em;
+  }
+  h1 span.c1{color:var(--cpu);}
+  h1 span.c2{color:var(--cache);}
+  h1 span.c3{color:var(--sec);}
+  .lede{font-size:18.5px;line-height:1.65;color:var(--ink-soft);max-width:680px;}
+
+  .scene{
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:var(--panel);
+    box-shadow:var(--shadow);
+    margin-bottom:30px;
+    overflow:hidden;
+  }
+  .stage{padding:20px 16px 6px;}
+  svg{width:100%;height:auto;display:block;}
+
+  .controls{
+    display:flex; flex-wrap:wrap; gap:10px;
+    padding:8px 26px 22px;
+  }
+  button.act{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    padding:11px 18px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  button.act:hover{transform:translateY(-1px); box-shadow:0 4px 14px rgba(20,20,40,.08);}
+  button.act:disabled{opacity:.4; cursor:not-allowed; transform:none; box-shadow:none;}
+  button.cpu{border-color:var(--cpu); color:var(--cpu);}
+  button.hit{border-color:var(--cache); color:var(--cache);}
+  button.ram{border-color:var(--ram); color:var(--ram);}
+  button.sec{border-color:var(--sec); color:var(--sec);}
+  button.reset{color:var(--ink-soft);}
+
+  .legend-wrap{
+    padding:4px 26px 22px;
+    border-top:1px solid var(--line);
+  }
+  .table-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    margin:16px 0 12px;
+  }
+  table.legend-table{width:100%; border-collapse:collapse; font-size:14px;}
+  table.legend-table th, table.legend-table td{
+    text-align:left; padding:9px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  table.legend-table th{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+    font-weight:600;
+  }
+  table.legend-table td{color:var(--ink); font-weight:500;}
+  table.legend-table td:nth-child(2){color:var(--ink-soft); font-weight:600;}
+  table.legend-table tr{transition:background .3s ease;}
+  table.legend-table tr.active-row{background:var(--cpu-soft);}
+  @media (max-width:600px){
+    table.legend-table{font-size:12.5px;}
+    table.legend-table th, table.legend-table td{padding:7px 6px;}
+  }
+
+  .lower{
+    display:grid;
+    grid-template-columns: 1.25fr 1fr;
+    border-top:1px solid var(--line);
+  }
+  @media (max-width:780px){ .lower{grid-template-columns:1fr;} }
+
+  .console{
+    padding:18px 26px 22px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14.5px;
+    font-weight:500;
+    line-height:1.8;
+    color:#111;
+    min-height:120px;
+    border-right:1px solid var(--line);
+  }
+  @media (max-width:780px){ .console{border-right:none; border-bottom:1px solid var(--line);} }
+  .console .row{opacity:0; transform:translateY(3px); animation:rise .35s ease forwards;}
+  @keyframes rise{to{opacity:1; transform:translateY(0);}}
+  .console .tag{color:var(--ink-soft); font-weight:600;}
+  .console .idle{color:var(--ink-soft);}
+
+  .gauge-wrap{padding:20px 26px 22px;}
+  .gauge-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    margin-bottom:12px;
+  }
+  .gauge-track{
+    position:relative;
+    height:14px;
+    background:#eef0f5;
+    border-radius:999px;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .gauge-fill{
+    position:absolute; left:0; top:0; height:100%;
+    width:2%;
+    background:linear-gradient(90deg, var(--cache), var(--ram), var(--sec));
+    border-radius:999px;
+    transition:width .5s ease;
+  }
+  .gauge-scale{
+    display:flex; justify-content:space-between;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:500;
+    color:var(--ink-soft);
+    margin-bottom:16px;
+  }
+  .readout{
+    font-family:'Sora',sans-serif;
+    font-weight:800;
+    font-size:30px;
+    color:var(--ink);
+  }
+  .readout .unit{font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600; color:var(--ink-soft); margin-left:6px;}
+  .readout-label{font-size:14px; font-weight:500; color:var(--ink-soft); margin-top:4px;}
+
+  .explain{
+    max-width:1080px;
+    margin:52px auto 0;
+    border-top:1px solid var(--line);
+    padding-top:28px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px 22px;
+  }
+  @media (max-width:860px){ .explain{grid-template-columns:1fr 1fr;} }
+  @media (max-width:520px){ .explain{grid-template-columns:1fr;} }
+  .explain .card{padding-left:14px; border-left:3px solid var(--line);}
+  .explain .card.cpu{border-color:var(--cpu);}
+  .explain .card.io{border-color:var(--io);}
+  .explain .card.cache{border-color:var(--cache);}
+  .explain .card.ram{border-color:var(--ram);}
+  .explain .card.sec{border-color:var(--sec);}
+  .explain h3{font-family:'Sora',sans-serif; font-weight:700; font-size:17px; color:var(--ink); margin:0 0 7px;}
+  .explain p{font-size:14.5px; font-weight:500; color:var(--ink-soft); line-height:1.6; margin:0;}
+
+  .node-box{fill:#fff; stroke:var(--line); stroke-width:1.5;}
+  .node-label{font-family:'Inter',sans-serif; font-weight:700; font-size:14.5px; fill:var(--ink);}
+  .node-sub{font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:11.5px; fill:var(--ink-soft);}
+  .link-line{stroke:#d6d9e2; stroke-width:2; fill:none;}
+  .cpu-outer{fill:var(--cpu-soft); stroke:var(--cpu); stroke-width:2;}
+  .cache-box{fill:var(--cache-soft); stroke:var(--cache); stroke-width:2;}
+  .ram-box{fill:var(--ram-soft); stroke:var(--ram); stroke-width:2;}
+  .sec-box{fill:var(--sec-soft); stroke:var(--sec); stroke-width:2;}
+  .io-box{fill:var(--io-soft); stroke:var(--io); stroke-width:1.5;}
+  .packet{filter:drop-shadow(0 2px 5px rgba(0,0,0,.2));}
+  .glowring{opacity:0;}
+  .speedtag{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:11.5px; fill:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow"><span class="dot"></span> interactive architecture primer</div>
+    <h1>Inside a computer: <span class="c1">CPU</span>, <span class="c2">cache</span>, and the road down to <span class="c3">secondary memory</span></h1>
+    <p class="lede">Data comes in, the CPU's Control Unit and ALU act on it, and a result goes back out — while every fetch along the way has to reach into cache, RAM, or all the way down to a disk. Press a scenario below and follow the exact path each one takes.</p>
+  </header>
+
+  <section class="scene">
+    <div class="stage">
+      <svg id="cSvg" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+
+        <!-- IO devices -->
+        <g id="inputDev">
+          <rect class="io-box" x="20" y="70" width="150" height="60" rx="12"/>
+          <text class="node-label" x="95" y="96" text-anchor="middle">Input Devices</text>
+          <text class="node-sub" x="95" y="112" text-anchor="middle">keyboard · mouse</text>
+        </g>
+        <circle id="inputPulse" class="glowring" cx="95" cy="100" r="40" fill="none" stroke="#64748b" stroke-width="3"/>
+        <g id="outputDev">
+          <rect class="io-box" x="730" y="70" width="150" height="60" rx="12"/>
+          <text class="node-label" x="805" y="96" text-anchor="middle">Output Devices</text>
+          <text class="node-sub" x="805" y="112" text-anchor="middle">display · speakers</text>
+        </g>
+        <circle id="outputPulse" class="glowring" cx="805" cy="100" r="40" fill="none" stroke="#64748b" stroke-width="3"/>
+        <path class="link-line" d="M170 100 L 300 100" marker-end="url(#arrow)"/>
+        <path class="link-line" d="M600 100 L 730 100" marker-end="url(#arrow)"/>
+
+        <!-- CPU outer -->
+        <rect class="cpu-outer" x="300" y="30" width="300" height="200" rx="18"/>
+        <text class="node-label" x="450" y="54" text-anchor="middle" fill="#4f46e5" font-size="16">CPU</text>
+
+        <rect class="node-box" x="320" y="70" width="120" height="52" rx="10"/>
+        <text class="node-label" x="380" y="93" text-anchor="middle" font-size="13.5">Control Unit</text>
+        <text class="node-sub" x="380" y="110" text-anchor="middle">directs execution</text>
+        <circle id="cuPulse" class="glowring" cx="380" cy="96" r="34" fill="none" stroke="#4f46e5" stroke-width="3"/>
+
+        <rect class="node-box" x="460" y="70" width="120" height="52" rx="10"/>
+        <text class="node-label" x="520" y="93" text-anchor="middle" font-size="13.5">ALU</text>
+        <text class="node-sub" x="520" y="110" text-anchor="middle">does the math</text>
+        <circle id="aluPulse" class="glowring" cx="520" cy="96" r="34" fill="none" stroke="#4f46e5" stroke-width="3"/>
+
+        <rect class="node-box" x="320" y="140" width="260" height="52" rx="10"/>
+        <text class="node-label" x="450" y="163" text-anchor="middle" font-size="13.5">Registers</text>
+        <text class="node-sub" x="450" y="180" text-anchor="middle">a few bytes, on-chip, fastest of all</text>
+        <circle id="regPulse" class="glowring" cx="450" cy="166" r="40" fill="none" stroke="#4f46e5" stroke-width="3"/>
+
+        <!-- CPU to cache -->
+        <path class="link-line" d="M450 230 L 450 268" marker-end="url(#arrow)"/>
+
+        <!-- Cache -->
+        <rect id="cacheBox" class="cache-box" x="350" y="270" width="200" height="60" rx="14"/>
+        <text class="node-label" x="450" y="294" text-anchor="middle" fill="#b8790a" font-size="15">Cache Memory</text>
+        <text class="node-sub" x="450" y="312" text-anchor="middle">small, on/near chip</text>
+        <text class="speedtag" x="565" y="305">~1 ns</text>
+        <circle id="cachePulse" class="glowring" cx="450" cy="300" r="40" fill="none" stroke="#f59e0b" stroke-width="3"/>
+
+        <path class="link-line" d="M450 330 L 450 368" marker-end="url(#arrow)"/>
+
+        <!-- RAM -->
+        <rect id="ramBox" class="ram-box" x="300" y="370" width="300" height="70" rx="16"/>
+        <text class="node-label" x="450" y="398" text-anchor="middle" fill="#0a8a5f" font-size="15">Primary Memory (RAM)</text>
+        <text class="node-sub" x="450" y="417" text-anchor="middle">larger, volatile, holds running programs</text>
+        <text class="speedtag" x="615" y="410">~100 ns</text>
+        <circle id="ramPulse" class="glowring" cx="450" cy="405" r="46" fill="none" stroke="#0ea472" stroke-width="3"/>
+
+        <path class="link-line" d="M450 440 L 450 478" marker-end="url(#arrow)"/>
+
+        <!-- Secondary memory -->
+        <rect id="secBox" class="sec-box" x="250" y="480" width="400" height="70" rx="16"/>
+        <text class="node-label" x="450" y="508" text-anchor="middle" fill="#9c1c81" font-size="15">Secondary Memory</text>
+        <text class="node-sub" x="450" y="527" text-anchor="middle">SSD / HDD — huge, permanent, the slowest hop</text>
+        <text class="speedtag" x="665" y="520">~10 ms</text>
+        <circle id="secPulse" class="glowring" cx="450" cy="515" r="46" fill="none" stroke="#c026a3" stroke-width="3"/>
+
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 z" fill="#c7cbd6"/>
+          </marker>
+        </defs>
+
+        <circle id="cPacket" class="packet" cx="450" cy="180" r="7" fill="#4f46e5" opacity="0"/>
+      </svg>
+    </div>
+
+    <div class="controls">
+      <button class="act cpu" id="btnCycle">Run an instruction: Input → CPU → Output</button>
+      <button class="act hit" id="btnHit">CPU requests data — Cache hit</button>
+      <button class="act ram" id="btnRam">Cache miss → found in RAM</button>
+      <button class="act sec" id="btnSec">Not in RAM → fetch from Secondary Memory</button>
+      <button class="act reset" id="btnReset">Reset</button>
+    </div>
+
+    <div class="legend-wrap">
+      <div class="table-title">Which instruction type goes where</div>
+      <table class="legend-table">
+        <thead><tr><th>Component</th><th>Instruction type it handles</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr id="row-input"><td>Input Devices</td><td>Input instructions</td><td>IN — read a keypress or sensor value</td></tr>
+          <tr id="row-cu"><td>Control Unit</td><td>Every instruction — fetch &amp; decode</td><td>reads the opcode: ADD, MOV, JMP…</td></tr>
+          <tr id="row-alu"><td>ALU</td><td>Arithmetic &amp; logical instructions</td><td>ADD, SUB, MUL, AND, CMP</td></tr>
+          <tr id="row-reg"><td>Registers</td><td>Operands and results of any instruction</td><td>holds a value just before or after it runs</td></tr>
+          <tr id="row-mem"><td>Cache / RAM / Secondary Memory</td><td>Data-transfer instructions</td><td>LOAD, STORE, MOV</td></tr>
+          <tr id="row-output"><td>Output Devices</td><td>Output instructions</td><td>OUT — send a result to the screen</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="lower">
+      <div class="console" id="cConsole"><span class="row idle">Waiting for a request…</span></div>
+      <div class="gauge-wrap">
+        <div class="gauge-title">Round-trip latency</div>
+        <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
+        <div class="gauge-scale"><span>1 ns</span><span>100 ns</span><span>10 ms</span></div>
+        <div class="readout" id="readoutValue">—<span class="unit" id="readoutUnit"></span></div>
+        <div class="readout-label" id="readoutLabel">no request yet</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="explain">
+    <div class="card io">
+      <h3>Input Devices</h3>
+      <p>Keyboards, mice, scanners — anything that turns an outside action into data the CPU can read. Every instruction cycle starts here or with data already stored in memory.</p>
+    </div>
+    <div class="card cpu">
+      <h3>Control Unit</h3>
+      <p>Fetches the next instruction, decodes what it means, and directs every other part of the computer on what to do next. Nothing executes without its say-so.</p>
+    </div>
+    <div class="card cpu">
+      <h3>ALU</h3>
+      <p>The Arithmetic Logic Unit does the actual work: addition, subtraction, comparisons, and logical operations, on whatever values the Control Unit hands it.</p>
+    </div>
+    <div class="card cpu">
+      <h3>Registers</h3>
+      <p>A handful of storage slots built directly into the CPU, holding the values currently being worked on — the smallest, fastest storage in the whole machine.</p>
+    </div>
+    <div class="card cache">
+      <h3>Cache Memory</h3>
+      <p>A small, fast copy of data the CPU has used recently, sitting right beside it — so the next request for the same data doesn't need to go any further.</p>
+    </div>
+    <div class="card ram">
+      <h3>Primary Memory</h3>
+      <p>RAM holds whatever program is currently running. Bigger than cache, still fast, but it empties out the moment the power goes off.</p>
+    </div>
+    <div class="card sec">
+      <h3>Secondary Memory</h3>
+      <p>The SSD or hard disk stores everything permanently. It's enormous compared to RAM, but reaching it takes thousands of times longer.</p>
+    </div>
+    <div class="card io">
+      <h3>Output Devices</h3>
+      <p>Monitors, speakers, printers — where a finished result becomes something a person can actually see, hear, or hold.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function animatePacket(packetEl, pathPoints, duration, onDone){
+  const start = performance.now();
+  packetEl.setAttribute('opacity','1');
+  function seg(t){
+    const total = pathPoints.length - 1;
+    const scaled = t * total;
+    let i = Math.min(Math.floor(scaled), total - 1);
+    let localT = scaled - i;
+    const p0 = pathPoints[i], p1 = pathPoints[i+1];
+    return { x: p0.x + (p1.x-p0.x)*localT, y: p0.y + (p1.y-p0.y)*localT };
+  }
+  function frame(now){
+    let t = Math.min((now-start)/duration, 1);
+    const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+    const pt = seg(ease);
+    packetEl.setAttribute('cx', pt.x);
+    packetEl.setAttribute('cy', pt.y);
+    if(t < 1){ requestAnimationFrame(frame); }
+    else { onDone && onDone(); }
+  }
+  requestAnimationFrame(frame);
+}
+
+function pulse(el){
+  el.style.opacity = '1';
+  el.animate([
+    {r:34, opacity:0.9},
+    {r:60, opacity:0}
+  ], {duration:650, easing:'ease-out'});
+  setTimeout(()=>{ el.style.opacity='0'; }, 660);
+}
+
+function logRow(container, html){
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML = html;
+  if(container.querySelector('.idle')) container.innerHTML = '';
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+}
+
+const cConsole = document.getElementById('cConsole');
+const cPacket = document.getElementById('cPacket');
+const cachePulse = document.getElementById('cachePulse');
+const ramPulse = document.getElementById('ramPulse');
+const secPulse = document.getElementById('secPulse');
+const inputPulse = document.getElementById('inputPulse');
+const outputPulse = document.getElementById('outputPulse');
+const cuPulse = document.getElementById('cuPulse');
+const aluPulse = document.getElementById('aluPulse');
+const regPulse = document.getElementById('regPulse');
+const gaugeFill = document.getElementById('gaugeFill');
+const readoutValue = document.getElementById('readoutValue');
+const readoutUnit = document.getElementById('readoutUnit');
+const readoutLabel = document.getElementById('readoutLabel');
+
+const btnCycle = document.getElementById('btnCycle');
+const btnHit = document.getElementById('btnHit');
+const btnRam = document.getElementById('btnRam');
+const btnSec = document.getElementById('btnSec');
+const btnReset = document.getElementById('btnReset');
+
+const legendRows = {
+  input: document.getElementById('row-input'),
+  cu: document.getElementById('row-cu'),
+  alu: document.getElementById('row-alu'),
+  reg: document.getElementById('row-reg'),
+  mem: document.getElementById('row-mem'),
+  output: document.getElementById('row-output'),
+};
+function highlightRow(key){
+  Object.values(legendRows).forEach(r => r.classList.remove('active-row'));
+  if(key && legendRows[key]) legendRows[key].classList.add('active-row');
+}
+
+function setButtons(disabled){
+  btnCycle.disabled = disabled;
+  btnHit.disabled = disabled;
+  btnRam.disabled = disabled;
+  btnSec.disabled = disabled;
+}
+
+function setGauge(pct, value, unit, label){
+  gaugeFill.style.width = pct + '%';
+  readoutValue.textContent = value;
+  readoutUnit.textContent = unit;
+  readoutLabel.textContent = label;
+}
+
+btnCycle.addEventListener('click', () => {
+  setButtons(true);
+  cPacket.setAttribute('fill', '#64748b');
+  cPacket.setAttribute('cx', 95); cPacket.setAttribute('cy', 100);
+  cPacket.setAttribute('opacity','1');
+  highlightRow('input');
+  pulse(inputPulse);
+  logRow(cConsole, '<span class="tag">01</span> INPUT instruction — a keypress arrives as raw data from an input device.');
+  setGauge(6, '~1', 'ns', 'input instruction: data enters the system');
+  animatePacket(cPacket, [{x:95,y:100},{x:380,y:96}], 600, () => {
+    pulse(cuPulse);
+    highlightRow('cu');
+    logRow(cConsole, '<span class="tag">02</span> Control Unit fetches the next instruction and decodes its opcode — say, ADD R1, R2.');
+    setGauge(20, '~1', 'ns', 'fetch & decode: every instruction passes through here');
+    cPacket.setAttribute('fill', '#4f46e5');
+    animatePacket(cPacket, [{x:380,y:96},{x:520,y:96}], 550, () => {
+      pulse(aluPulse);
+      highlightRow('alu');
+      logRow(cConsole, '<span class="tag">03</span> ARITHMETIC instruction — ALU executes ADD R1, R2 and produces a result.');
+      setGauge(40, '~1', 'ns', 'arithmetic/logical instruction: ALU does the work');
+      animatePacket(cPacket, [{x:520,y:96},{x:450,y:166}], 550, () => {
+        pulse(regPulse);
+        highlightRow('reg');
+        logRow(cConsole, '<span class="tag">04</span> Result is held in a register — ready for the next instruction or to move onward.');
+        setGauge(60, '~1', 'ns', 'operand/result: kept in a register');
+        cPacket.setAttribute('fill', '#64748b');
+        animatePacket(cPacket, [{x:450,y:166},{x:805,y:100}], 700, () => {
+          pulse(outputPulse);
+          highlightRow('output');
+          logRow(cConsole, '<span class="tag">05</span> OUTPUT instruction — Control Unit sends the result to a display.');
+          setGauge(80, '~1', 'ns', 'output instruction: result reaches the screen');
+          cPacket.setAttribute('opacity','0');
+          setButtons(false);
+        });
+      });
+    });
+  });
+});
+
+btnHit.addEventListener('click', () => {
+  setButtons(true);
+  highlightRow('mem');
+  cPacket.setAttribute('fill', '#4f46e5');
+  cPacket.setAttribute('cx', 450); cPacket.setAttribute('cy', 180);
+  logRow(cConsole, '<span class="tag">01</span> LOAD instruction — CPU asks for a value it used moments ago.');
+  animatePacket(cPacket, [{x:450,y:180},{x:450,y:300}], 500, () => {
+    pulse(cachePulse);
+    logRow(cConsole, '<span class="tag">02</span> Found immediately in cache — a hit.');
+    setGauge(4, '~1', 'ns', 'cache hit — the fast path');
+    cPacket.setAttribute('fill', '#f59e0b');
+    animatePacket(cPacket, [{x:450,y:300},{x:450,y:180}], 500, () => {
+      logRow(cConsole, '<span class="tag">03</span> Value handed straight back to the CPU.');
+      cPacket.setAttribute('opacity','0');
+      setButtons(false);
+    });
+  });
+});
+
+btnRam.addEventListener('click', () => {
+  setButtons(true);
+  highlightRow('mem');
+  cPacket.setAttribute('fill', '#4f46e5');
+  cPacket.setAttribute('cx', 450); cPacket.setAttribute('cy', 180);
+  logRow(cConsole, '<span class="tag">01</span> LOAD instruction — CPU asks for a value.');
+  animatePacket(cPacket, [{x:450,y:180},{x:450,y:300}], 500, () => {
+    pulse(cachePulse);
+    logRow(cConsole, '<span class="tag">02</span> Not in cache — a miss. Falling through to RAM.');
+    cPacket.setAttribute('fill', '#0ea472');
+    animatePacket(cPacket, [{x:450,y:300},{x:450,y:405}], 550, () => {
+      pulse(ramPulse);
+      logRow(cConsole, '<span class="tag">03</span> Found in RAM.');
+      setGauge(35, '~100', 'ns', 'cache miss, RAM hit — a hundred times slower');
+      logRow(cConsole, '<span class="tag">04</span> Copied into cache for next time, then sent up to the CPU.');
+      cPacket.setAttribute('fill', '#f59e0b');
+      animatePacket(cPacket, [{x:450,y:405},{x:450,y:300},{x:450,y:180}], 700, () => {
+        cPacket.setAttribute('opacity','0');
+        setButtons(false);
+      });
+    });
+  });
+});
+
+btnSec.addEventListener('click', () => {
+  setButtons(true);
+  highlightRow('mem');
+  cPacket.setAttribute('fill', '#4f46e5');
+  cPacket.setAttribute('cx', 450); cPacket.setAttribute('cy', 180);
+  logRow(cConsole, '<span class="tag">01</span> LOAD instruction — CPU asks for a value that isn\'t currently loaded anywhere close by.');
+  animatePacket(cPacket, [{x:450,y:180},{x:450,y:300}], 500, () => {
+    pulse(cachePulse);
+    logRow(cConsole, '<span class="tag">02</span> Cache miss.');
+    cPacket.setAttribute('fill', '#0ea472');
+    animatePacket(cPacket, [{x:450,y:300},{x:450,y:405}], 500, () => {
+      pulse(ramPulse);
+      logRow(cConsole, '<span class="tag">03</span> Not in RAM either — a page fault. Dropping down to Secondary Memory.');
+      cPacket.setAttribute('fill', '#c026a3');
+      animatePacket(cPacket, [{x:450,y:405},{x:450,y:515}], 650, () => {
+        pulse(secPulse);
+        logRow(cConsole, '<span class="tag">04</span> Located on the SSD/HDD — the slowest hop in the whole system.');
+        setGauge(100, '~10', 'ms', 'page fault — roughly ten million times slower than a cache hit');
+        logRow(cConsole, '<span class="tag">05</span> Loaded up into RAM, then into cache, then finally reaches the CPU.');
+        cPacket.setAttribute('fill', '#0ea472');
+        animatePacket(cPacket, [{x:450,y:515},{x:450,y:405}], 500, () => {
+          cPacket.setAttribute('fill', '#f59e0b');
+          animatePacket(cPacket, [{x:450,y:405},{x:450,y:300}], 500, () => {
+            cPacket.setAttribute('fill', '#4f46e5');
+            animatePacket(cPacket, [{x:450,y:300},{x:450,y:180}], 500, () => {
+              cPacket.setAttribute('opacity','0');
+              setButtons(false);
+            });
+          });
+        });
+      });
+    });
+  });
+});
+
+btnReset.addEventListener('click', () => {
+  cConsole.innerHTML = '<span class="row idle">Waiting for a request…</span>';
+  cPacket.setAttribute('opacity','0');
+  [inputPulse, outputPulse, cuPulse, aluPulse, regPulse, cachePulse, ramPulse, secPulse].forEach(el => el.style.opacity = '0');
+  highlightRow(null);
+  setGauge(2, '—', '', 'no request yet');
+  setButtons(false);
+});
+</script>
+</body>
+</html>
