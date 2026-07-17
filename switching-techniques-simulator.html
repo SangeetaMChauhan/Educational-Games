@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switching Techniques Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#f6f8fd;
+    --panel-2:#eef1fb;
+    --border:#dfe5f5;
+    --ink:#101a33;
+    --muted:#5b6786;
+    --circuit:#2563eb;
+    --circuit-soft:#dbe6fe;
+    --message:#9333ea;
+    --message-soft:#efe0fe;
+    --packet:#ea580c;
+    --packet-soft:#ffe6d5;
+    --accent: var(--circuit);
+    --accent-soft: var(--circuit-soft);
+    --good:#16a34a;
+    --radius:16px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:17px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+
+  .wrap{ max-width:1320px; margin:0 auto; padding:28px 28px 60px; }
+
+  header{
+    display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    gap:20px; margin-bottom:26px; border-bottom:3px solid var(--panel-2); padding-bottom:20px;
+  }
+  .title-block h1{
+    font-family:'Sora',sans-serif; font-weight:800; font-size:clamp(28px,4vw,42px);
+    margin:0 0 6px; letter-spacing:-0.02em;
+  }
+  .title-block p{ margin:0; color:var(--muted); font-size:18px; max-width:640px; }
+  .title-block .accent-word{color:var(--accent); transition:color .3s;}
+
+  .switch-signal{
+    display:flex; align-items:center; gap:10px;
+    font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--muted);
+  }
+  .dot-pulse{
+    width:10px;height:10px;border-radius:50%; background:var(--accent);
+    box-shadow:0 0 0 0 var(--accent-soft); animation:pulse 1.8s infinite; transition:background .3s;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 var(--accent-soft);}
+    70%{box-shadow:0 0 0 10px transparent;}
+    100%{box-shadow:0 0 0 0 transparent;}
+  }
+
+  .tabs{
+    display:flex; gap:6px; background:var(--panel); border:2px solid var(--border);
+    border-radius:999px; padding:6px; margin-bottom:18px; width:fit-content; flex-wrap:wrap;
+  }
+  .tab-btn{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:16px; border:none;
+    background:transparent; color:var(--muted); padding:12px 22px; border-radius:999px;
+    cursor:pointer; transition:all .25s ease;
+  }
+  .tab-btn.active{ background:var(--accent); color:#fff; box-shadow:0 6px 16px -4px var(--accent-soft); }
+  .tab-btn:not(.active):hover{ background:var(--panel-2); color:var(--ink); }
+
+  .stepper{ display:flex; gap:8px; margin:0 10px 14px; }
+  .step{
+    flex:1; text-align:center; padding:10px 6px; border-radius:10px; background:var(--panel-2);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:var(--muted);
+    border:2px solid transparent; transition:all .3s;
+  }
+  .step .num{ display:block; font-family:'Sora',sans-serif; font-size:15px; margin-bottom:2px; }
+  .step.active{ background:var(--accent); color:#fff; border-color:var(--accent); transform:translateY(-2px); }
+  .step.done{ background:var(--accent-soft); color:var(--accent); }
+
+  .path-note{ font-size:14.5px; color:var(--muted); padding:0 10px 12px; display:flex; align-items:center; gap:8px; }
+  .path-note b{color:var(--ink);}
+
+  .util-wrap{ display:flex; align-items:center; gap:12px; padding:0 10px 16px; }
+  .util-wrap .util-label{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--muted); white-space:nowrap; }
+  .util-track{ flex:1; height:16px; background:var(--panel-2); border-radius:999px; overflow:hidden; border:1px solid var(--border); }
+  .util-fill{ height:100%; width:0%; background:var(--accent); transition:width .35s ease, background .3s; border-radius:999px; }
+  .util-pct{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--ink); width:70px; text-align:right; }
+  .util-fill.waste{ background:repeating-linear-gradient(45deg, var(--accent), var(--accent) 8px, rgba(255,255,255,0.45) 8px, rgba(255,255,255,0.45) 16px); }
+
+  .grid{ display:grid; grid-template-columns:1.6fr 1fr; gap:22px; align-items:start; }
+  @media(max-width:960px){ .grid{grid-template-columns:1fr;} }
+
+  .card{ background:var(--panel); border:2px solid var(--border); border-radius:var(--radius); padding:20px; }
+
+  .stage-card{padding:14px 14px 20px;}
+  .stage-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 10px 6px; flex-wrap:wrap; gap:10px;
+  }
+  .stage-head h2{ font-family:'Sora',sans-serif; font-size:20px; margin:0; }
+  .phase-pill{
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
+    background:var(--accent-soft); color:var(--accent); padding:6px 14px; border-radius:999px; transition:all .3s;
+  }
+
+  svg#stage{ width:100%; height:auto; display:block; background:#fff; border-radius:12px; }
+  .link{ stroke:#c7d0ea; stroke-width:5; fill:none; stroke-linecap:round; transition:all .3s; }
+  .link.reserved{ stroke:var(--accent); stroke-width:9; }
+  .link.active-flash{ stroke:var(--accent); opacity:0.6; }
+  .link.idle-dim{ stroke:#eef1fb; stroke-width:4; opacity:0.6; stroke-dasharray:5 8; }
+  .node-circle{ fill:#fff; stroke:#aeb9dd; stroke-width:4; transition:all .25s ease; }
+  .node-circle.endpoint{ stroke:var(--ink); fill:var(--panel-2); }
+  .node-circle.busy{ stroke:var(--accent); fill:var(--accent-soft); filter:drop-shadow(0 0 8px var(--accent-soft)); }
+  .node-label{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:16px; fill:var(--ink);
+    text-anchor:middle; pointer-events:none;
+  }
+  .node-sub{
+    font-family:'JetBrains Mono',monospace; font-size:11px; fill:var(--muted);
+    text-anchor:middle; pointer-events:none;
+  }
+  .traveler{ filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+  .traveler-label{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; fill:#fff;
+    text-anchor:middle; pointer-events:none;
+  }
+  .reserved-badge{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; fill:var(--accent);
+    text-anchor:middle; opacity:0; transition:opacity .3s;
+  }
+  .reserved-badge.show{ opacity:1; }
+  .reserved-badge-bg{ fill:#fff; stroke:var(--accent); stroke-width:2; opacity:0; transition:opacity .3s; }
+  .reserved-badge-bg.show{ opacity:1; }
+
+  .frag-label{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px;
+    text-anchor:middle; fill:#fff; pointer-events:none;
+  }
+  .slot-box{ fill:#fff; stroke:#c7d0ea; stroke-width:2.5; stroke-dasharray:4 4; transition:all .3s; }
+  .slot-box.filled{ stroke-dasharray:0; }
+  .slot-label{ font-family:'JetBrains Mono',monospace; font-size:11px; fill:var(--muted); text-anchor:middle; pointer-events:none; }
+
+  .controls{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:6px; padding:0 10px; }
+  button.action{
+    font-family:'Sora',sans-serif; font-weight:700; font-size:16px; padding:12px 22px; border-radius:12px;
+    border:none; cursor:pointer; background:var(--accent); color:#fff; transition:transform .15s, box-shadow .15s, background .3s;
+  }
+  button.action:hover:not(:disabled){transform:translateY(-2px); box-shadow:0 8px 18px -6px var(--accent-soft);}
+  button.action:disabled{opacity:.45; cursor:not-allowed;}
+  button.ghost{ background:transparent; color:var(--ink); border:2px solid var(--border); }
+  button.ghost:hover:not(:disabled){border-color:var(--accent); color:var(--accent);}
+
+  .speed-wrap{
+    display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace;
+    font-size:14px; color:var(--muted); margin-left:auto;
+  }
+  input[type=range]{accent-color:var(--accent); width:120px;}
+
+  .side-stack{display:flex; flex-direction:column; gap:18px;}
+  .info-card h3{ font-family:'Sora',sans-serif; font-size:19px; margin:0 0 10px; color:var(--accent); transition:color .3s; }
+  .info-card ul{ margin:0; padding-left:20px; font-size:15.5px; color:var(--ink); }
+  .info-card li{margin-bottom:8px;}
+  .info-card li b{color:var(--ink);}
+
+  .log-card h3{ font-family:'Sora',sans-serif; font-size:17px; margin:0 0 10px; }
+  #log{
+    height:230px; overflow-y:auto; background:#fff; border:2px solid var(--border); border-radius:10px;
+    padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--ink);
+  }
+  #log .entry{margin-bottom:8px; display:flex; gap:8px;}
+  #log .entry .t{color:var(--muted); flex-shrink:0;}
+  #log .entry.good .msg{color:var(--good); font-weight:600;}
+  #log .entry.warn .msg{color:#d97706; font-weight:600;}
+  #log::-webkit-scrollbar{width:8px;}
+  #log::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+
+  .compare{ margin-top:26px; }
+  .compare h2{ font-family:'Sora',sans-serif; font-size:24px; margin-bottom:14px; }
+  table{ width:100%; border-collapse:collapse; background:var(--panel); border:2px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  th,td{ text-align:left; padding:14px 16px; font-size:15.5px; border-bottom:1px solid var(--border); }
+  th{ font-family:'Sora',sans-serif; background:var(--panel-2); font-size:15px; }
+  tr:last-child td{border-bottom:none;}
+  td.tech-name{font-weight:700; font-family:'Sora',sans-serif;}
+  .swatch{ display:inline-block; width:12px;height:12px; border-radius:50%; margin-right:8px; }
+
+  footer{ text-align:center; color:var(--muted); font-size:13.5px; margin-top:34px; font-family:'JetBrains Mono',monospace; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="title-block">
+      <h1>Switching Techniques <span class="accent-word">Simulator</span></h1>
+      <p>Watch how data actually travels across a network under <b>Circuit</b>, <b>Message</b>, and <b>Packet</b> switching — hop by hop, in real time.</p>
+    </div>
+    <div class="switch-signal"><span class="dot-pulse"></span> LIVE NETWORK VIEW</div>
+  </header>
+
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-mode="circuit">🔵 Circuit Switching</button>
+    <button class="tab-btn" data-mode="message">🟣 Message Switching</button>
+    <button class="tab-btn" data-mode="packet">🟠 Packet Switching</button>
+  </div>
+
+  <div class="grid">
+
+    <div class="card stage-card">
+      <div class="stage-head">
+        <h2 id="stageTitle">Circuit Switching</h2>
+        <div class="phase-pill" id="phasePill">Idle</div>
+      </div>
+
+      <div class="stepper" id="stepper"></div>
+      <div class="path-note" id="pathNote"></div>
+
+      <div class="util-wrap">
+        <span class="util-label">📊 LINK OCCUPANCY</span>
+        <div class="util-track"><div class="util-fill" id="utilFill"></div></div>
+        <span class="util-pct" id="utilPct">0% free</span>
+      </div>
+
+      <svg id="stage" viewBox="0 0 860 470" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <div class="controls">
+        <button class="action" id="playBtn">▶ Run Simulation</button>
+        <button class="action ghost" id="resetBtn">⟲ Reset</button>
+        <div class="speed-wrap">
+          <span>SPEED</span>
+          <input type="range" id="speed" min="0.5" max="2" step="0.25" value="1">
+          <span id="speedVal">1.0x</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-stack">
+      <div class="card info-card" id="infoCard">
+        <h3 id="infoTitle">How Circuit Switching works</h3>
+        <ul id="infoList"></ul>
+      </div>
+
+      <div class="card log-card">
+        <h3>📟 Event Log</h3>
+        <div id="log"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="compare">
+    <h2>Quick Comparison</h2>
+    <table>
+      <thead>
+        <tr><th>Technique</th><th>Path setup</th><th>How data moves</th><th>Typical delay</th><th>Real-world example</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="tech-name"><span class="swatch" style="background:var(--circuit)"></span>Circuit Switching</td>
+          <td>Dedicated path reserved before transfer (setup + ack)</td>
+          <td>Continuous stream on ONE fixed reserved path</td>
+          <td>Setup delay, then near-zero transfer delay</td>
+          <td>Traditional telephone calls</td>
+        </tr>
+        <tr>
+          <td class="tech-name"><span class="swatch" style="background:var(--message)"></span>Message Switching</td>
+          <td>No reservation — ONE path chosen per hop</td>
+          <td>Whole message stored fully, then forwarded — not split</td>
+          <td>High — full message delay at every hop</td>
+          <td>Old telegraph / store-and-forward email</td>
+        </tr>
+        <tr>
+          <td class="tech-name"><span class="swatch" style="background:var(--packet)"></span>Packet Switching</td>
+          <td>No reservation — routed dynamically</td>
+          <td>Message SPLIT into packets, sent over MULTIPLE paths at once</td>
+          <td>Low, variable — packets may arrive out of order</td>
+          <td>The Internet (IP networks)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Educational simulation • built to visualize network switching concepts</footer>
+</div>
+
+<script>
+const THEMES = {
+  circuit:{
+    accent:'#2563eb', soft:'#dbe6fe', title:'Circuit Switching',
+    note:'Only <b>ONE</b> dedicated path is reserved for the whole session. The unused path below is dimmed — it is never touched.',
+    steps:['Setup Request','Acknowledgment','Data Transfer','Teardown'],
+    info:[
+      '<b>Dedicated path</b> between sender and receiver is reserved before any data flows.',
+      'A <b>setup (request) signal</b> travels forward, then an <b>acknowledgment</b> travels back to confirm.',
+      'Once reserved, the entire path is <b>locked for the whole session</b> — even during silence.',
+      'Data flows as a <b>continuous stream</b>; a final <b>teardown</b> signal releases the path.'
+    ]
+  },
+  message:{
+    accent:'#9333ea', soft:'#efe0fe', title:'Message Switching',
+    note:'Only <b>ONE</b> path is used, chosen hop-by-hop — but it is <b>never reserved</b>. The whole message travels as a single unsplit block.',
+    steps:['Send Message','Store Fully','Forward','Delivered'],
+    info:[
+      'No dedicated path is reserved — each hop decides the next link on the fly.',
+      'The <b>entire message</b> is sent as ONE unit — it is <u>not</u> broken into pieces.',
+      'This is <b>store-and-forward</b>: each switch receives the full message, then forwards it.',
+      'Simple and reliable, but a large message causes a long delay at every single hop.'
+    ]
+  },
+  packet:{
+    accent:'#ea580c', soft:'#ffe6d5', title:'Packet Switching',
+    note:'The message is <b>fragmented</b> into packets first. Packets may travel over <b>multiple different paths at the same time</b>.',
+    steps:['Fragment Message','Independent Routing','Store & Forward','Reassemble'],
+    info:[
+      'The message is first <b>broken into smaller packets</b>, each with its own header/number.',
+      'Packets can travel via <b>different routes</b> at the same time, depending on conditions.',
+      'Each packet is still <b>stored-and-forwarded</b> hop by hop, but independently of the others.',
+      'Packets may arrive <b>out of order</b> and are <b>reassembled</b> using sequence numbers at D.'
+    ]
+  }
+};
+
+const NODES = {
+  S:  {x:55,  y:235, label:'S',  sub:'Source',      endpoint:true},
+  N1: {x:230, y:105, label:'N1', sub:'Switch'},
+  N2: {x:400, y:105, label:'N2', sub:'Switch'},
+  N3: {x:570, y:105, label:'N3', sub:'Switch'},
+  N4: {x:230, y:365, label:'N4', sub:'Switch'},
+  N5: {x:400, y:365, label:'N5', sub:'Switch'},
+  N6: {x:570, y:365, label:'N6', sub:'Switch'},
+  D:  {x:730, y:235, label:'D',  sub:'Destination', endpoint:true}
+};
+const EDGES = [
+  ['S','N1'],['N1','N2'],['N2','N3'],['N3','D'],
+  ['S','N4'],['N4','N5'],['N5','N6'],['N6','D']
+];
+const TOP = ['S','N1','N2','N3','D'];
+const BOTTOM = ['S','N4','N5','N6','D'];
+
+let mode = 'circuit';
+let running = false;
+let speed = 1;
+
+const svg = document.getElementById('stage');
+const logEl = document.getElementById('log');
+const phasePill = document.getElementById('phasePill');
+const playBtn = document.getElementById('playBtn');
+const resetBtn = document.getElementById('resetBtn');
+const stageTitle = document.getElementById('stageTitle');
+const infoTitle = document.getElementById('infoTitle');
+const infoList = document.getElementById('infoList');
+const stepperEl = document.getElementById('stepper');
+const pathNoteEl = document.getElementById('pathNote');
+
+function edgeId(a,b){ return 'edge-'+a+'-'+b; }
+function ns(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+function buildStage(){
+  svg.innerHTML = '';
+  EDGES.forEach(([a,b])=>{
+    const n1 = NODES[a], n2 = NODES[b];
+    const path = ns('path');
+    path.setAttribute('d', `M ${n1.x} ${n1.y} L ${n2.x} ${n2.y}`);
+    path.setAttribute('class','link');
+    path.setAttribute('id', edgeId(a,b));
+    svg.appendChild(path);
+  });
+
+  Object.entries(NODES).forEach(([id,n])=>{
+    const g = ns('g');
+    g.setAttribute('id','node-'+id);
+    const circle = ns('circle');
+    circle.setAttribute('cx', n.x); circle.setAttribute('cy', n.y); circle.setAttribute('r', 30);
+    circle.setAttribute('class', 'node-circle' + (n.endpoint ? ' endpoint':''));
+    g.appendChild(circle);
+    const label = ns('text');
+    label.setAttribute('x', n.x); label.setAttribute('y', n.y + 5);
+    label.setAttribute('class','node-label'); label.textContent = n.label;
+    g.appendChild(label);
+    const sub = ns('text');
+    sub.setAttribute('x', n.x); sub.setAttribute('y', n.y + 48);
+    sub.setAttribute('class','node-sub'); sub.textContent = n.sub;
+    g.appendChild(sub);
+    svg.appendChild(g);
+  });
+
+  const badgeBg = ns('rect');
+  badgeBg.setAttribute('id','reservedBadgeBg');
+  badgeBg.setAttribute('class','reserved-badge-bg');
+  badgeBg.setAttribute('x', 340); badgeBg.setAttribute('y', 55);
+  badgeBg.setAttribute('width', 120); badgeBg.setAttribute('height', 26);
+  badgeBg.setAttribute('rx', 8);
+  svg.appendChild(badgeBg);
+  const badge = ns('text');
+  badge.setAttribute('id','reservedBadge');
+  badge.setAttribute('class','reserved-badge');
+  badge.setAttribute('x', 400); badge.setAttribute('y', 72);
+  badge.textContent = '🔒 CIRCUIT RESERVED';
+  svg.appendChild(badge);
+
+  const fragGroup = ns('g');
+  fragGroup.setAttribute('id','fragGroup');
+  svg.appendChild(fragGroup);
+
+  const slotGroup = ns('g');
+  slotGroup.setAttribute('id','slotGroup');
+  const slotY = [55, 125, 195, 265];
+  ['1','2','3','4'].forEach((n,i)=>{
+    const box = ns('rect');
+    box.setAttribute('class','slot-box');
+    box.setAttribute('id','slot-'+n);
+    box.setAttribute('x', 795); box.setAttribute('y', slotY[i]);
+    box.setAttribute('width', 46); box.setAttribute('height', 34);
+    box.setAttribute('rx', 8);
+    slotGroup.appendChild(box);
+    const lbl = ns('text');
+    lbl.setAttribute('class','slot-label');
+    lbl.setAttribute('x', 818); lbl.setAttribute('y', slotY[i]-6);
+    lbl.textContent = 'seq '+n;
+    slotGroup.appendChild(lbl);
+    const txt = ns('text');
+    txt.setAttribute('id','slot-txt-'+n);
+    txt.setAttribute('class','frag-label');
+    txt.setAttribute('x', 818); txt.setAttribute('y', slotY[i]+22);
+    txt.setAttribute('fill', '#5b6786');
+    slotGroup.appendChild(txt);
+  });
+  svg.appendChild(slotGroup);
+}
+
+function getPathEl(a,b){ return document.getElementById(edgeId(a,b)) || document.getElementById(edgeId(b,a)); }
+function setNodeBusy(id, busy){ const el = document.querySelector(`#node-${id} .node-circle`); if(el) el.classList.toggle('busy', busy); }
+function setEdgeState(a,b,state){
+  const el = getPathEl(a,b); if(!el) return;
+  el.classList.remove('reserved','active-flash','idle-dim');
+  if(state) el.classList.add(state);
+}
+function resetEdges(){ EDGES.forEach(([a,b])=> setEdgeState(a,b,null)); Object.keys(NODES).forEach(id=> setNodeBusy(id,false)); }
+
+function dimBottomPath(dim){
+  const bottomEdges = [['S','N4'],['N4','N5'],['N5','N6'],['N6','D']];
+  bottomEdges.forEach(([a,b])=> setEdgeState(a,b, dim ? 'idle-dim' : null));
+}
+
+function showReservedBadge(show){
+  document.getElementById('reservedBadge').classList.toggle('show', show);
+  document.getElementById('reservedBadgeBg').classList.toggle('show', show);
+}
+
+function spawnTraveler(color, label, startNode, radius){
+  const n = NODES[startNode];
+  const g = ns('g'); g.setAttribute('class','traveler');
+  const r = ns('circle'); r.setAttribute('r', radius||17); r.setAttribute('fill', color);
+  g.appendChild(r);
+  const t = ns('text'); t.setAttribute('class','traveler-label'); t.setAttribute('y', 4); t.textContent = label;
+  g.appendChild(t);
+  g.setAttribute('transform', `translate(${n.x},${n.y})`);
+  svg.appendChild(g);
+  return g;
+}
+
+function moveTraveler(g, from, to, duration){
+  return new Promise(resolve=>{
+    const start = performance.now();
+    const a = (typeof from==='string') ? NODES[from] : from;
+    const b = (typeof to==='string') ? NODES[to] : to;
+    function frame(now){
+      let t = Math.min((now-start)/duration, 1);
+      const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
+      const x = a.x + (b.x-a.x)*ease;
+      const y = a.y + (b.y-a.y)*ease;
+      g.setAttribute('transform', `translate(${x},${y})`);
+      if(t<1) requestAnimationFrame(frame); else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
+}
+function removeTraveler(g){ g.remove(); }
+
+function log(msg, cls){
+  const row = document.createElement('div');
+  row.className = 'entry' + (cls? ' '+cls:'');
+  const time = new Date().toLocaleTimeString([], {hour12:false});
+  row.innerHTML = `<span class="t">[${time}]</span><span class="msg">${msg}</span>`;
+  logEl.appendChild(row);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog(){ logEl.innerHTML=''; }
+function setPhase(text){ phasePill.textContent = text; }
+function delay(ms){ return new Promise(r=> setTimeout(r, ms/speed)); }
+function dur(ms){ return ms/speed; }
+
+function buildStepper(m){
+  const th = THEMES[m];
+  stepperEl.innerHTML = th.steps.map((s,i)=>`<div class="step" id="step-${i}"><span class="num">${i+1}</span>${s}</div>`).join('');
+}
+function updateStepper(idx){
+  const th = THEMES[mode];
+  th.steps.forEach((s,i)=>{
+    const el = document.getElementById('step-'+i);
+    if(!el) return;
+    el.classList.remove('active','done');
+    if(i===idx) el.classList.add('active');
+    else if(i<idx) el.classList.add('done');
+  });
+}
+
+function applyTheme(m){
+  const th = THEMES[m];
+  document.documentElement.style.setProperty('--accent', th.accent);
+  document.documentElement.style.setProperty('--accent-soft', th.soft);
+  stageTitle.textContent = th.title;
+  infoTitle.textContent = 'How ' + th.title + ' works';
+  infoList.innerHTML = th.info.map(i=>`<li>${i}</li>`).join('');
+  pathNoteEl.innerHTML = '📌 ' + th.note;
+  buildStepper(m);
+}
+
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn || running) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  mode = btn.dataset.mode;
+  applyTheme(mode);
+  resetAll();
+});
+
+document.getElementById('speed').addEventListener('input', (e)=>{
+  speed = parseFloat(e.target.value);
+  document.getElementById('speedVal').textContent = speed.toFixed(2)+'x';
+});
+
+const utilFill = document.getElementById('utilFill');
+const utilPct = document.getElementById('utilPct');
+let activeBursts = 0;
+
+function setUtil(pct, waste){
+  pct = Math.max(0, Math.min(100, pct));
+  utilFill.style.width = pct + '%';
+  utilFill.classList.toggle('waste', !!waste);
+  utilPct.textContent = pct + (waste ? '% reserved (idle)' : '% busy');
+}
+function resetUtil(){
+  activeBursts = 0;
+  utilFill.classList.remove('waste');
+  utilFill.style.width = '0%';
+  utilPct.textContent = '0% free';
+}
+function bumpBurst(delta){
+  activeBursts = Math.max(0, activeBursts + delta);
+  setUtil(Math.min(100, activeBursts * 32), false);
+}
+
+function clearFragAndSlots(){
+  document.getElementById('fragGroup').innerHTML = '';
+  ['1','2','3','4'].forEach(n=>{
+    const box = document.getElementById('slot-'+n);
+    const txt = document.getElementById('slot-txt-'+n);
+    if(box){ box.classList.remove('filled'); box.setAttribute('stroke', '#c7d0ea'); box.setAttribute('fill', '#fff'); }
+    if(txt) txt.textContent = '';
+  });
+}
+
+function resetAll(){
+  running = false;
+  playBtn.disabled = false;
+  playBtn.textContent = '▶ Run Simulation';
+  setPhase('Idle');
+  clearLog();
+  resetEdges();
+  showReservedBadge(false);
+  clearFragAndSlots();
+  svg.querySelectorAll('.traveler').forEach(t=>t.remove());
+  dimBottomPath(mode !== 'packet');
+  updateStepper(-1);
+  resetUtil();
+}
+resetBtn.addEventListener('click', resetAll);
+
+async function runCircuit(){
+  dimBottomPath(true);
+  updateStepper(0);
+  setPhase('Step 1 — Setup Request…');
+  log('Source <b>S</b> sends a <b>connection request</b> toward Destination <b>D</b>.');
+  await delay(400);
+
+  for(let i=0;i<TOP.length-1;i++){
+    const a=TOP[i], b=TOP[i+1];
+    setNodeBusy(a,true);
+    const sig = spawnTraveler('#2563eb','REQ', a, 15);
+    setEdgeState(a,b,'active-flash');
+    await moveTraveler(sig, a, b, dur(380));
+    removeTraveler(sig);
+    setNodeBusy(a,false);
+    setEdgeState(a,b,null);
+    log(`Setup request reaches <b>${b}</b> — checking if a free line is available…`);
+    await delay(150);
+  }
+  log('Request reached <b>D</b>. Destination is ready to accept the call.', 'good');
+  await delay(300);
+
+  updateStepper(1);
+  setPhase('Step 2 — Acknowledgment…');
+  log('<b>D</b> sends an <b>ACK</b> back to confirm — reserving the path link by link.');
+  const revTop = [...TOP].reverse();
+  for(let i=0;i<revTop.length-1;i++){
+    const a=revTop[i], b=revTop[i+1];
+    setNodeBusy(a,true);
+    const ack = spawnTraveler('#16a34a','ACK', a, 15);
+    await moveTraveler(ack, a, b, dur(380));
+    removeTraveler(ack);
+    setNodeBusy(a,false);
+    setEdgeState(b,a,'reserved');
+    log(`Link ${b}↔${a} <b>reserved</b> for this call.`);
+    await delay(150);
+  }
+  showReservedBadge(true);
+  log('✅ Circuit fully established: <b>S–N1–N2–N3–D</b> is now dedicated to this call.', 'good');
+  setUtil(100, true);
+  await delay(400);
+
+  log('⏳ Notice: the whole path is already <b>100% reserved</b>, even though no data is moving yet — this idle reservation is wasted capacity.', 'warn');
+  await delay(900);
+
+  updateStepper(2);
+  setPhase('Step 3 — Data Transfer (dedicated line)…');
+  setUtil(100, false);
+  log('Data now flows continuously — <b>no store-and-forward waiting</b> at any switch.');
+  for(let round=0; round<3; round++){
+    const dot = spawnTraveler('#2563eb','●','S', 14);
+    for(let i=0;i<TOP.length-1;i++){
+      const a=TOP[i], b=TOP[i+1];
+      await moveTraveler(dot, a, b, dur(220));
+    }
+    removeTraveler(dot);
+  }
+  log('All data delivered to <b>D</b> successfully over the reserved circuit.', 'good');
+  await delay(300);
+
+  updateStepper(3);
+  setPhase('Step 4 — Teardown…');
+  setUtil(0, false);
+  const rel = spawnTraveler('#64748b','REL','S', 15);
+  for(let i=0;i<TOP.length-1;i++){
+    const a=TOP[i], b=TOP[i+1];
+    await moveTraveler(rel, a, b, dur(300));
+    setEdgeState(a,b,null);
+  }
+  removeTraveler(rel);
+  showReservedBadge(false);
+  log('Circuit released. The path is free for other calls again.');
+  setPhase('Complete ✓');
+}
+
+async function runMessage(){
+  dimBottomPath(true);
+  updateStepper(0);
+  setPhase('Sending message (store-and-forward)…');
+  log('Source <b>S</b> prepares <b>one complete, unsplit message</b> for <b>D</b>. No path is reserved.');
+  await delay(400);
+
+  const msg = spawnTraveler('#9333ea','MSG','S', 20);
+  for(let i=0;i<TOP.length-1;i++){
+    const a=TOP[i], b=TOP[i+1];
+    updateStepper(1);
+    setEdgeState(a,b,'active-flash');
+    setPhase(`Travelling ${a} → ${b} (link used only for this hop)…`);
+    log(`Message travelling ${a} → ${b} — link is <b>not</b> reserved, used only now.`);
+    setUtil(85, false);
+    await moveTraveler(msg, a, b, dur(500));
+    setEdgeState(a,b,null);
+    setNodeBusy(b,true);
+    updateStepper(1);
+    setUtil(0, false);
+    log(`<b>${b}</b> receives the <u>entire</u> message and stores it fully before doing anything else.`);
+    setPhase(`Stored at ${b} — reading destination, then forwarding…`);
+    await delay(700);
+    updateStepper(2);
+    setNodeBusy(b,false);
+    await delay(150);
+  }
+  removeTraveler(msg);
+  updateStepper(3);
+  log('✅ Full message delivered and reconstructed at <b>D</b> — it was never broken apart.', 'good');
+  setPhase('Complete ✓');
+}
+
+async function runPacket(){
+  dimBottomPath(false);
+  clearFragAndSlots();
+  updateStepper(0);
+  setPhase('Step 1 — Fragmenting the message…');
+  log('Source <b>S</b> prepares one message: <b>"HELLO WORLD"</b>.');
+  await delay(400);
+
+  const fragGroup = document.getElementById('fragGroup');
+  const bigMsg = ns('rect');
+  bigMsg.setAttribute('x', 15); bigMsg.setAttribute('y', 15);
+  bigMsg.setAttribute('width', 150); bigMsg.setAttribute('height', 40);
+  bigMsg.setAttribute('rx', 8);
+  bigMsg.setAttribute('fill', '#101a33');
+  fragGroup.appendChild(bigMsg);
+  const bigTxt = ns('text');
+  bigTxt.setAttribute('x', 90); bigTxt.setAttribute('y', 40);
+  bigTxt.setAttribute('class','frag-label');
+  bigTxt.textContent = 'FULL MESSAGE';
+  fragGroup.appendChild(bigTxt);
+  log('Splitting the message into 4 numbered <b>packets</b>: P1, P2, P3, P4 — each gets its own header.');
+  await delay(700);
+
+  const colors = ['#f97316','#10b981','#ef4444','#0284c7'];
+  bigMsg.remove(); bigTxt.remove();
+  const miniXs = [15, 55, 95, 135];
+  for(let i=0;i<4;i++){
+    const r = ns('rect');
+    r.setAttribute('x', miniXs[i]); r.setAttribute('y', 15);
+    r.setAttribute('width', 34); r.setAttribute('height', 40);
+    r.setAttribute('rx', 6); r.setAttribute('fill', colors[i]);
+    fragGroup.appendChild(r);
+    const t = ns('text');
+    t.setAttribute('x', miniXs[i]+17); t.setAttribute('y', 40);
+    t.setAttribute('class','frag-label'); t.textContent = 'P'+(i+1);
+    fragGroup.appendChild(t);
+    await delay(150);
+  }
+  log('Message fragmented into 4 independent packets, ready to be sent separately.', 'good');
+  await delay(500);
+  fragGroup.innerHTML='';
+
+  updateStepper(1);
+  setPhase('Step 2 — Routing packets independently…');
+  log('📊 Watch Link Occupancy: it rises and falls in short bursts as different packets share the same links — this is <b>statistical multiplexing</b>.');
+
+  const packets = [
+    {id:'P1', color:'#f97316', route: TOP,    hopDelay:450, congest:false},
+    {id:'P2', color:'#10b981', route: BOTTOM, hopDelay:450, congest:true },
+    {id:'P3', color:'#ef4444', route: TOP,    hopDelay:450, congest:false},
+    {id:'P4', color:'#0284c7', route: BOTTOM, hopDelay:450, congest:false},
+  ];
+  const arrivals = [];
+
+  async function sendPacket(p, startDelay){
+    await delay(startDelay);
+    log(`<b>${p.id}</b> leaves <b>S</b> via route ${p.route.join('→')}.`);
+    const dot = spawnTraveler(p.color, p.id, 'S', 16);
+    for(let i=0;i<p.route.length-1;i++){
+      const a=p.route[i], b=p.route[i+1];
+      setEdgeState(a,b,'active-flash');
+      updateStepper(2);
+      bumpBurst(1);
+      await moveTraveler(dot, a, b, dur(p.hopDelay));
+      bumpBurst(-1);
+      if(b!=='D'){
+        setEdgeState(a,b,null);
+        setNodeBusy(b,true);
+        log(`${p.id} stored briefly at <b>${b}</b>, then forwarded independently.`);
+        let wait = 300;
+        if(p.congest && b==='N5'){
+          wait = 1200;
+          log(`⚠ Congestion at <b>${b}</b> — ${p.id} delayed longer than the others.`, 'warn');
+        }
+        await delay(wait);
+        setNodeBusy(b,false);
+      } else {
+        setEdgeState(a,b,null);
+      }
+    }
+    removeTraveler(dot);
+    arrivals.push(p.id);
+
+    const seq = p.id.replace('P','');
+    const box = document.getElementById('slot-'+seq);
+    const txt = document.getElementById('slot-txt-'+seq);
+    box.classList.add('filled');
+    box.setAttribute('stroke', p.color);
+    box.setAttribute('fill', p.color);
+    txt.setAttribute('fill', '#fff');
+    txt.textContent = p.id;
+    log(`<b>${p.id}</b> arrived at <b>D</b> and placed into reassembly slot #${seq}.`, 'good');
+  }
+
+  await Promise.all([
+    sendPacket(packets[0], 0),
+    sendPacket(packets[1], 150),
+    sendPacket(packets[2], 300),
+    sendPacket(packets[3], 450),
+  ]);
+
+  updateStepper(3);
+  setPhase('Step 4 — Reassembling at destination…');
+  log(`Arrival order at D: ${arrivals.join(', ')} — <i>notice it's out of original order!</i>`, 'warn');
+  await delay(500);
+  log('Destination reorders packets using their sequence numbers: P1 → P2 → P3 → P4.');
+  await delay(500);
+  log('✅ Message fully reassembled at <b>D</b>: "HELLO WORLD".', 'good');
+  setUtil(0, false);
+  setPhase('Complete ✓');
+}
+
+playBtn.addEventListener('click', async ()=>{
+  if(running) return;
+  running = true;
+  playBtn.disabled = true;
+  playBtn.textContent = 'Running…';
+  clearLog();
+  resetEdges();
+  showReservedBadge(false);
+  clearFragAndSlots();
+  svg.querySelectorAll('.traveler').forEach(t=>t.remove());
+  resetUtil();
+
+  try{
+    if(mode==='circuit') await runCircuit();
+    else if(mode==='message') await runMessage();
+    else await runPacket();
+  } catch(e){ console.error(e); }
+
+  running = false;
+  playBtn.disabled = false;
+  playBtn.textContent = '▶ Run Again';
+});
+
+buildStage();
+applyTheme(mode);
+setPhase('Idle');
+dimBottomPath(true);
+updateStepper(-1);
+log('Select a switching technique above, then press <b>Run Simulation</b>.');
+</script>
+</body>
+</html>

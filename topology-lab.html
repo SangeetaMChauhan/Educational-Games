@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Topology Lab — Learn Network Topologies</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ffffff;
+    --grid:#eef0f6;
+    --ink:#1b1f3b;
+    --ink-soft:#5b5f7a;
+    --indigo:#4c3bcf;
+    --indigo-deep:#372aa3;
+    --coral:#ff6b6b;
+    --amber:#ffb627;
+    --teal:#06aed5;
+    --violet:#7c5cfc;
+    --mint:#12b886;
+    --pink:#f368e0;
+    --line:#dfe2ee;
+    --good:#12b886;
+    --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+  }
+  ::selection{background:var(--violet);color:#fff;}
+
+  /* ---------- Header ---------- */
+  header{
+    padding:28px clamp(16px,4vw,48px) 10px;
+    border-bottom:2px dashed var(--line);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--indigo);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:8px;height:8px;border-radius:50%;
+    background:var(--coral);
+    display:inline-block;
+  }
+  h1{
+    font-family:'Fredoka',sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,4vw,42px);
+    margin:0 0 6px;
+    letter-spacing:.2px;
+  }
+  h1 span{color:var(--indigo);}
+  header p{
+    margin:0;
+    color:var(--ink-soft);
+    max-width:640px;
+    font-size:15px;
+    line-height:1.5;
+  }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:0;
+    min-height:calc(100vh - 140px);
+  }
+  @media(max-width:880px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Sidebar ---------- */
+  aside{
+    border-right:2px dashed var(--line);
+    padding:20px 16px;
+    overflow:auto;
+  }
+  .side-title{
+    font-family:'Fredoka',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin:4px 6px 12px;
+  }
+  .topo-card{
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    background:#fff;
+  }
+  .topo-card:hover{transform:translateY(-2px);}
+  .topo-card.active{
+    border-color:var(--accent,var(--indigo));
+    box-shadow:0 6px 0 0 var(--accent,var(--indigo));
+    transform:translateY(-2px);
+  }
+  .topo-card .name{
+    font-family:'Fredoka',sans-serif;
+    font-weight:600;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .topo-card .swatch{
+    width:12px;height:12px;border-radius:4px;
+    background:var(--accent,var(--indigo));
+    flex:none;
+  }
+  .topo-card .blurb{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:4px;
+    line-height:1.4;
+  }
+
+  .info-panel{
+    margin-top:18px;
+    border:2px solid var(--ink);
+    border-radius:16px;
+    padding:16px;
+    background:#fff;
+  }
+  .info-panel h3{
+    font-family:'Fredoka',sans-serif;
+    margin:0 0 8px;
+    font-size:18px;
+    color:var(--accent,var(--indigo));
+  }
+  .info-panel p{
+    font-size:13px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+  }
+  .info-actions{display:flex;flex-direction:column;gap:8px;}
+
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border-radius:10px;
+    border:2px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    padding:9px 12px;
+    cursor:pointer;
+    transition:transform .1s ease, background .15s ease, color .15s ease;
+  }
+  button:hover{transform:translateY(-1px);}
+  button:active{transform:translateY(0);}
+  button.primary{
+    background:var(--ink);
+    color:#fff;
+  }
+  button.accent{
+    background:var(--accent,var(--indigo));
+    border-color:var(--accent,var(--indigo));
+    color:#fff;
+  }
+  button.ghost{border-color:var(--line);color:var(--ink-soft);}
+  button:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+  /* ---------- Main / canvas ---------- */
+  main{
+    padding:20px clamp(12px,3vw,32px) 32px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .toolbar .group{display:flex;gap:8px;flex-wrap:wrap;}
+  .mode-pill{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    padding:6px 12px;
+    border-radius:999px;
+    background:var(--grid);
+    color:var(--ink-soft);
+    letter-spacing:.04em;
+  }
+  #connectToggle.on{
+    background:var(--coral);
+    border-color:var(--coral);
+    color:#fff;
+  }
+
+  .canvas-wrap{
+    position:relative;
+    border:2px solid var(--ink);
+    border-radius:20px;
+    overflow:hidden;
+    background:
+      linear-gradient(var(--grid) 1.5px,transparent 1.5px) 0 0/40px 40px,
+      linear-gradient(90deg,var(--grid) 1.5px,transparent 1.5px) 0 0/40px 40px,
+      #ffffff;
+    aspect-ratio:5/3;
+    max-height:64vh;
+  }
+  svg#stage{
+    width:100%;
+    height:100%;
+    display:block;
+    touch-action:none;
+  }
+  .node{cursor:grab;}
+  .node:active{cursor:grabbing;}
+  .node .ring{
+    fill:none;
+    stroke-width:3;
+    stroke-dasharray:2 6;
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .node.selectable .ring{opacity:1;}
+  .node text.label{
+    font-family:'Fredoka',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    fill:var(--ink);
+    text-anchor:middle;
+  }
+  .cable{
+    fill:none;
+    stroke-linecap:round;
+    stroke-width:7;
+    opacity:.85;
+  }
+  .cable-plug{opacity:.9;}
+
+  .banner{
+    border:2px dashed var(--line);
+    border-radius:14px;
+    padding:12px 16px;
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--ink-soft);
+    min-height:20px;
+    transition:border-color .2s ease, color .2s ease, background .2s ease;
+  }
+  .banner.good{border-color:var(--good);color:var(--good);background:#ecfdf5;border-style:solid;}
+  .banner.bad{border-color:var(--bad);color:var(--bad);background:#fff1f1;border-style:solid;}
+  .banner strong{color:inherit;}
+
+  footer{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    padding:10px 0 20px;
+    font-family:'JetBrains Mono',monospace;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Networking Fundamentals</div>
+  <h1>Topology <span>Lab</span></h1>
+  <p>Drag devices, plug in cables, and see how a network's shape changes what happens when one part breaks. Pick a topology on the left to read about it, watch it get built, or try building it yourself.</p>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="side-title">Choose a topology</div>
+    <div id="topoList"></div>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <div class="group">
+        <button id="addPc" class="ghost">🖥️ + PC</button>
+        <button id="addHub" class="ghost">▭ + Switch/Hub</button>
+        <button id="addTerm" class="ghost">⏚ + Terminator</button>
+        <button id="connectToggle" class="ghost">🔌 Connect mode: off</button>
+        <button id="clearBtn" class="ghost">🗑 Clear board</button>
+      </div>
+      <div class="group">
+        <span class="mode-pill" id="modePill">SANDBOX MODE</span>
+        <button id="identifyBtn" class="primary">🔍 Identify my topology</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <svg id="stage" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="banner" id="banner">Tip: this board only starts with plain PCs. If a topology needs a <strong>Switch/Hub</strong> or a <strong>Terminator</strong>, add one yourself from the toolbar above — that's part of learning where each piece belongs. Then switch on <strong>Connect mode</strong> and click two devices to run a cable between them.</div>
+  </main>
+</div>
+
+
+<footer>Double-click a device to remove it · drag to rearrange · built for learning, not for production networks 🙂</footer>
+
+<script>
+(function(){
+  const svg = document.getElementById('stage');
+  const banner = document.getElementById('banner');
+  const modePill = document.getElementById('modePill');
+  const topoListEl = document.getElementById('topoList');
+  const identifyBtn = document.getElementById('identifyBtn');
+  const connectToggle = document.getElementById('connectToggle');
+  const addPcBtn = document.getElementById('addPc');
+  const addHubBtn = document.getElementById('addHub');
+  const addTermBtn = document.getElementById('addTerm');
+  const clearBtn = document.getElementById('clearBtn');
+
+  const PALETTE = ['#ff6b6b','#ffb627','#06aed5','#7c5cfc','#12b886','#f368e0','#ff9f1c','#3ddc97'];
+  const W = 1000, H = 600, CX = 500, CY = 300;
+
+  // ---------- topology definitions ----------
+  const TOPOLOGIES = {
+    bus: {
+      name:'Bus', accent:'#ff9f1c', n:5,
+      blurb:'One shared backbone cable carries all the traffic.',
+      desc:"All devices share one single communication line, called the backbone. Every device listens for messages addressed to it as they pass along the cable. Both ends of the backbone must be capped with a terminator — a small resistor that stops the signal bouncing back down the line. It's cheap and simple to set up, but if the backbone breaks, the whole network goes down, and things slow down as more devices join.",
+      hint:'A bus is a straight line: connect each device to the next one, in a single row, with no loops and no hub. Get it right and a 50Ω terminator cap will appear at each end of the line.',
+      layout(n){
+        const pts=[];
+        const margin=140;
+        for(let i=0;i<n;i++){
+          const x = margin + (W-2*margin) * (n===1?0.5:i/(n-1));
+          pts.push({x, y: CY});
+        }
+        return pts;
+      },
+      edges(n){
+        const e=[];
+        for(let i=0;i<n-1;i++) e.push([i,i+1]);
+        return e;
+      }
+    },
+    star: {
+      name:'Star', accent:'#4c3bcf', n:6,
+      blurb:'Every device plugs into one central hub.',
+      desc:"Every device connects directly to one central hub or switch (shown here as a square device with ports), which manages all communication. It's easy to install and troubleshoot — a single broken cable only knocks out one device. But if the hub itself fails, the entire network stops.",
+      hint:'A star needs one central switch/hub device connected to every other device — and the other devices should only connect to that hub, not to each other.',
+      layout(n){
+        const pts=[{x:CX,y:CY}];
+        const leaves=n-1, r=200;
+        for(let i=0;i<leaves;i++){
+          const a = -Math.PI/2 + i*(2*Math.PI/leaves);
+          pts.push({x:CX+r*Math.cos(a), y:CY+r*Math.sin(a)});
+        }
+        return pts;
+      },
+      edges(n){
+        const e=[];
+        for(let i=1;i<n;i++) e.push([0,i]);
+        return e;
+      }
+    },
+    ring: {
+      name:'Ring', accent:'#06aed5', n:6,
+      blurb:'Devices form a closed loop, hop to hop.',
+      desc:"Each device connects to exactly two neighbours, forming a closed loop. Data travels around the ring, hop by hop, until it reaches its destination. Performance is predictable, but one broken link can interrupt the whole ring unless it can send data both directions.",
+      hint:'A ring is a closed loop: every device connects to exactly two neighbours, and the last device connects back to the first.',
+      layout(n){
+        const pts=[], r=220;
+        for(let i=0;i<n;i++){
+          const a = -Math.PI/2 + i*(2*Math.PI/n);
+          pts.push({x:CX+r*Math.cos(a), y:CY+r*Math.sin(a)});
+        }
+        return pts;
+      },
+      edges(n){
+        const e=[];
+        for(let i=0;i<n;i++) e.push([i,(i+1)%n]);
+        return e;
+      }
+    },
+    mesh: {
+      name:'Mesh', accent:'#12b886', n:5,
+      blurb:'Every device connects to every other device.',
+      desc:"Every device connects directly to every other device, creating many alternate paths. The network keeps working even if several connections fail — extremely reliable, but expensive and tangled to wire as it grows.",
+      hint:'A full mesh needs a cable between every possible pair of devices — with 5 devices, that\'s 10 cables in total.',
+      layout(n){
+        const pts=[], r=200;
+        for(let i=0;i<n;i++){
+          const a = -Math.PI/2 + i*(2*Math.PI/n);
+          pts.push({x:CX+r*Math.cos(a), y:CY+r*Math.sin(a)});
+        }
+        return pts;
+      },
+      edges(n){
+        const e=[];
+        for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) e.push([i,j]);
+        return e;
+      }
+    },
+    tree: {
+      name:'Tree', accent:'#f368e0', n:7,
+      blurb:'A hierarchy branching out from a root hub.',
+      desc:"Devices are arranged in a hierarchy, branching from a root device through intermediate hubs down to individual endpoints. It combines the manageability of a star with the ability to scale across a large area — though the root and upper hubs become critical points of failure.",
+      hint:'A tree branches downward from one root: the root connects to a couple of hubs, and each hub connects to its own devices below it — no loops.',
+      layout(n){
+        // fixed 1-2-4 style tree for n=7, else fall back to generic
+        const levels = [[0],[1,2],[3,4,5,6]];
+        const pts = new Array(n);
+        const rowY = [130,300,470];
+        levels.forEach((row,li)=>{
+          row.forEach((idx,ii)=>{
+            if(idx>=n) return;
+            const spread = 760;
+            const x = row.length===1 ? CX : (CX - spread/2) + spread*(ii/(row.length-1));
+            pts[idx] = {x, y: rowY[li]};
+          });
+        });
+        for(let i=0;i<n;i++) if(!pts[i]) pts[i]={x:CX,y:CY};
+        return pts;
+      },
+      edges(n){
+        const base=[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]];
+        return base.filter(([a,b])=>a<n&&b<n);
+      }
+    },
+    hybrid: {
+      name:'Hybrid', accent:'#ff6b6b', n:6,
+      blurb:'Two topologies wired together as one network.',
+      desc:"A hybrid combines two or more topologies — for example, two small star networks joined by a single backbone link. It's designed to balance the strengths and weaknesses of its component parts to fit a real building or campus layout.",
+      hint:'Try two mini-stars: each hub has its own leaf devices, and the two hubs are linked to each other by one cable.',
+      layout(n){
+        const pts=[];
+        pts.push({x:300,y:300}); // hub1
+        pts.push({x:700,y:300}); // hub2
+        pts.push({x:150,y:170}); // leaf
+        pts.push({x:150,y:430}); // leaf
+        pts.push({x:850,y:170}); // leaf
+        pts.push({x:850,y:430}); // leaf
+        return pts.slice(0,n);
+      },
+      edges(n){
+        const base=[[0,1],[0,2],[0,3],[1,4],[1,5]];
+        return base.filter(([a,b])=>a<n&&b<n);
+      }
+    }
+  };
+
+  // ---------- state ----------
+  let nodes = [];      // {id, x, y, color, label, kind, gEl}
+  let edges = [];      // {a, b, pathEl, plug1, plug2}
+  let nextId = 0;
+  let connectMode = false;
+  let selectedForConnect = null;
+  let mode = 'sandbox'; // sandbox | demo | practice
+  let currentTarget = null;
+  let activeTopoKey = null;
+
+  function svgPoint(evt){
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  function setBanner(text, kind){
+    banner.className = 'banner' + (kind ? ' '+kind : '');
+    banner.innerHTML = text;
+  }
+
+  function setModePill(text){ modePill.textContent = text; }
+
+  // ---------- rendering ----------
+  function clearBoard(){
+    nodes.forEach(n=>n.gEl && n.gEl.remove());
+    edges.forEach(e=>{ e.pathEl && e.pathEl.remove(); e.plug1 && e.plug1.remove(); e.plug2 && e.plug2.remove(); });
+    nodes = []; edges = []; nextId = 0;
+    selectedForConnect = null;
+  }
+
+  function edgeExists(a,b){
+    return edges.some(e => (e.a===a&&e.b===b)||(e.a===b&&e.b===a));
+  }
+
+  function addEdge(a,b, color){
+    if(a===b || edgeExists(a,b)) return;
+    const path = document.createElementNS(svg.namespaceURI,'path');
+    path.setAttribute('class','cable');
+    path.setAttribute('stroke', color || '#1b1f3b');
+    svg.insertBefore(path, svg.querySelector('.nodes-layer'));
+    const plug1 = document.createElementNS(svg.namespaceURI,'circle');
+    const plug2 = document.createElementNS(svg.namespaceURI,'circle');
+    [plug1,plug2].forEach(p=>{ p.setAttribute('r',5); p.setAttribute('class','cable-plug'); p.setAttribute('fill', color || '#1b1f3b'); svg.insertBefore(p, svg.querySelector('.nodes-layer')); });
+    const e = {a,b,pathEl:path,plug1,plug2};
+    edges.push(e);
+    updateEdge(e);
+  }
+
+  function removeEdgeBetween(a,b){
+    const idx = edges.findIndex(e => (e.a===a&&e.b===b)||(e.a===b&&e.b===a));
+    if(idx>-1){
+      edges[idx].pathEl.remove();
+      edges[idx].plug1.remove();
+      edges[idx].plug2.remove();
+      edges.splice(idx,1);
+    }
+  }
+
+  function updateEdge(e){
+    const na = nodes.find(n=>n.id===e.a), nb = nodes.find(n=>n.id===e.b);
+    if(!na||!nb) return;
+    const midx = (na.x+nb.x)/2, midy=(na.y+nb.y)/2;
+    e.pathEl.setAttribute('d', `M ${na.x} ${na.y} Q ${midx} ${midy} ${nb.x} ${nb.y}`);
+    e.plug1.setAttribute('cx', na.x); e.plug1.setAttribute('cy', na.y);
+    e.plug2.setAttribute('cx', nb.x); e.plug2.setAttribute('cy', nb.y);
+  }
+
+  function updateEdgesFor(id){
+    edges.forEach(e=>{ if(e.a===id||e.b===id) updateEdge(e); });
+  }
+
+  function makeNode(x,y,color,label,kind){
+    kind = kind || 'pc';
+    const id = nextId++;
+    const g = document.createElementNS(svg.namespaceURI,'g');
+    g.setAttribute('class','node');
+    g.setAttribute('transform', `translate(${x},${y})`);
+
+    const ringRadius = kind==='hub' ? 42 : (kind==='terminator' ? 24 : 26);
+    const ring = document.createElementNS(svg.namespaceURI,'circle');
+    ring.setAttribute('class','ring');
+    ring.setAttribute('r', ringRadius);
+    ring.setAttribute('stroke', color);
+    g.appendChild(ring);
+
+    if(kind==='hub'){
+      // switch / hub device: flat RECTANGULAR unit with ports on top + status LEDs
+      const body = document.createElementNS(svg.namespaceURI,'rect');
+      body.setAttribute('x',-36); body.setAttribute('y',-14);
+      body.setAttribute('width',72); body.setAttribute('height',28);
+      body.setAttribute('rx',4);
+      body.setAttribute('fill', color);
+      body.setAttribute('stroke','#1b1f3b');
+      body.setAttribute('stroke-width','2.5');
+      g.appendChild(body);
+
+      // port notches along the top edge
+      for(let p=0;p<5;p++){
+        const px = -28 + p*14;
+        const tick = document.createElementNS(svg.namespaceURI,'rect');
+        tick.setAttribute('x', px-3);
+        tick.setAttribute('y',-14-5);
+        tick.setAttribute('width',6);
+        tick.setAttribute('height',5);
+        tick.setAttribute('rx',1);
+        tick.setAttribute('fill','#1b1f3b');
+        g.appendChild(tick);
+      }
+      // status LEDs along the bottom edge
+      for(let d=0;d<3;d++){
+        const dot = document.createElementNS(svg.namespaceURI,'circle');
+        dot.setAttribute('cx', -14 + d*14);
+        dot.setAttribute('cy', 7);
+        dot.setAttribute('r', 2.4);
+        dot.setAttribute('fill', d===1 ? '#ffd23f' : '#12ff9b');
+        g.appendChild(dot);
+      }
+      const swText = document.createElementNS(svg.namespaceURI,'text');
+      swText.setAttribute('y',-2);
+      swText.setAttribute('text-anchor','middle');
+      swText.setAttribute('font-size','8');
+      swText.setAttribute('font-family',"'JetBrains Mono',monospace");
+      swText.setAttribute('fill','#fff');
+      swText.textContent = 'SWITCH';
+      g.appendChild(swText);
+    } else if(kind==='terminator'){
+      // bus terminator: 50Ω end-cap resistor
+      const cap = document.createElementNS(svg.namespaceURI,'rect');
+      cap.setAttribute('x',-9); cap.setAttribute('y',-18);
+      cap.setAttribute('width',18); cap.setAttribute('height',36);
+      cap.setAttribute('rx',5);
+      cap.setAttribute('fill','#3a3f58');
+      cap.setAttribute('stroke','#1b1f3b');
+      cap.setAttribute('stroke-width','2.5');
+      g.appendChild(cap);
+      const bands = document.createElementNS(svg.namespaceURI,'path');
+      bands.setAttribute('d','M -9 -6 h18 M -9 6 h18');
+      bands.setAttribute('stroke','#ff9f1c');
+      bands.setAttribute('stroke-width','2.5');
+      g.appendChild(bands);
+      const ohmText = document.createElementNS(svg.namespaceURI,'text');
+      ohmText.setAttribute('y',3);
+      ohmText.setAttribute('text-anchor','middle');
+      ohmText.setAttribute('font-size','8');
+      ohmText.setAttribute('font-family',"'JetBrains Mono',monospace");
+      ohmText.setAttribute('fill','#fff');
+      ohmText.setAttribute('transform','rotate(90)');
+      ohmText.textContent = '50Ω';
+      g.appendChild(ohmText);
+    } else {
+      const circle = document.createElementNS(svg.namespaceURI,'circle');
+      circle.setAttribute('r',22);
+      circle.setAttribute('fill', color);
+      circle.setAttribute('stroke','#1b1f3b');
+      circle.setAttribute('stroke-width','2.5');
+      g.appendChild(circle);
+
+      // simple device glyph (monitor)
+      const glyph = document.createElementNS(svg.namespaceURI,'path');
+      glyph.setAttribute('d','M -9 -7 h18 v11 h-18 z M -4 6 h8 M 0 4 v3');
+      glyph.setAttribute('stroke','#fff');
+      glyph.setAttribute('stroke-width','2');
+      glyph.setAttribute('fill','none');
+      glyph.setAttribute('stroke-linecap','round');
+      glyph.setAttribute('stroke-linejoin','round');
+      g.appendChild(glyph);
+    }
+
+    const text = document.createElementNS(svg.namespaceURI,'text');
+    text.setAttribute('class','label');
+    text.setAttribute('y', kind==='hub' ? 34 : 44);
+    text.textContent = label;
+    g.appendChild(text);
+
+    svg.querySelector('.nodes-layer').appendChild(g);
+    const node = {id,x,y,color,label,kind,gEl:g,ringEl:ring};
+    nodes.push(node);
+    attachDrag(node);
+    return node;
+  }
+
+  function attachDrag(node){
+    let dragging=false, pointerId=null;
+    node.gEl.addEventListener('pointerdown', (evt)=>{
+      if(connectMode){
+        handleConnectClick(node);
+        return;
+      }
+      dragging=true; pointerId=evt.pointerId;
+      node.gEl.setPointerCapture(pointerId);
+      evt.preventDefault();
+    });
+    node.gEl.addEventListener('pointermove',(evt)=>{
+      if(!dragging) return;
+      const p = svgPoint(evt);
+      node.x = Math.max(30,Math.min(W-30,p.x));
+      node.y = Math.max(30,Math.min(H-30,p.y));
+      node.gEl.setAttribute('transform', `translate(${node.x},${node.y})`);
+      updateEdgesFor(node.id);
+    });
+    function endDrag(evt){
+      if(dragging && pointerId!=null){ try{node.gEl.releasePointerCapture(pointerId);}catch(e){} }
+      dragging=false; pointerId=null;
+    }
+    node.gEl.addEventListener('pointerup', endDrag);
+    node.gEl.addEventListener('pointercancel', endDrag);
+    node.gEl.addEventListener('dblclick', ()=>{
+      removeNode(node.id);
+    });
+  }
+
+  function removeNode(id){
+    const idx = nodes.findIndex(n=>n.id===id);
+    if(idx===-1) return;
+    nodes[idx].gEl.remove();
+    nodes.splice(idx,1);
+    edges.filter(e=>e.a===id||e.b===id).forEach(e=>{e.pathEl.remove();e.plug1.remove();e.plug2.remove();});
+    edges = edges.filter(e=>e.a!==id&&e.b!==id);
+    if(selectedForConnect===id) selectedForConnect=null;
+  }
+
+  function handleConnectClick(node){
+    if(selectedForConnect===null){
+      selectedForConnect = node.id;
+      node.gEl.classList.add('selectable');
+    } else if(selectedForConnect===node.id){
+      node.gEl.classList.remove('selectable');
+      selectedForConnect=null;
+    } else {
+      const a = selectedForConnect, b = node.id;
+      if(edgeExists(a,b)){
+        removeEdgeBetween(a,b);
+      } else {
+        addEdge(a,b);
+      }
+      const prevNode = nodes.find(n=>n.id===a);
+      if(prevNode) prevNode.gEl.classList.remove('selectable');
+      selectedForConnect=null;
+    }
+  }
+
+  // ---------- init svg layers ----------
+  const nodesLayer = document.createElementNS(svg.namespaceURI,'g');
+  nodesLayer.setAttribute('class','nodes-layer');
+  svg.appendChild(nodesLayer);
+
+  // ---------- sidebar cards ----------
+  const order = ['bus','star','ring','mesh','tree','hybrid'];
+  order.forEach(key=>{
+    const t = TOPOLOGIES[key];
+    const card = document.createElement('div');
+    card.className='topo-card';
+    card.style.setProperty('--accent', t.accent);
+    card.dataset.key = key;
+    card.innerHTML = `<div class="name"><span class="swatch"></span>${t.name}</div><div class="blurb">${t.blurb}</div>`;
+    card.addEventListener('click', ()=> selectTopology(key));
+    topoListEl.appendChild(card);
+  });
+
+  function renderInfoPanel(key){
+    const t = TOPOLOGIES[key];
+    let panel = document.getElementById('infoPanel');
+    if(!panel){
+      panel = document.createElement('div');
+      panel.id='infoPanel';
+      panel.className='info-panel';
+      topoListEl.parentElement.appendChild(panel);
+    }
+    panel.style.setProperty('--accent', t.accent);
+    panel.innerHTML = `
+      <h3>${t.name} topology</h3>
+      <p>${t.desc}</p>
+      <div class="info-actions">
+        <button class="accent" id="btnShow">👀 Show me an example</button>
+        <button class="ghost" id="btnPractice">🎯 Let me build it</button>
+      </div>
+    `;
+    document.getElementById('btnShow').onclick = ()=> demoTopology(key);
+    document.getElementById('btnPractice').onclick = ()=> practiceTopology(key);
+  }
+
+  function selectTopology(key){
+    activeTopoKey = key;
+    document.querySelectorAll('.topo-card').forEach(c=>{
+      c.classList.toggle('active', c.dataset.key===key);
+      c.style.setProperty('--accent', TOPOLOGIES[c.dataset.key].accent);
+    });
+    renderInfoPanel(key);
+  }
+
+  // ---------- demo mode ----------
+  function animateTo(node, tx, ty, duration, onDone){
+    const sx=node.x, sy=node.y, start=performance.now();
+    function step(now){
+      const t = Math.min(1,(now-start)/duration);
+      const ease = t<.5 ? 2*t*t : -1+(4-2*t)*t;
+      node.x = sx + (tx-sx)*ease;
+      node.y = sy + (ty-sy)*ease;
+      node.gEl.setAttribute('transform',`translate(${node.x},${node.y})`);
+      updateEdgesFor(node.id);
+      if(t<1) requestAnimationFrame(step); else if(onDone) onDone();
+    }
+    requestAnimationFrame(step);
+  }
+
+  function demoTopology(key){
+    const t = TOPOLOGIES[key];
+    clearBoard();
+    mode='demo';
+    setModePill(t.name.toUpperCase()+' · DEMO');
+    connectMode=false; updateConnectToggle();
+    const n = t.n;
+    const positions = t.layout(n);
+    const madeNodes = [];
+    for(let i=0;i<n;i++){
+      const startX = CX + (Math.random()-0.5)*60;
+      const startY = CY + (Math.random()-0.5)*60;
+      const node = makeNode(startX, startY, PALETTE[i%PALETTE.length], labelFor(key,i), kindFor(key,i));
+      madeNodes.push(node);
+      animateTo(node, positions[i].x, positions[i].y, 650);
+    }
+    const edgeList = t.edges(n);
+    edgeList.forEach(([a,b],idx)=>{
+      setTimeout(()=> addEdge(a,b,t.accent), 700 + idx*160);
+    });
+    if(key==='bus'){
+      // real terminator devices capping both ends of the backbone
+      const lastEdgeDelay = 700 + (edgeList.length-1)*160;
+      setTimeout(()=>{
+        const firstNode = madeNodes[0], lastNode = madeNodes[n-1];
+        const term1 = makeNode(firstNode.x-70, firstNode.y, '#3a3f58', 'Terminator', 'terminator');
+        const term2 = makeNode(lastNode.x+70, lastNode.y, '#3a3f58', 'Terminator', 'terminator');
+        addEdge(term1.id, firstNode.id, '#3a3f58');
+        addEdge(term2.id, lastNode.id, '#3a3f58');
+      }, lastEdgeDelay + 400);
+    }
+    setBanner(`This is a <strong>${t.name}</strong> topology — ${t.blurb.toLowerCase()} Drag the devices around; the cables will follow.`, null);
+  }
+
+  function labelFor(key,i){
+    if(key==='star' && i===0) return 'Hub';
+    if(key==='hybrid' && (i===0||i===1)) return 'Hub '+(i+1);
+    if(key==='tree'){
+      if(i===0) return 'Root';
+      if(i===1||i===2) return 'Switch '+i;
+      return 'PC'+(i-2);
+    }
+    return 'PC'+(i+1);
+  }
+
+  function kindFor(key,i){
+    if(key==='star') return i===0 ? 'hub' : 'pc';
+    if(key==='hybrid') return (i===0||i===1) ? 'hub' : 'pc';
+    if(key==='tree') return (i===0||i===1||i===2) ? 'hub' : 'pc';
+    return 'pc';
+  }
+
+  // how many plain PCs a practice challenge should start with —
+  // any switch/hub or terminator the topology needs is left for the student to add
+  function practicePcCount(key){
+    const t = TOPOLOGIES[key];
+    if(key==='star') return t.n-1;
+    if(key==='hybrid') return t.n-2;
+    if(key==='tree') return t.n-3;
+    return t.n; // bus, ring, mesh — no hub required (bus still needs terminators, added by the student)
+  }
+
+  // ---------- practice mode ----------
+  function practiceTopology(key){
+    const t = TOPOLOGIES[key];
+    clearBoard();
+    mode='practice';
+    currentTarget = key;
+    setModePill('PRACTICE · BUILD A '+t.name.toUpperCase());
+    connectMode=false; updateConnectToggle();
+    const pcCount = practicePcCount(key);
+    for(let i=0;i<pcCount;i++){
+      const x = 100 + Math.random()*(W-200);
+      const y = 100 + Math.random()*(H-200);
+      makeNode(x,y,PALETTE[i%PALETTE.length], 'PC'+(i+1), 'pc');
+    }
+    const extras = [];
+    if(key==='star') extras.push('1 Switch/Hub');
+    if(key==='hybrid') extras.push('2 Switch/Hub devices');
+    if(key==='tree') extras.push('3 Switch/Hub devices');
+    if(key==='bus') extras.push('2 Terminators');
+    const extraNote = extras.length ? ` You'll also need to add ${extras.join(' and ')} from the toolbar — they aren't provided for you.` : '';
+    setBanner(`Arrange these ${pcCount} PCs and connect them to form a <strong>${t.name}</strong> topology.${extraNote} Turn on <strong>Connect mode</strong>, click two devices to cable them, then hit <strong>Identify my topology</strong>. Hint: ${t.hint}`, null);
+  }
+
+  // ---------- sandbox seed ----------
+  function seedSandbox(){
+    clearBoard();
+    mode='sandbox';
+    setModePill('SANDBOX MODE');
+    const seedPositions = [{x:260,y:200},{x:520,y:150},{x:740,y:260},{x:300,y:420}];
+    seedPositions.forEach((p,i)=> makeNode(p.x,p.y,PALETTE[i%PALETTE.length], 'PC'+(i+1), 'pc'));
+  }
+
+  // ---------- graph classification ----------
+  function classifyCurrentGraph(){
+    const n = nodes.length;
+    const m = edges.length;
+    if(n<2) return {type:'empty', reason:'Add at least two devices and connect them with a cable.'};
+
+    const idIndex = {};
+    nodes.forEach((nd,i)=> idIndex[nd.id]=i);
+    const adj = Array.from({length:n},()=>[]);
+    edges.forEach(e=>{
+      const a=idIndex[e.a], b=idIndex[e.b];
+      adj[a].push(b); adj[b].push(a);
+    });
+    const degrees = adj.map(a=>a.length);
+    const order = nodes; // same index order as degrees
+
+    // connectivity check via BFS
+    const seen = new Array(n).fill(false);
+    const queue=[0]; seen[0]=true; let count=1;
+    while(queue.length){
+      const cur=queue.shift();
+      adj[cur].forEach(nb=>{ if(!seen[nb]){seen[nb]=true;count++;queue.push(nb);} });
+    }
+    const connected = count===n;
+
+    if(!connected){
+      return {type:'disconnected', reason:'Some devices are not linked to the rest of the network yet — every device needs at least one cable path to every other device.', order, degrees};
+    }
+
+    // Mesh
+    if(m === n*(n-1)/2){
+      return {type:'mesh', reason:null, order, degrees};
+    }
+    // Star: one node degree n-1, rest degree 1
+    const highDegIdx = degrees.findIndex(d=>d===n-1);
+    const oneDeg = degrees.filter(d=>d===1).length;
+    if(m===n-1 && highDegIdx>-1 && oneDeg===n-1){
+      return {type:'star', reason:null, order, degrees, hubId: order[highDegIdx].id};
+    }
+    // Ring: all degrees ===2, m===n
+    if(m===n && degrees.every(d=>d===2)){
+      return {type:'ring', reason:null, order, degrees};
+    }
+    // Bus / path: m=n-1, exactly two nodes degree1, rest degree2
+    const deg1 = degrees.filter(d=>d===1).length;
+    const deg2 = degrees.filter(d=>d===2).length;
+    if(m===n-1 && deg1===2 && deg2===n-2){
+      const endpointIdx = [];
+      degrees.forEach((d,i)=>{ if(d===1) endpointIdx.push(i); });
+      const endpoints = endpointIdx.map(i=>order[i].id);
+      return {type:'bus', reason:null, order, degrees, endpoints};
+    }
+    // Tree: connected, acyclic (m=n-1), branching (someone degree>=3)
+    if(m===n-1 && degrees.some(d=>d>=3)){
+      return {type:'tree', reason:null, order, degrees};
+    }
+    // otherwise hybrid/mixed
+    return {type:'hybrid', reason:null, order, degrees};
+  }
+
+  function friendlyName(type){
+    if(type==='disconnected') return 'an unfinished network';
+    if(type==='empty') return 'an empty board';
+    return TOPOLOGIES[type] ? TOPOLOGIES[type].name : type;
+  }
+
+  // checks that the *right kind* of device sits in each structural role —
+  // e.g. a real Switch/Hub at the center of a star, real Terminators on a bus
+  function kindIssueFor(result){
+    if(result.type==='bus'){
+      const bad = (result.endpoints||[]).some(id=>{
+        const nd = result.order.find(n=>n.id===id);
+        return nd && nd.kind!=='terminator';
+      });
+      if(bad) return 'This is shaped like a bus, but each end of the backbone should be capped with a <strong>Terminator</strong> device (from the toolbar), not just another PC.';
+    }
+    if(result.type==='star'){
+      const hub = result.order.find(n=>n.id===result.hubId);
+      if(hub && hub.kind!=='hub') return 'This is shaped like a star, but the central device should be a <strong>Switch/Hub</strong> (from the toolbar), not a plain PC.';
+    }
+    if(result.type==='tree' || result.type==='hybrid'){
+      const bad = result.order.some((nd,i)=> result.degrees[i]>=2 && nd.kind!=='hub');
+      if(bad) return `This is shaped like a ${result.type}, but any device connecting to more than one other device should be a <strong>Switch/Hub</strong> (from the toolbar).`;
+    }
+    return null;
+  }
+
+  identifyBtn.addEventListener('click', ()=>{
+    const result = classifyCurrentGraph();
+    if(result.type==='empty' || result.type==='disconnected'){
+      setBanner(result.reason, 'bad');
+      return;
+    }
+    const issue = kindIssueFor(result);
+    if(mode==='practice' && currentTarget){
+      if(result.type===currentTarget && !issue){
+        setBanner(`✅ Nicely done — that's a genuine <strong>${TOPOLOGIES[currentTarget].name}</strong> topology, wired with the right hardware!`, 'good');
+      } else if(result.type===currentTarget && issue){
+        setBanner(issue, 'bad');
+      } else {
+        const t = TOPOLOGIES[currentTarget];
+        setBanner(`Not quite yet. What you've built currently reads as <strong>${friendlyName(result.type)}</strong>. Hint: ${t.hint}`, 'bad');
+      }
+    } else {
+      const note = issue ? ' ' + issue : '';
+      setBanner(`This network currently looks like a <strong>${friendlyName(result.type)}</strong> topology.${note}`, null);
+    }
+  });
+
+  // ---------- toolbar ----------
+  function updateConnectToggle(){
+    connectToggle.classList.toggle('on', connectMode);
+    connectToggle.textContent = '🔌 Connect mode: ' + (connectMode?'on':'off');
+    if(!connectMode && selectedForConnect!==null){
+      const nd = nodes.find(n=>n.id===selectedForConnect);
+      if(nd) nd.gEl.classList.remove('selectable');
+      selectedForConnect=null;
+    }
+  }
+
+  connectToggle.addEventListener('click', ()=>{
+    connectMode = !connectMode;
+    updateConnectToggle();
+  });
+
+  function randomFreeSpot(){
+    return { x: 150 + Math.random()*(W-300), y: 150 + Math.random()*(H-300) };
+  }
+
+  addPcBtn.addEventListener('click', ()=>{
+    const p = randomFreeSpot();
+    const count = nodes.filter(n=>n.kind==='pc').length;
+    makeNode(p.x, p.y, PALETTE[count%PALETTE.length], 'PC'+(count+1), 'pc');
+    if(mode==='demo') mode='sandbox';
+    if(mode!=='practice') setModePill('SANDBOX MODE');
+  });
+
+  addHubBtn.addEventListener('click', ()=>{
+    const p = randomFreeSpot();
+    const count = nodes.filter(n=>n.kind==='hub').length;
+    makeNode(p.x, p.y, '#4c3bcf', 'Switch '+(count+1), 'hub');
+    if(mode==='demo') mode='sandbox';
+    if(mode!=='practice') setModePill('SANDBOX MODE');
+  });
+
+  addTermBtn.addEventListener('click', ()=>{
+    const p = randomFreeSpot();
+    makeNode(p.x, p.y, '#3a3f58', 'Terminator', 'terminator');
+    if(mode==='demo') mode='sandbox';
+    if(mode!=='practice') setModePill('SANDBOX MODE');
+  });
+
+  clearBtn.addEventListener('click', ()=>{
+    seedSandbox();
+    currentTarget=null;
+    setBanner('Board cleared. Add devices, connect them, and see what kind of network you can build.', null);
+  });
+
+  // ---------- go ----------
+  seedSandbox();
+  selectTopology('star');
+})();
+</script>
+</body>
+</html>
