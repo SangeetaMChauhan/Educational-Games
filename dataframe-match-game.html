@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataFrame Match — pandas Q&A Drag &amp; Drop Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2EFE6;
+    --paper-alt:#E9E2D0;
+    --ink:#16202B;
+    --ink-soft:#3B4753;
+    --amber:#D9782D;
+    --amber-dark:#B4611E;
+    --teal:#1F7A6C;
+    --teal-dark:#155B50;
+    --green:#2E8B57;
+    --red:#C1443A;
+    --line:#CFC6AE;
+    --card-shadow: 0 6px 0 rgba(22,32,43,0.9);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0/100% 42px,
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:24px 16px 60px;
+  }
+
+  .wrap{max-width:980px;margin:0 auto;}
+
+  /* ---------- HEADER ---------- */
+  header{margin-bottom:22px;}
+  .repr-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    letter-spacing:0.02em;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,42px);
+    margin:0 0 4px;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  h1 span{color:var(--amber);}
+  .subtitle{
+    font-size:15px;
+    color:var(--ink-soft);
+    margin:0;
+    max-width:560px;
+  }
+
+  /* ---------- LEVEL TABS ---------- */
+  .level-strip{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:18px 2px 6px;
+    margin-bottom:6px;
+  }
+  .level-tab{
+    flex:0 0 auto;
+    width:52px;height:52px;
+    border-radius:10px;
+    border:2px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    position:relative;
+    transition:transform .12s ease, background .12s ease, color .12s ease;
+  }
+  .level-tab:hover:not(.locked){transform:translateY(-3px);}
+  .level-tab.active{
+    background:var(--ink);
+    color:var(--paper);
+    box-shadow:var(--card-shadow);
+    transform:translateY(-3px);
+  }
+  .level-tab.done{
+    background:var(--teal);
+    border-color:var(--teal-dark);
+    color:#fff;
+  }
+  .level-tab.done.active{background:var(--ink);}
+  .level-tab.locked{
+    cursor:not-allowed;
+    opacity:0.45;
+    border-style:dashed;
+  }
+  .level-tab .tick{
+    position:absolute;top:-6px;right:-6px;
+    background:var(--green);
+    color:#fff;
+    border-radius:50%;
+    width:18px;height:18px;
+    font-size:11px;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--paper);
+  }
+
+  /* ---------- STATS BAR ---------- */
+  .stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--ink);
+    color:var(--paper);
+    border-radius:12px;
+    padding:14px 18px;
+    margin-bottom:22px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .stats .block{display:flex;flex-direction:column;gap:2px;}
+  .stats .label{font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:#9AA7B2;}
+  .stats .value{font-size:18px;font-weight:700;color:var(--paper);}
+  .dots{display:flex;gap:6px;}
+  .dot{width:11px;height:11px;border-radius:50%;background:#3B4753;border:1px solid #55626F;}
+  .dot.filled{background:var(--amber);border-color:var(--amber-dark);}
+
+  /* ---------- LEVEL TITLE ---------- */
+  .level-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:20px;
+    margin:0 0 4px;
+  }
+  .level-caption{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin:0 0 18px;
+  }
+
+  /* ---------- BOARD (dataframe table) ---------- */
+  .df-table{
+    background:#fff;
+    border:2px solid var(--ink);
+    border-radius:12px;
+    overflow:hidden;
+    margin-bottom:26px;
+  }
+  .df-head{
+    display:grid;
+    grid-template-columns:44px 1.3fr 1fr;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    padding:9px 0;
+  }
+  .df-head div{padding:0 12px;}
+  .df-row{
+    display:grid;
+    grid-template-columns:44px 1.3fr 1fr;
+    align-items:center;
+    border-top:1px solid var(--line);
+  }
+  .df-row:nth-child(even){background:var(--paper-alt);}
+  .df-idx{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:14px 12px;
+    text-align:center;
+  }
+  .df-q{
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    padding:14px 12px;
+    line-height:1.35;
+  }
+  .df-drop{
+    margin:8px 12px;
+    min-height:46px;
+    border:2px dashed var(--amber-dark);
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;
+    padding:6px 10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--amber-dark);
+    background:rgba(217,120,45,0.08);
+    transition:background .15s ease, transform .1s ease, border-color .15s ease;
+    cursor:pointer;
+  }
+  .df-drop.dragover{background:rgba(217,120,45,0.22);transform:scale(1.02);}
+  .df-drop.correct{
+    background:var(--green);
+    border:2px solid #1f6b41;
+    color:#fff;
+    font-weight:700;
+    cursor:default;
+  }
+  .df-drop.wrong{
+    animation:shake .4s ease;
+    border-color:var(--red);
+    background:rgba(193,68,58,0.15);
+    color:var(--red);
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+
+  /* ---------- ANSWER POOL ---------- */
+  .pool-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    margin:0 0 10px;
+  }
+  .pool{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    padding:16px;
+    background:var(--paper-alt);
+    border:2px solid var(--line);
+    border-radius:12px;
+    min-height:70px;
+  }
+  .pill{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    padding:11px 16px;
+    border-radius:9px;
+    cursor:grab;
+    border-left:5px solid var(--amber);
+    box-shadow:0 3px 0 rgba(0,0,0,0.35);
+    user-select:none;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .pill:nth-child(2n){border-left-color:var(--teal);}
+  .pill:hover{transform:translateY(-2px);}
+  .pill.selected{
+    transform:translateY(-3px);
+    box-shadow:0 5px 0 var(--amber);
+    border-left-color:#fff;
+  }
+  .pill.dragging{opacity:0.4;}
+  .pill.used{display:none;}
+
+  .hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:10px;
+    font-style:italic;
+  }
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed;
+    bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:var(--paper);
+    padding:12px 22px;
+    border-radius:30px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:50;
+    border:2px solid var(--amber);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.good{border-color:var(--green);}
+  .toast.bad{border-color:var(--red);}
+
+  /* ---------- MODAL ---------- */
+  .modal-bg{
+    position:fixed;inset:0;
+    background:rgba(22,32,43,0.72);
+    display:none;
+    align-items:center;justify-content:center;
+    padding:20px;
+    z-index:100;
+  }
+  .modal-bg.show{display:flex;}
+  .modal{
+    background:var(--paper);
+    border:3px solid var(--ink);
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+    padding:32px 28px;
+    text-align:center;
+    box-shadow:0 10px 0 rgba(22,32,43,0.9);
+  }
+  .modal .big{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0 0 8px;
+  }
+  .modal p{color:var(--ink-soft);font-size:14px;margin:0 0 22px;}
+  .modal .score-line{
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    background:var(--ink);
+    color:var(--paper);
+    display:inline-block;
+    padding:8px 16px;
+    border-radius:8px;
+    margin-bottom:22px;
+  }
+  .btn{
+    background:var(--amber);
+    color:var(--ink);
+    border:none;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    padding:13px 26px;
+    border-radius:9px;
+    cursor:pointer;
+    box-shadow:0 4px 0 var(--amber-dark);
+    transition:transform .1s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(1px);box-shadow:0 2px 0 var(--amber-dark);}
+  .btn.secondary{
+    background:var(--paper);
+    color:var(--ink);
+    border:2px solid var(--ink);
+    box-shadow:0 4px 0 var(--ink);
+    margin-left:10px;
+  }
+
+  @media (max-width:640px){
+    .df-head, .df-row{grid-template-columns:36px 1fr;}
+    .df-head div:nth-child(3){display:none;}
+    .df-drop{grid-column:1/3;margin:0 12px 12px 44px;}
+    .stats{font-size:13px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <p class="repr-line">&lt;class 'pandas.core.frame.DataFrame'&gt; — match_game.py</p>
+    <h1>DataFrame<span>Match</span></h1>
+    <p class="subtitle">Drag each answer card onto the question it belongs to. 10 levels, 5 questions each — every level covers a real pandas concept, from basics to advanced reshaping.</p>
+  </header>
+
+  <div class="level-strip" id="levelStrip"></div>
+
+  <div class="stats">
+    <div class="block">
+      <span class="label">Level</span>
+      <span class="value" id="statLevel">1 / 10</span>
+    </div>
+    <div class="block">
+      <span class="label">Score</span>
+      <span class="value" id="statScore">0</span>
+    </div>
+    <div class="block">
+      <span class="label">This level</span>
+      <div class="dots" id="statDots"></div>
+    </div>
+  </div>
+
+  <h2 class="level-title" id="levelTitle"></h2>
+  <p class="level-caption" id="levelCaption"></p>
+
+  <div class="df-table">
+    <div class="df-head">
+      <div>#</div>
+      <div>question</div>
+      <div>answer</div>
+    </div>
+    <div id="boardBody"></div>
+  </div>
+
+  <p class="pool-label">Answer cards</p>
+  <div class="pool" id="pool"></div>
+  <p class="hint">Drag a card onto its matching row — or tap a card, then tap the row.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="levelModal">
+  <div class="modal">
+    <p class="big" id="modalTitle">Level complete!</p>
+    <p id="modalText">Every answer matched correctly.</p>
+    <div class="score-line" id="modalScore">Score: 0</div><br>
+    <button class="btn" id="modalNextBtn">Next level →</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="finalModal">
+  <div class="modal">
+    <p class="big">🏆 DataFrame mastered!</p>
+    <p>You matched all 50 pandas concepts across 10 levels.</p>
+    <div class="score-line" id="finalScore">Final score: 0</div><br>
+    <button class="btn" id="restartBtn">Play again</button>
+  </div>
+</div>
+
+<script>
+const LEVELS = [
+  { title:"DataFrame Basics", caption:"pandas.DataFrame — the fundamentals", questions:[
+    {q:"What is a pandas DataFrame?", a:"2D labeled table of data"},
+    {q:"What is a pandas Series?", a:"1D labeled array"},
+    {q:"Attribute that returns (rows, columns)", a:"shape"},
+    {q:"Attribute that returns column labels", a:"columns"},
+    {q:"Attribute that returns row labels", a:"index"},
+  ]},
+  { title:"Creating DataFrames", caption:"Building a DataFrame from data sources", questions:[
+    {q:"Function to build a DataFrame from a dict", a:"pd.DataFrame()"},
+    {q:"Function to read a CSV file", a:"pd.read_csv()"},
+    {q:"Parameter to set custom column names", a:"columns="},
+    {q:"Function to read an Excel file", a:"pd.read_excel()"},
+    {q:"Attribute showing each column's data type", a:"dtypes"},
+  ]},
+  { title:"Viewing Data", caption:"Getting a first look at your table", questions:[
+    {q:"Method to preview the first 5 rows", a:"head()"},
+    {q:"Method to preview the last 5 rows", a:"tail()"},
+    {q:"Method giving a summary of columns and types", a:"info()"},
+    {q:"Method giving a statistical summary of numeric columns", a:"describe()"},
+    {q:"Attribute returning the total number of elements", a:"size"},
+  ]},
+  { title:"Selecting Data", caption:"Picking rows, columns, and cells", questions:[
+    {q:"Label-based row/column selector", a:"loc[]"},
+    {q:"Position-based row/column selector", a:"iloc[]"},
+    {q:"Selects a single column as a Series", a:"df['col']"},
+    {q:"Filters rows using a True/False condition", a:"boolean indexing"},
+    {q:"Fast scalar accessor by label", a:"at[]"},
+  ]},
+  { title:"Modifying Data", caption:"Changing structure and values", questions:[
+    {q:"Method to remove a column", a:"drop(columns=)"},
+    {q:"Method to rename columns", a:"rename()"},
+    {q:"Method to add a new computed column", a:"assign()"},
+    {q:"Method to fill missing values", a:"fillna()"},
+    {q:"Method to insert a column at a position", a:"insert()"},
+  ]},
+  { title:"Sorting & Filtering", caption:"Ordering and narrowing rows", questions:[
+    {q:"Method to sort rows by column values", a:"sort_values()"},
+    {q:"Method to sort rows by index", a:"sort_index()"},
+    {q:"Method to filter rows with an expression string", a:"query()"},
+    {q:"Method to check membership in a list", a:"isin()"},
+    {q:"Method to check if values fall within a range", a:"between()"},
+  ]},
+  { title:"Aggregation", caption:"Summarizing and grouping data", questions:[
+    {q:"Method to group rows by column values", a:"groupby()"},
+    {q:"Method to apply multiple aggregation functions", a:"agg()"},
+    {q:"Method to create a spreadsheet-style pivot table", a:"pivot_table()"},
+    {q:"Method to count unique value occurrences", a:"value_counts()"},
+    {q:"Method to apply a function along an axis", a:"apply()"},
+  ]},
+  { title:"Merging & Joining", caption:"Combining multiple DataFrames", questions:[
+    {q:"Function to combine two DataFrames on a key", a:"pd.merge()"},
+    {q:"Function to stack DataFrames along an axis", a:"pd.concat()"},
+    {q:"Method to combine DataFrames using their index", a:"join()"},
+    {q:"merge parameter that keeps all rows from both sides", a:"how='outer'"},
+    {q:"merge parameter that keeps only matching rows", a:"how='inner'"},
+  ]},
+  { title:"Missing Data & Cleaning", caption:"Handling gaps and duplicates", questions:[
+    {q:"Method to detect missing values", a:"isna()"},
+    {q:"Method to remove rows with missing values", a:"dropna()"},
+    {q:"Method to flag duplicate rows", a:"duplicated()"},
+    {q:"Method to remove duplicate rows", a:"drop_duplicates()"},
+    {q:"Method to replace specific values", a:"replace()"},
+  ]},
+  { title:"Advanced Reshaping", caption:"Element-wise ops and reshaping tables", questions:[
+    {q:"Method to apply a function element-wise on a DataFrame", a:"applymap()"},
+    {q:"Method to apply a function element-wise on a Series", a:"map()"},
+    {q:"Index type with multiple levels", a:"MultiIndex"},
+    {q:"Method to reshape wide data into long format", a:"melt()"},
+    {q:"Method to reshape long data into wide format", a:"pivot()"},
+  ]},
+];
+
+let currentLevel = 0;
+let maxUnlocked = 0;
+let score = 0;
+let matchedInLevel = new Set();
+let order = []; // shuffled original-indices for pool rendering
+let selectedPillIdx = null; // originalIndex of currently selected pill
+
+const levelStrip = document.getElementById('levelStrip');
+const statLevel = document.getElementById('statLevel');
+const statScore = document.getElementById('statScore');
+const statDots = document.getElementById('statDots');
+const levelTitle = document.getElementById('levelTitle');
+const levelCaption = document.getElementById('levelCaption');
+const boardBody = document.getElementById('boardBody');
+const pool = document.getElementById('pool');
+const toastEl = document.getElementById('toast');
+const levelModal = document.getElementById('levelModal');
+const finalModal = document.getElementById('finalModal');
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function renderLevelStrip(){
+  levelStrip.innerHTML = '';
+  LEVELS.forEach((lvl,i)=>{
+    const tab = document.createElement('div');
+    const done = i < maxUnlocked || (i===maxUnlocked && matchedInLevel.size===5 && i===currentLevel);
+    let cls = 'level-tab';
+    if(i===currentLevel) cls += ' active';
+    if(i < maxUnlocked) cls += ' done';
+    if(i > maxUnlocked) cls += ' locked';
+    tab.className = cls;
+    tab.textContent = i+1;
+    if(i < maxUnlocked){
+      const tick = document.createElement('span');
+      tick.className='tick'; tick.textContent='✓';
+      tab.appendChild(tick);
+    }
+    tab.addEventListener('click', ()=>{
+      if(i<=maxUnlocked) loadLevel(i);
+    });
+    levelStrip.appendChild(tab);
+  });
+}
+
+function renderDots(){
+  statDots.innerHTML = '';
+  for(let i=0;i<5;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < matchedInLevel.size ? ' filled':'');
+    statDots.appendChild(d);
+  }
+}
+
+function loadLevel(i){
+  currentLevel = i;
+  matchedInLevel = new Set();
+  selectedPillIdx = null;
+  const lvl = LEVELS[i];
+  levelTitle.textContent = `Level ${i+1}: ${lvl.title}`;
+  levelCaption.textContent = lvl.caption;
+  statLevel.textContent = `${i+1} / 10`;
+
+  boardBody.innerHTML = '';
+  lvl.questions.forEach((item, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'df-row';
+    row.innerHTML = `
+      <div class="df-idx">${idx}</div>
+      <div class="df-q">${item.q}</div>
+    `;
+    const drop = document.createElement('div');
+    drop.className = 'df-drop';
+    drop.textContent = 'drop answer here';
+    drop.dataset.rowIndex = idx;
+    row.appendChild(drop);
+    boardBody.appendChild(row);
+    setupDropzone(drop);
+  });
+
+  order = shuffle(lvl.questions.map((_,idx)=>idx));
+  renderPool();
+  renderDots();
+  renderLevelStrip();
+}
+
+function renderPool(){
+  pool.innerHTML = '';
+  const lvl = LEVELS[currentLevel];
+  order.forEach(origIdx=>{
+    const pill = document.createElement('div');
+    pill.className = 'pill';
+    pill.textContent = lvl.questions[origIdx].a;
+    pill.dataset.origIndex = origIdx;
+    pill.draggable = true;
+    if(matchedInLevel.has(origIdx)) pill.classList.add('used');
+
+    pill.addEventListener('dragstart', e=>{
+      pill.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', origIdx);
+    });
+    pill.addEventListener('dragend', ()=> pill.classList.remove('dragging'));
+
+    pill.addEventListener('click', ()=>{
+      if(matchedInLevel.has(origIdx)) return;
+      document.querySelectorAll('.pill.selected').forEach(p=>p.classList.remove('selected'));
+      if(selectedPillIdx === origIdx){
+        selectedPillIdx = null;
+      } else {
+        selectedPillIdx = origIdx;
+        pill.classList.add('selected');
+      }
+    });
+
+    pool.appendChild(pill);
+  });
+}
+
+function setupDropzone(drop){
+  drop.addEventListener('dragover', e=>{
+    e.preventDefault();
+    if(!drop.classList.contains('correct')) drop.classList.add('dragover');
+  });
+  drop.addEventListener('dragleave', ()=> drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e=>{
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    if(drop.classList.contains('correct')) return;
+    const origIdx = parseInt(e.dataTransfer.getData('text/plain'));
+    attemptMatch(origIdx, drop);
+  });
+  drop.addEventListener('click', ()=>{
+    if(drop.classList.contains('correct')) return;
+    if(selectedPillIdx === null) return;
+    attemptMatch(selectedPillIdx, drop);
+  });
+}
+
+function attemptMatch(origIdx, drop){
+  const rowIndex = parseInt(drop.dataset.rowIndex);
+  const lvl = LEVELS[currentLevel];
+  if(origIdx === rowIndex){
+    drop.textContent = lvl.questions[origIdx].a;
+    drop.classList.add('correct');
+    matchedInLevel.add(origIdx);
+    score += 10;
+    showToast('Correct match! +10', true);
+    selectedPillIdx = null;
+    document.querySelectorAll('.pill.selected').forEach(p=>p.classList.remove('selected'));
+    renderPool();
+    renderDots();
+    statScore.textContent = score;
+    if(matchedInLevel.size === 5){
+      setTimeout(()=>completeLevel(), 500);
+    }
+  } else {
+    drop.classList.remove('wrong');
+    void drop.offsetWidth;
+    drop.classList.add('wrong');
+    showToast('Not quite — try again', false);
+    setTimeout(()=> drop.classList.remove('wrong'), 400);
+  }
+}
+
+function showToast(msg, good){
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show ' + (good ? 'good':'bad');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toastEl.classList.remove('show'), 1200);
+}
+
+function completeLevel(){
+  if(currentLevel+1 > maxUnlocked) maxUnlocked = currentLevel+1;
+  renderLevelStrip();
+  if(currentLevel === LEVELS.length-1){
+    document.getElementById('finalScore').textContent = `Final score: ${score}`;
+    finalModal.classList.add('show');
+  } else {
+    document.getElementById('modalScore').textContent = `Score: ${score}`;
+    document.getElementById('modalText').textContent =
+      `You matched all 5 answers in "${LEVELS[currentLevel].title}".`;
+    levelModal.classList.add('show');
+  }
+}
+
+document.getElementById('modalNextBtn').addEventListener('click', ()=>{
+  levelModal.classList.remove('show');
+  loadLevel(currentLevel+1);
+});
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  finalModal.classList.remove('show');
+  score = 0;
+  maxUnlocked = 0;
+  statScore.textContent = 0;
+  loadLevel(0);
+});
+
+// init
+loadLevel(0);
+statScore.textContent = score;
+</script>
+</body>
+</html>

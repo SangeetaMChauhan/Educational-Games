@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pandas.DataFrame — Learn by Dragging</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F8;
+    --card:#FFFFFF;
+    --border:#DCE2E8;
+    --ink:#1E2530;
+    --ink-soft:#5A6472;
+    --gold:#C08F22;
+    --plum:#5B4B8A;
+    --plum-tint:#EDE9F5;
+    --plum-dark:#3E3260;
+    --brick:#B3462B;
+    --brick-tint:#FBEAE5;
+    --blue:#2F6F8C;
+    --flame:#E2661C;
+    --tile-bg:#EDF1F4;
+    --tile-border:#C7D2DB;
+    --shadow: 0 1px 2px rgba(30,37,48,0.06), 0 6px 18px rgba(30,37,48,0.06);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(to bottom, transparent, transparent 39px, rgba(59,80,110,0.045) 40px),
+      repeating-linear-gradient(to right, transparent, transparent 119px, rgba(59,80,110,0.035) 120px),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding-bottom:80px;
+  }
+  code, .mono{font-family:'IBM Plex Mono',monospace;}
+  h1,h2,h3{font-family:'Fraunces',serif; margin:0;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:sticky; top:0; z-index:40;
+    background:rgba(244,246,248,0.94);
+    backdrop-filter: blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:16px 24px 14px;
+  }
+  .hero-inner{
+    max-width:1120px; margin:0 auto;
+    display:flex; gap:24px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+  }
+  .hero-title-wrap{display:flex; flex-direction:column; gap:4px; max-width:520px;}
+  .hero-eyebrow{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.08em;
+    color:var(--plum); text-transform:uppercase; font-weight:600;
+  }
+  .hero-title{font-size:28px; font-weight:600; color:var(--ink);}
+  .hero-title span{color:var(--gold);}
+  .hero-sub{font-size:13.5px; color:var(--ink-soft);}
+
+  .hero-side{display:flex; flex-direction:column; gap:8px; align-items:flex-end;}
+  .hero-actions{display:flex; gap:8px;}
+  .mute-btn, .restart-btn{
+    border:1px solid var(--tile-border); background:var(--card); border-radius:8px;
+    cursor:pointer; font-family:'IBM Plex Mono',monospace; transition:.15s ease;
+  }
+  .mute-btn{width:34px; height:34px; font-size:15px; display:flex; align-items:center; justify-content:center;}
+  .restart-btn{padding:0 14px; font-size:12px; color:var(--ink-soft);}
+  .mute-btn:hover, .restart-btn:hover{border-color:var(--plum); color:var(--plum);}
+
+  .series-panel{
+    background:var(--ink); color:#E9ECF3;
+    border-radius:10px; padding:12px 16px;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    min-width:230px; box-shadow:var(--shadow);
+  }
+  .series-panel .sp-title{color:#C6B8F0; font-size:11px; letter-spacing:.05em; margin-bottom:6px;}
+  .series-repr{white-space:pre; line-height:1.55;}
+  .series-panel .sp-foot{margin-top:6px; color:#C9CFDA; font-size:11.5px; border-top:1px solid #3B4250; padding-top:6px;}
+
+  /* ---------- GAME BAR ---------- */
+  .game-bar{
+    max-width:1120px; margin:14px auto 0; padding:0 24px;
+    display:flex; flex-wrap:wrap; gap:10px;
+  }
+  .stat-chip{
+    display:flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:7px 12px; box-shadow:var(--shadow);
+  }
+  .stat-chip .icon{font-size:17px; line-height:1;}
+  .stat-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
+  .stat-value{font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:700; color:var(--ink);}
+  .streak-chip.hot .stat-value{color:var(--flame);}
+  .streak-chip.hot .icon{animation:flicker 1s ease-in-out infinite;}
+  @keyframes flicker{0%,100%{transform:scale(1);} 50%{transform:scale(1.18) rotate(-4deg);}}
+  .level-chip{background:linear-gradient(135deg, var(--plum-tint), #fff); border-color:#D3C7EC;}
+  .xp-mini-track{width:70px; height:6px; border-radius:99px; background:var(--tile-bg); overflow:hidden; margin-left:2px;}
+  .xp-mini-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--gold),var(--plum)); transition:width .5s ease;}
+
+  .progress-outer{
+    max-width:1120px; margin:12px auto 0; padding:0 24px;
+  }
+  .progress-bar-outer{
+    height:8px; border-radius:99px; background:var(--tile-bg); border:1px solid var(--tile-border); overflow:hidden;
+  }
+  .progress-bar-inner{
+    height:100%; width:0%; background:linear-gradient(90deg, var(--plum), var(--gold));
+    transition:width .4s ease;
+  }
+  .progress-label{font-size:11.5px; color:var(--ink-soft); margin-top:4px; font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- NAV CHIPS ---------- */
+  .nav-chips{
+    max-width:1120px; margin:16px auto 0; padding:0 24px;
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 12px;
+    border-radius:99px; border:1px solid var(--tile-border); background:var(--card);
+    color:var(--ink-soft); text-decoration:none; cursor:pointer;
+    transition:.15s ease;
+  }
+  .chip:hover{border-color:var(--plum); color:var(--plum);}
+
+  /* ---------- MAIN ---------- */
+  main{max-width:1120px; margin:0 auto; padding:20px 24px;}
+  .section{margin-top:44px;}
+  .section-head{display:flex; align-items:baseline; gap:10px; margin-bottom:16px; border-bottom:2px solid var(--ink); padding-bottom:8px;}
+  .section-num{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-weight:700; font-size:14px;}
+  .section-title{font-size:22px; font-weight:600;}
+
+  .qcard{
+    position:relative;
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px; margin-bottom:16px; box-shadow:var(--shadow);
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .qcard.solved{border-color:var(--plum); background:linear-gradient(180deg, var(--plum-tint), var(--card) 40%);}
+  .qmeta{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .qtag{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;
+    color:var(--blue); background:#E7F0F4; border:1px solid #C9DDE6;
+    padding:2px 8px; border-radius:6px;
+  }
+  .qcard.solved .qtag{color:var(--plum); background:var(--plum-tint); border-color:#D3C7EC;}
+  .qtext{font-size:16px; line-height:1.75; margin:0 0 14px 0;}
+  .qtext code{background:var(--tile-bg); padding:1px 6px; border-radius:4px; font-size:14.5px;}
+
+  .perfect-tag{
+    position:absolute; top:-10px; right:16px;
+    background:var(--gold); color:#fff;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700;
+    padding:3px 9px; border-radius:99px; box-shadow:var(--shadow);
+    animation:pop .35s ease;
+  }
+
+  .blank{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:112px; height:32px; padding:0 10px; margin:0 2px;
+    border:2px dashed var(--tile-border); border-radius:8px;
+    background:#FAFBFC; vertical-align:middle;
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13.5px;
+    color:var(--ink-soft); transition:.15s ease; cursor:pointer;
+  }
+  .blank.hover-ok{border-color:var(--plum); background:var(--plum-tint);}
+  .blank.filled{border-style:solid; color:var(--ink); background:var(--tile-bg);}
+  .blank.correct{border-color:var(--plum); background:var(--plum-tint); color:var(--plum-dark); cursor:default;}
+  .blank.wrong{border-color:var(--brick); background:var(--brick-tint); color:var(--brick); animation:shake .35s ease;}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-5px);}
+    40%{transform:translateX(5px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+  @keyframes pop{
+    0%{transform:scale(.85); opacity:0;}
+    60%{transform:scale(1.08); opacity:1;}
+    100%{transform:scale(1);}
+  }
+
+  .tray{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; padding-top:12px; border-top:1px dashed var(--border);}
+  .tile{
+    font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:600;
+    background:var(--tile-bg); border:1.5px solid var(--tile-border); color:var(--ink);
+    padding:7px 14px; border-radius:8px; cursor:grab; user-select:none;
+    touch-action:none; transition:.15s ease;
+  }
+  .tile:hover{border-color:var(--blue); transform:translateY(-1px);}
+  .tile.selected{border-color:var(--gold); background:#FBF2DD; box-shadow:0 0 0 2px rgba(192,143,34,0.25);}
+  .tile.used{visibility:hidden; pointer-events:none;}
+  .ghost-tile{
+    position:fixed; z-index:999; pointer-events:none;
+    font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:600;
+    background:var(--gold); color:#fff; padding:7px 14px; border-radius:8px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.25); transform:translate(-50%,-50%);
+  }
+  .explain{font-size:13px; color:var(--ink-soft); margin-top:10px; display:none;}
+  .qcard.solved .explain{display:block;}
+
+  .hint-row{font-size:11.5px; color:var(--ink-soft); margin-top:2px; font-style:italic;}
+
+  /* ---------- FLOATING POINTS / TOASTS / CONFETTI ---------- */
+  .points-pop{
+    position:absolute; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:13px;
+    color:var(--gold); pointer-events:none; z-index:120; animation:floatUp 1.05s ease forwards;
+  }
+  @keyframes floatUp{
+    0%{opacity:0; transform:translateY(0) scale(.8);}
+    15%{opacity:1; transform:translateY(-6px) scale(1);}
+    100%{opacity:0; transform:translateY(-42px) scale(1);}
+  }
+
+  .toast-wrap{
+    position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:300;
+    display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none;
+  }
+  .toast{
+    background:var(--ink); color:#fff; padding:10px 20px; border-radius:99px;
+    font-family:'IBM Plex Mono',monospace; font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,0.28);
+    animation:toastIn .35s ease, toastOut .4s ease 2.5s forwards;
+    white-space:nowrap;
+  }
+  @keyframes toastIn{from{opacity:0; transform:translateY(-16px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes toastOut{to{opacity:0; transform:translateY(-16px);}}
+
+  .confetti-piece{
+    position:fixed; top:-12px; width:8px; height:14px; z-index:250; pointer-events:none;
+    animation-name:confettiFall; animation-timing-function:linear; animation-fill-mode:forwards;
+  }
+  @keyframes confettiFall{
+    to{ transform: translateY(112vh) rotate(620deg); opacity:0.85; }
+  }
+
+  footer.done-banner{
+    display:none; max-width:1120px; margin:36px auto 0; padding:22px 24px;
+    background:var(--ink); color:#E9ECF3; border-radius:12px; text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  footer.done-banner.show{display:block; animation:pop .5s ease;}
+  footer.done-banner .big{font-family:'Fraunces',serif; font-size:22px; color:#C6B8F0; margin-bottom:6px;}
+  footer.done-banner .final-stats{margin-top:12px; font-size:13px; color:#DCE1EA;}
+  footer.done-banner .final-stats b{color:#fff;}
+
+  @media (max-width:640px){
+    .hero-inner{flex-direction:column; align-items:flex-start;}
+    .hero-side{align-items:flex-start; width:100%;}
+    .series-panel{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-title-wrap">
+      <span class="hero-eyebrow">interactive drill · gamified</span>
+      <h1 class="hero-title">pandas.<span>DataFrame</span></h1>
+      <p class="hero-sub">Drag the correct tile into each blank. First-try answers earn bonus XP and build your streak — chain enough of them and your multiplier climbs.</p>
+    </div>
+    <div class="hero-side">
+      <div class="hero-actions">
+        <button id="muteBtn" class="mute-btn" title="Mute sound">🔊</button>
+        <button id="restartBtn" class="restart-btn">Restart</button>
+      </div>
+      <div class="series-panel">
+        <div class="sp-title">&gt;&gt;&gt; df.correct</div>
+        <div class="series-repr" id="seriesRepr">Empty DataFrame
+Columns: [correct]
+Index: []</div>
+        <div class="sp-foot" id="seriesFoot">Score: 0 / 50</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-bar" id="gameBar">
+    <div class="stat-chip level-chip">
+      <span class="icon" id="levelEmoji">🌱</span>
+      <div>
+        <div class="stat-label" id="levelNum">Lv.1</div>
+        <div class="stat-value" id="levelName">Index Novice</div>
+      </div>
+      <div class="xp-mini-track"><div class="xp-mini-fill" id="xpMiniFill"></div></div>
+    </div>
+    <div class="stat-chip">
+      <span class="icon">⭐</span>
+      <div><div class="stat-label">XP</div><div class="stat-value" id="statPoints">0</div></div>
+    </div>
+    <div class="stat-chip streak-chip" id="streakChip">
+      <span class="icon">🔥</span>
+      <div><div class="stat-label">Streak</div><div class="stat-value" id="statStreak">0</div></div>
+    </div>
+    <div class="stat-chip">
+      <span class="icon">🏆</span>
+      <div><div class="stat-label">Best streak</div><div class="stat-value" id="statBest">0</div></div>
+    </div>
+    <div class="stat-chip">
+      <span class="icon">🎯</span>
+      <div><div class="stat-label">Accuracy</div><div class="stat-value" id="statAccuracy">100%</div></div>
+    </div>
+    <div class="stat-chip">
+      <span class="icon">⏱</span>
+      <div><div class="stat-label">Time</div><div class="stat-value" id="statTimer">00:00</div></div>
+    </div>
+  </div>
+
+  <div class="progress-outer">
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-label" id="progressLabel">0 of 50 solved · drag a tile, or tap a tile then tap a blank</div>
+  </div>
+</div>
+
+<div class="nav-chips" id="navChips"></div>
+
+<main id="mainContent"></main>
+
+<footer class="done-banner" id="doneBanner">
+  <div class="big">df.all().all() → True 🎉</div>
+  <div>You matched all 50 blanks correctly. Nice work learning the pandas DataFrame API!</div>
+  <div class="final-stats" id="finalStats"></div>
+</footer>
+
+<script>
+/* ---------------- DATA ---------------- */
+const SECTIONS = [
+  "Creating a DataFrame",
+  "Attributes",
+  "Indexing & Selection",
+  "Core Methods",
+  "GroupBy, Merge & Reshaping",
+  "Missing Data & I/O",
+  "Combining DataFrames",
+  "String & DateTime Columns",
+  "Window & Advanced Aggregation",
+  "MultiIndex & Reshaping Extras"
+];
+
+const DATA = [
+  // Section 0: Creating a DataFrame
+  {sec:0, text:"pd.DataFrame({'a':[1,2],'b':[3,4]}) creates a DataFrame where the dict keys become the ___.",
+   options:["column names","index labels","dtype","row values"], correct:"column names",
+   explain:"Each dict key becomes a column, and its list/array becomes that column's values."},
+  {sec:0, text:"The columns=[...] parameter of pd.DataFrame() controls the ___ and their order.",
+   options:["column names","index labels","dtype","values"], correct:"column names",
+   explain:"columns lets you name and reorder the resulting DataFrame's columns explicitly."},
+  {sec:0, text:"A DataFrame is fundamentally a ___-dimensional labeled data structure.",
+   options:["2","1","3","0"], correct:"2",
+   explain:"DataFrame is 2-D (rows and columns); Series is its 1-D counterpart."},
+  {sec:0, text:"pd.DataFrame(list_of_dicts) creates one ___ per dictionary in the list.",
+   options:["row","column","index","dtype"], correct:"row",
+   explain:"Each dict becomes a row, with its keys mapped to matching columns."},
+  {sec:0, text:"pd.read_csv('file.csv') reads a CSV file and returns a ___.",
+   options:["DataFrame","Series","dict","ndarray"], correct:"DataFrame",
+   explain:"read_csv is the most common way to load tabular data into a DataFrame."},
+
+  // Section 1: Attributes
+  {sec:1, text:"df.columns returns the ___ labels as an Index object.",
+   options:["column","row","dtype","index"], correct:"column",
+   explain:"df.columns holds the labels across the top of the table."},
+  {sec:1, text:"df.index returns the ___ labels of the DataFrame.",
+   options:["row","column","dtype","name"], correct:"row",
+   explain:"df.index holds the labels down the left side of the table."},
+  {sec:1, text:"df.shape returns a tuple (rows, columns) representing the DataFrame's ___.",
+   options:["dimensions","dtype","memory","index"], correct:"dimensions",
+   explain:"shape reports how many rows and columns the DataFrame has."},
+  {sec:1, text:"df.dtypes returns the data type of ___.",
+   options:["each column","each row","the index","the whole DataFrame"], correct:"each column",
+   explain:"Unlike a Series, a DataFrame can mix types, so dtypes is reported per column."},
+  {sec:1, text:"df.to_numpy() returns the data as a ___ array, without row or column labels.",
+   options:["NumPy","Series","list","dict"], correct:"NumPy",
+   explain:"to_numpy() (or the .values attribute) strips away labels and returns raw values."},
+
+  // Section 2: Indexing & Selection
+  {sec:2, text:"df['col'] or df.col selects a single ___ as a Series.",
+   options:["column","row","cell","index"], correct:"column",
+   explain:"Selecting one column returns a 1-D Series sharing the DataFrame's index."},
+  {sec:2, text:"df.loc[] selects rows and columns by ___.",
+   options:["label","position","hash","dtype"], correct:"label",
+   explain:"loc uses index and column labels, e.g. df.loc['row1', 'colA']."},
+  {sec:2, text:"df.iloc[] selects rows and columns by integer ___.",
+   options:["position","label","name","hash"], correct:"position",
+   explain:"iloc works purely by position, like NumPy array indexing."},
+  {sec:2, text:"df[df['age'] > 30] filters rows using ___ indexing.",
+   options:["boolean","positional","label","fancy-only"], correct:"boolean",
+   explain:"The comparison creates a boolean mask that keeps only matching rows."},
+  {sec:2, text:"df.at[row, col] is a faster, scalar-only version of ___.",
+   options:["loc","iloc","iat","get"], correct:"loc",
+   explain:"at is optimized for retrieving or setting a single value by label."},
+
+  // Section 3: Core Methods
+  {sec:3, text:"df.head(n) returns the first ___ rows of the DataFrame.",
+   options:["n","n-1","n+1","5"], correct:"n",
+   explain:"head(n) previews the top n rows; it defaults to 5 if n is omitted."},
+  {sec:3, text:"df.sort_values('col') sorts rows by the values in ___.",
+   options:["that column","the index","all columns","dtype"], correct:"that column",
+   explain:"You can also pass a list of column names to sort by multiple keys."},
+  {sec:3, text:"df.drop(columns=['a']) returns a new DataFrame with column 'a' ___.",
+   options:["removed","renamed","filled","sorted"], correct:"removed",
+   explain:"drop() returns a copy without the specified labels unless inplace=True is set."},
+  {sec:3, text:"df.rename(columns={'a':'b'}) changes the name of column 'a' to ___.",
+   options:["'b'","'a'","the index","nothing"], correct:"'b'",
+   explain:"rename() maps old labels to new ones via a dictionary."},
+  {sec:3, text:"df.apply(func, axis=1) applies a function to each ___ of the DataFrame.",
+   options:["row","column","cell","index"], correct:"row",
+   explain:"axis=1 applies the function row-wise; axis=0 (the default) applies it column-wise."},
+
+  // Section 4: GroupBy, Merge & Reshaping
+  {sec:4, text:"df.groupby('col') splits the DataFrame into groups based on unique values in ___.",
+   options:["that column","the index","all columns","dtype"], correct:"that column",
+   explain:"Each unique value in 'col' defines one group of rows."},
+  {sec:4, text:"df.groupby('col').mean() computes the mean of ___ within each group.",
+   options:["numeric columns","the group labels","the index","all values combined"], correct:"numeric columns",
+   explain:"Aggregation methods after groupby operate on each numeric column per group."},
+  {sec:4, text:"pd.merge(df1, df2, on='id') combines two DataFrames by matching values in the ___ column.",
+   options:["'id'","index","dtype","name"], correct:"'id'",
+   explain:"on='id' tells pandas which shared column to join the two tables on."},
+  {sec:4, text:"df.pivot_table() reshapes data by turning unique values of a column into ___.",
+   options:["new columns","new rows","the index only","dtype labels"], correct:"new columns",
+   explain:"pivot_table spreads one column's values out into new column headers, aggregating as needed."},
+  {sec:4, text:"df.melt() reshapes a DataFrame from wide format to ___ format.",
+   options:["long","wide","pivoted","indexed"], correct:"long",
+   explain:"melt() unpivots columns into rows, the opposite of pivot_table()."},
+
+  // Section 5: Missing Data & I/O
+  {sec:5, text:"df.isna() returns a DataFrame of booleans marking which cells are ___.",
+   options:["missing (NaN)","duplicated","negative","zero"], correct:"missing (NaN)",
+   explain:"isna() (or isnull()) flags every NaN/None cell as True."},
+  {sec:5, text:"df.dropna() removes rows (by default) that contain ___.",
+   options:["any missing value","duplicate values","negative values","only zeros"], correct:"any missing value",
+   explain:"By default dropna() drops a row if it has at least one NaN; how='all' changes that."},
+  {sec:5, text:"df.fillna(0) replaces missing cells with ___.",
+   options:["0","the mean","the previous value","NaN"], correct:"0",
+   explain:"fillna() substitutes NaNs with whatever value or method you pass in — here, 0."},
+  {sec:5, text:"df.duplicated() returns a boolean Series marking rows that are ___ of a previous row.",
+   options:["duplicates","missing","unique","sorted"], correct:"duplicates",
+   explain:"duplicated() flags repeated rows so you can inspect or drop them with drop_duplicates()."},
+  {sec:5, text:"df.to_csv('out.csv') writes the DataFrame to a ___ file.",
+   options:["CSV","JSON","Excel","SQL"], correct:"CSV",
+   explain:"to_csv() is the counterpart to read_csv(), exporting the table as comma-separated text."},
+
+  // Section 6: Combining DataFrames
+  {sec:6, text:"pd.concat([df1, df2]) stacks two DataFrames along the ___ by default.",
+   options:["index (axis=0)","columns (axis=1)","values only","dtype"], correct:"index (axis=0)",
+   explain:"concat glues DataFrames end-to-end along the index unless axis=1 is specified."},
+  {sec:6, text:"df1.join(df2) combines DataFrames using their ___ by default.",
+   options:["index","columns","dtype","values"], correct:"index",
+   explain:"join() is a convenient shortcut for merging on the index rather than a column."},
+  {sec:6, text:"pd.merge(df1, df2, how='left') keeps all rows from the ___ DataFrame.",
+   options:["left","right","inner","outer"], correct:"left",
+   explain:"A left join preserves every row of df1, filling unmatched df2 columns with NaN."},
+  {sec:6, text:"pd.merge(df1, df2, how='outer') keeps ___ rows from both DataFrames, filling unmatched cells with NaN.",
+   options:["all","only matching","no","left"], correct:"all",
+   explain:"An outer join is the union of both keys, unlike an inner join's intersection."},
+  {sec:6, text:"df.combine_first(df2) fills missing values in df using values from ___.",
+   options:["df2","the index","the columns","a scalar"], correct:"df2",
+   explain:"combine_first patches NaNs in the caller with aligned values from the argument."},
+
+  // Section 7: String & DateTime Columns
+  {sec:7, text:"df['col'].str.contains('x') returns a boolean Series marking rows where the string ___.",
+   options:["contains 'x'","starts with 'x'","equals 'x'","excludes 'x'"], correct:"contains 'x'",
+   explain:"str.contains checks for a substring or pattern anywhere in each string."},
+  {sec:7, text:"df['col'].str.split(',') splits each string into a list wherever a ___ occurs.",
+   options:["comma","space","dot","dash"], correct:"comma",
+   explain:"The character passed to str.split is used as the delimiter."},
+  {sec:7, text:"pd.to_datetime(df['col']) converts a column to pandas ___ objects.",
+   options:["datetime","string","integer","category"], correct:"datetime",
+   explain:"to_datetime parses strings or numbers into Timestamp objects for date math and resampling."},
+  {sec:7, text:"df['date'].dt.year extracts the ___ component from each datetime value.",
+   options:["year","month","day","hour"], correct:"year",
+   explain:"The .dt accessor exposes date parts like year, month, day, and hour."},
+  {sec:7, text:"df.set_index('date').resample('M') groups time-series rows into ___ periods.",
+   options:["monthly","daily","yearly","weekly"], correct:"monthly",
+   explain:"The 'M' rule resamples a datetime index into month-end buckets."},
+
+  // Section 8: Window & Advanced Aggregation
+  {sec:8, text:"df.rolling(window=3).mean() computes a moving average over ___ consecutive rows.",
+   options:["3","all","1","2"], correct:"3",
+   explain:"The window size sets how many consecutive rows each rolling calculation covers."},
+  {sec:8, text:"df.expanding().sum() computes a ___ sum that grows to include all prior rows.",
+   options:["cumulative","fixed-window","reverse","random"], correct:"cumulative",
+   explain:"Unlike rolling(), expanding() keeps widening the window from the start of the data."},
+  {sec:8, text:"df.agg(['sum','mean']) applies ___ aggregation functions to each column at once.",
+   options:["multiple","one","zero","nested"], correct:"multiple",
+   explain:"agg() accepts a list of function names or callables to run side by side."},
+  {sec:8, text:"df.pivot_table(values='sales', index='region', aggfunc='sum') summarizes 'sales' totals grouped by ___.",
+   options:["region","date","product","dtype"], correct:"region",
+   explain:"index='region' defines the grouping rows that the aggfunc is applied within."},
+  {sec:8, text:"df.groupby('col').transform(func) returns a result with the ___ shape as the original DataFrame.",
+   options:["same","aggregated","smaller","reversed"], correct:"same",
+   explain:"transform() broadcasts the per-group result back to every original row, unlike agg()."},
+
+  // Section 9: MultiIndex & Reshaping Extras
+  {sec:9, text:"df.set_index(['a','b']) creates a ___ using columns 'a' and 'b'.",
+   options:["MultiIndex","Series","single Index","dtype"], correct:"MultiIndex",
+   explain:"Passing multiple columns to set_index builds a hierarchical (Multi)Index."},
+  {sec:9, text:"df.reset_index() moves the index back into the DataFrame as ___.",
+   options:["regular column(s)","the dtype","a MultiIndex","nothing"], correct:"regular column(s)",
+   explain:"reset_index() undoes set_index, restoring a default RangeIndex."},
+  {sec:9, text:"df.stack() pivots columns into ___, creating a MultiIndex.",
+   options:["rows","new columns","the index only","dtype"], correct:"rows",
+   explain:"stack() compresses column labels down into an inner index level."},
+  {sec:9, text:"df.unstack() pivots an index level into ___.",
+   options:["new columns","new rows","the dtype","nothing"], correct:"new columns",
+   explain:"unstack() is the inverse of stack(), spreading an index level out into columns."},
+  {sec:9, text:"df.T (transpose) swaps the DataFrame's ___ and columns.",
+   options:["rows","dtype","index name","values only"], correct:"rows",
+   explain:"Transposing flips rows to columns and columns to rows, like a matrix transpose."}
+];
+
+/* ---------------- GAME CONFIG ---------------- */
+const total = DATA.length;
+const LEVELS = [
+  {at:0,  name:"Index Novice",        emoji:"🌱"},
+  {at:6,  name:"Column Cadet",        emoji:"📊"},
+  {at:13, name:"Merge Apprentice",    emoji:"🔗"},
+  {at:21, name:"GroupBy Adept",       emoji:"🧮"},
+  {at:30, name:"Pivot Pro",           emoji:"🔄"},
+  {at:40, name:"MultiIndex Master",   emoji:"🗂️"},
+  {at:50, name:"DataFrame Grandmaster", emoji:"👑"}
+];
+
+/* ---------------- STATE ---------------- */
+let points = 0;
+let solvedCount = 0;
+let streak = 0;
+let bestStreak = 0;
+let totalWrong = 0;
+let startTime = null;
+let timerHandle = null;
+let muted = false;
+let audioCtx = null;
+let currentLevelIndex = 0;
+let selectedTile = null;
+
+/* ---------------- HELPERS ---------------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* ---------------- RENDER NAV ---------------- */
+const navChips = document.getElementById('navChips');
+SECTIONS.forEach((s,i)=>{
+  const a = document.createElement('a');
+  a.className = 'chip';
+  a.href = '#sec-'+i;
+  a.textContent = (i+1)+'. '+s;
+  navChips.appendChild(a);
+});
+
+/* ---------------- RENDER QUESTIONS ---------------- */
+const main = document.getElementById('mainContent');
+let globalIdx = 0;
+
+SECTIONS.forEach((secName, secIdx)=>{
+  const section = document.createElement('section');
+  section.className = 'section';
+  section.id = 'sec-'+secIdx;
+
+  const head = document.createElement('div');
+  head.className = 'section-head';
+  head.innerHTML = `<span class="section-num">§${secIdx+1}</span><h2 class="section-title">${secName}</h2>`;
+  section.appendChild(head);
+
+  DATA.forEach((q)=>{
+    if(q.sec !== secIdx) return;
+    const myIndex = globalIdx++;
+    const card = document.createElement('div');
+    card.className = 'qcard';
+    card.dataset.qid = myIndex;
+    card.dataset.solved = 'false';
+    card.dataset.wrong = '0';
+
+    const meta = document.createElement('div');
+    meta.className = 'qmeta';
+    meta.innerHTML = `<span class="qtag">df.iloc[${myIndex}]</span>`;
+    card.appendChild(meta);
+
+    const p = document.createElement('p');
+    p.className = 'qtext';
+    const parts = q.text.split('___');
+    p.appendChild(document.createTextNode(parts[0]));
+    const blank = document.createElement('span');
+    blank.className = 'blank';
+    blank.dataset.qid = myIndex;
+    blank.textContent = '⠀⠀⠀⠀⠀⠀';
+    p.appendChild(blank);
+    p.appendChild(document.createTextNode(parts[1]));
+    card.appendChild(p);
+
+    const tray = document.createElement('div');
+    tray.className = 'tray';
+    tray.dataset.qid = myIndex;
+    const shuffled = shuffle(q.options);
+    shuffled.forEach(optLabel=>{
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.setAttribute('draggable','false');
+      tile.dataset.qid = myIndex;
+      tile.dataset.value = optLabel;
+      tile.dataset.correct = (optLabel === q.correct) ? 'true' : 'false';
+      tile.textContent = optLabel;
+      tray.appendChild(tile);
+    });
+    card.appendChild(tray);
+
+    const hint = document.createElement('div');
+    hint.className = 'hint-row';
+    hint.textContent = 'drag a tile into the blank above';
+    card.appendChild(hint);
+
+    const explain = document.createElement('div');
+    explain.className = 'explain';
+    explain.textContent = q.explain;
+    card.appendChild(explain);
+
+    section.appendChild(card);
+  });
+
+  main.appendChild(section);
+});
+
+/* ---------------- SOUND ---------------- */
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+  } else if(audioCtx.state === 'suspended'){
+    audioCtx.resume();
+  }
+}
+function beep(freq, dur, type, vol, delay){
+  if(muted || !audioCtx) return;
+  const t0 = audioCtx.currentTime + (delay || 0);
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol || 0.15, t0 + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.03);
+}
+function playCorrect(perfect){
+  beep(660,0.09,'triangle',0.16,0);
+  beep(880,0.12,'triangle',0.16,0.08);
+  if(perfect) beep(1320,0.14,'triangle',0.14,0.16);
+}
+function playWrong(){ beep(180,0.18,'sawtooth',0.13,0); }
+function playLevelUp(){ [523,659,784,1047].forEach((f,i)=>beep(f,0.16,'square',0.13,i*0.11)); }
+function playComplete(){ [523,659,784,988,1175].forEach((f,i)=>beep(f,0.2,'square',0.14,i*0.12)); }
+
+document.getElementById('muteBtn').addEventListener('click', ()=>{
+  muted = !muted;
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+});
+document.getElementById('restartBtn').addEventListener('click', ()=> location.reload());
+
+/* ---------------- TIMER ---------------- */
+function startTimerIfNeeded(){
+  if(startTime) return;
+  startTime = Date.now();
+  timerHandle = setInterval(updateTimerDisplay, 1000);
+}
+function updateTimerDisplay(){
+  const secs = Math.floor((Date.now() - startTime) / 1000);
+  const m = String(Math.floor(secs/60)).padStart(2,'0');
+  const s = String(secs%60).padStart(2,'0');
+  document.getElementById('statTimer').textContent = `${m}:${s}`;
+}
+function stopTimer(){ if(timerHandle) clearInterval(timerHandle); }
+
+/* ---------------- TOASTS / CONFETTI / POINTS POP ---------------- */
+function showToast(html){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = html;
+  wrap.appendChild(t);
+  setTimeout(()=> t.remove(), 2950);
+}
+function spawnConfetti(n){
+  const colors = ['#C08F22','#5B4B8A','#2F6F8C','#B3462B','#3E8F63'];
+  for(let i=0;i<n;i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = (Math.random()*100) + 'vw';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    const dur = 1.6 + Math.random()*1.3;
+    p.style.animationDuration = dur + 's';
+    p.style.animationDelay = (Math.random()*0.3) + 's';
+    document.body.appendChild(p);
+    setTimeout(()=> p.remove(), (dur+0.4)*1000);
+  }
+}
+function floatPoints(x, y, text){
+  const el = document.createElement('div');
+  el.className = 'points-pop';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(()=> el.remove(), 1100);
+}
+
+/* ---------------- DRAG ENGINE (pointer events, mouse+touch) ---------------- */
+let dragTile = null;
+let ghost = null;
+let startX=0, startY=0, moved=false;
+const MOVE_THRESHOLD = 6;
+
+document.addEventListener('pointerdown', (e)=>{
+  const tile = e.target.closest('.tile');
+  if(!tile || tile.classList.contains('used')) return;
+  const qcard = tile.closest('.qcard');
+  if(qcard.dataset.solved === 'true') return;
+
+  startTimerIfNeeded();
+  ensureAudio();
+
+  dragTile = tile;
+  startX = e.clientX; startY = e.clientY;
+  moved = false;
+  tile.setPointerCapture && tile.setPointerCapture(e.pointerId);
+});
+
+document.addEventListener('pointermove', (e)=>{
+  if(!dragTile) return;
+  const dx = e.clientX - startX, dy = e.clientY - startY;
+  if(!moved && Math.hypot(dx,dy) > MOVE_THRESHOLD){
+    moved = true;
+    ghost = document.createElement('div');
+    ghost.className = 'ghost-tile';
+    ghost.textContent = dragTile.dataset.value;
+    document.body.appendChild(ghost);
+    clearSelection();
+  }
+  if(moved && ghost){
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top = e.clientY + 'px';
+    document.querySelectorAll('.blank.hover-ok').forEach(b=>b.classList.remove('hover-ok'));
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const blank = under && under.closest('.blank');
+    if(blank && blank.dataset.qid === dragTile.dataset.qid && !blank.classList.contains('correct')){
+      blank.classList.add('hover-ok');
+    }
+  }
+});
+
+document.addEventListener('pointerup', (e)=>{
+  if(!dragTile) return;
+  if(moved && ghost){
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const blank = under && under.closest('.blank');
+    ghost.remove(); ghost = null;
+    document.querySelectorAll('.blank.hover-ok').forEach(b=>b.classList.remove('hover-ok'));
+    if(blank && blank.dataset.qid === dragTile.dataset.qid){
+      attemptPlace(dragTile, blank);
+    }
+  } else {
+    toggleSelect(dragTile);
+  }
+  dragTile = null;
+  moved = false;
+});
+
+document.addEventListener('click', (e)=>{
+  const blank = e.target.closest('.blank');
+  if(!blank) return;
+  if(blank.classList.contains('correct')) return;
+  if(selectedTile && selectedTile.dataset.qid === blank.dataset.qid){
+    startTimerIfNeeded();
+    ensureAudio();
+    attemptPlace(selectedTile, blank);
+    clearSelection();
+  } else if(blank.classList.contains('filled')){
+    resetBlank(blank);
+  }
+});
+
+function toggleSelect(tile){
+  if(selectedTile === tile){
+    clearSelection();
+  } else {
+    clearSelection();
+    selectedTile = tile;
+    tile.classList.add('selected');
+  }
+}
+function clearSelection(){
+  if(selectedTile) selectedTile.classList.remove('selected');
+  selectedTile = null;
+}
+
+function resetBlank(blank){
+  const qid = blank.dataset.qid;
+  const prevVal = blank.dataset.filledValue;
+  blank.textContent = '⠀⠀⠀⠀⠀⠀';
+  blank.classList.remove('filled','wrong');
+  delete blank.dataset.filledValue;
+  if(prevVal){
+    const prevTile = document.querySelector(`.tile[data-qid="${qid}"][data-value="${CSS.escape(prevVal)}"]`);
+    if(prevTile) prevTile.classList.remove('used');
+  }
+}
+
+function attemptPlace(tile, blank){
+  const isCorrect = tile.dataset.correct === 'true';
+  if(blank.classList.contains('filled') && blank.dataset.filledValue !== tile.dataset.value){
+    resetBlank(blank);
+  }
+  blank.textContent = tile.dataset.value;
+  blank.dataset.filledValue = tile.dataset.value;
+  blank.classList.add('filled');
+  tile.classList.add('used');
+
+  if(isCorrect){
+    blank.classList.remove('wrong');
+    blank.classList.add('correct');
+    blank.style.animation = 'pop .3s ease';
+    const card = document.querySelector(`.qcard[data-qid="${blank.dataset.qid}"]`);
+    markSolved(card);
+  } else {
+    blank.classList.add('wrong');
+    const card = document.querySelector(`.qcard[data-qid="${blank.dataset.qid}"]`);
+    card.dataset.wrong = String(parseInt(card.dataset.wrong || '0', 10) + 1);
+    totalWrong++;
+    playWrong();
+    updateStatsBar();
+    setTimeout(()=>{
+      tile.classList.remove('used');
+      resetBlank(blank);
+    }, 550);
+  }
+}
+
+/* ---------------- SOLVE / SCORE / LEVELS ---------------- */
+function levelForCount(n){
+  let idx = 0;
+  for(let i=0;i<LEVELS.length;i++){ if(n >= LEVELS[i].at) idx = i; }
+  return idx;
+}
+
+function markSolved(card){
+  if(!card || card.dataset.solved === 'true') return;
+  card.dataset.solved = 'true';
+  card.classList.add('solved');
+
+  const wrongCount = parseInt(card.dataset.wrong || '0', 10);
+  const perfect = wrongCount === 0;
+  streak = perfect ? streak + 1 : 0;
+  bestStreak = Math.max(bestStreak, streak);
+  const multiplier = perfect ? (1 + Math.min(Math.floor((streak-1)/3), 4) * 0.5) : 1;
+  const basePts = perfect ? 10 : 5;
+  const pts = Math.round(basePts * multiplier);
+  points += pts;
+  solvedCount++;
+
+  const tag = document.createElement('div');
+  tag.className = 'perfect-tag';
+  if(!perfect){ tag.style.background = 'var(--blue)'; }
+  tag.textContent = (perfect ? 'PERFECT +' : '+') + pts;
+  card.appendChild(tag);
+
+  const rect = card.getBoundingClientRect();
+  floatPoints(rect.right - 40, rect.top + window.scrollY + 6, '+' + pts);
+
+  playCorrect(perfect);
+
+  if(perfect && streak > 0 && streak % 5 === 0){
+    showToast(`🔥 <b>${streak} in a row!</b> multiplier x${multiplier.toFixed(1)}`);
+  }
+
+  const hint = card.querySelector('.hint-row');
+  if(hint) hint.textContent = perfect ? 'perfect — first try!' : 'correct (after a retry)';
+
+  updateSeriesPanel();
+  updateStatsBar();
+  updateProgress();
+  checkLevelUp();
+
+  if(solvedCount === total){
+    finishGame();
+  }
+}
+
+function checkLevelUp(){
+  const newIdx = levelForCount(solvedCount);
+  if(newIdx !== currentLevelIndex){
+    currentLevelIndex = newIdx;
+    updateLevelChip();
+    playLevelUp();
+    spawnConfetti(30);
+    showToast(`🏅 Level up! You're now <b>${LEVELS[newIdx].emoji} ${LEVELS[newIdx].name}</b>`);
+  }
+}
+
+function updateLevelChip(){
+  const lvl = LEVELS[currentLevelIndex];
+  document.getElementById('levelEmoji').textContent = lvl.emoji;
+  document.getElementById('levelName').textContent = lvl.name;
+  document.getElementById('levelNum').textContent = 'Lv.' + (currentLevelIndex + 1);
+  const next = LEVELS[currentLevelIndex + 1];
+  const fill = document.getElementById('xpMiniFill');
+  if(next){
+    const span = next.at - lvl.at;
+    const prog = Math.min(1, (solvedCount - lvl.at) / span);
+    fill.style.width = (prog*100) + '%';
+  } else {
+    fill.style.width = '100%';
+  }
+}
+
+function updateStatsBar(){
+  document.getElementById('statPoints').textContent = points;
+  document.getElementById('statStreak').textContent = streak;
+  document.getElementById('statBest').textContent = bestStreak;
+  document.getElementById('streakChip').classList.toggle('hot', streak >= 3);
+  const attempts = solvedCount + totalWrong;
+  const acc = attempts ? Math.round((solvedCount / attempts) * 100) : 100;
+  document.getElementById('statAccuracy').textContent = acc + '%';
+}
+
+function updateProgress(){
+  const bar = document.getElementById('progressBar');
+  bar.style.width = (solvedCount/total*100) + '%';
+  document.getElementById('progressLabel').textContent =
+    `${solvedCount} of ${total} solved · drag a tile, or tap a tile then tap a blank`;
+}
+
+function updateSeriesPanel(){
+  const repr = document.getElementById('seriesRepr');
+  const foot = document.getElementById('seriesFoot');
+  if(solvedCount === 0){
+    repr.textContent = 'Empty DataFrame\nColumns: [correct]\nIndex: []';
+  } else {
+    let lines = ['      correct'];
+    const showCount = Math.min(solvedCount, 8);
+    for(let i=0;i<showCount;i++){
+      lines.push(`${String(i).padEnd(6)}True`);
+    }
+    if(solvedCount > 8){ lines.push('...   ...'); }
+    repr.textContent = lines.join('\n');
+  }
+  foot.textContent = `[${solvedCount} rows x 1 columns]  ·  Score: ${solvedCount} / ${total}`;
+}
+
+function finishGame(){
+  stopTimer();
+  playComplete();
+  spawnConfetti(80);
+  document.getElementById('doneBanner').classList.add('show');
+  const attempts = solvedCount + totalWrong;
+  const acc = Math.round((solvedCount/attempts) * 100);
+  const timeText = document.getElementById('statTimer').textContent;
+  document.getElementById('finalStats').innerHTML =
+    `⏱ Time: <b>${timeText}</b> &nbsp;·&nbsp; 🎯 Accuracy: <b>${acc}%</b> &nbsp;·&nbsp; 🔥 Best streak: <b>${bestStreak}</b> &nbsp;·&nbsp; ⭐ XP: <b>${points}</b>`;
+}
+
+/* ---------------- INIT ---------------- */
+updateSeriesPanel();
+updateStatsBar();
+updateProgress();
+updateLevelChip();
+</script>
+</body>
+</html>
