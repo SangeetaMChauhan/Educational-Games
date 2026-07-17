@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>SQL Function Quest — Learn SQL by Playing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F7F5FC;
+    --bg-deep: #EFE9FB;
+    --card: #FFFFFF;
+    --ink: #241B3A;
+    --ink-soft: #6E6789;
+    --border: #E7E2F5;
+
+    --aggregate: #FF6B6B;
+    --aggregate-soft: #FFE4E4;
+    --string: #12B3A6;
+    --string-soft: #D2F6F2;
+    --date: #F2A100;
+    --date-soft: #FFEECB;
+    --math: #8B5CF6;
+    --math-soft: #EAE0FF;
+    --clause: #22B573;
+    --clause-soft: #D9F6E7;
+
+    --accent: #FF4FA0;
+    --shadow: 0 10px 30px rgba(88, 66, 150, 0.12);
+    --shadow-sm: 0 4px 14px rgba(88, 66, 150, 0.10);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 8% 12%, #FFE9F6 0%, transparent 40%),
+      radial-gradient(circle at 92% 8%, #E4F5FF 0%, transparent 42%),
+      radial-gradient(circle at 85% 90%, #FFF3D9 0%, transparent 45%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+  .code, .mono{ font-family: 'Space Mono', monospace; }
+  h1,h2,h3,.display{ font-family: 'Baloo 2', sans-serif; }
+
+  .wrap{ max-width: 980px; margin: 0 auto; padding: 22px 18px 60px; }
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content: space-between;
+    gap:14px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand h1{ font-size: 1.5rem; margin:0; letter-spacing:.2px; }
+  .brand-sub{ font-size:.78rem; color:var(--ink-soft); margin-top:-2px; }
+
+  .db-icon{ flex: none; }
+
+  .stat-cluster{ display:flex; align-items:center; gap:10px; flex-wrap: wrap; }
+  .pill{
+    background: var(--card); border:1px solid var(--border); border-radius: 999px;
+    padding: 7px 14px; font-weight:600; font-size:.85rem; display:flex; align-items:center; gap:6px;
+    box-shadow: var(--shadow-sm);
+  }
+  .hearts{ color:#FF4F6E; letter-spacing:2px; }
+  .ref-btn{
+    background: var(--ink); color:#fff; border:none; border-radius:999px;
+    padding: 9px 16px; font-weight:700; font-size:.85rem; cursor:pointer;
+    font-family:'Inter',sans-serif; box-shadow: var(--shadow-sm);
+    transition: transform .15s ease;
+  }
+  .ref-btn:hover{ transform: translateY(-2px); }
+
+  /* ---------- SCREENS ---------- */
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  /* ---- START SCREEN ---- */
+  .start-hero{
+    background: var(--card); border:1px solid var(--border); border-radius: 26px;
+    padding: 38px 32px; box-shadow: var(--shadow); position:relative; overflow:hidden;
+  }
+  .start-hero::before{
+    content:""; position:absolute; right:-60px; top:-60px; width:220px; height:220px;
+    background: conic-gradient(from 180deg, var(--aggregate), var(--string), var(--date), var(--math), var(--clause), var(--aggregate));
+    border-radius: 50%; opacity:.15; filter: blur(2px);
+  }
+  .start-hero h2{ font-size: 2.1rem; margin: 0 0 8px; position:relative; }
+  .start-hero p{ color: var(--ink-soft); font-size: 1rem; max-width: 560px; line-height:1.55; position:relative;}
+  .badge-row{ display:flex; gap:10px; flex-wrap:wrap; margin: 22px 0 26px; position:relative; }
+  .cat-chip{
+    border-radius: 14px; padding: 12px 14px; font-weight:700; font-size:.82rem;
+    display:flex; flex-direction:column; gap:4px; min-width:118px;
+  }
+  .cat-chip small{ font-weight:500; font-size:.7rem; opacity:.85; }
+
+  .start-btn{
+    border:none; cursor:pointer; font-family:'Baloo 2',sans-serif; font-weight:700;
+    font-size: 1.15rem; color:#fff; padding: 15px 34px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), var(--math));
+    box-shadow: 0 12px 26px rgba(139,92,246,.35);
+    transition: transform .15s ease, box-shadow .15s ease;
+    position:relative;
+  }
+  .start-btn:hover{ transform: translateY(-3px) scale(1.02); box-shadow: 0 16px 30px rgba(139,92,246,.42); }
+
+  .howto{
+    margin-top: 26px; display:grid; grid-template-columns: repeat(3,1fr); gap:14px; position:relative;
+  }
+  .howto div{
+    background: var(--bg); border-radius:16px; padding:14px 16px; border:1px dashed var(--border);
+  }
+  .howto div b{ display:block; font-family:'Baloo 2'; font-size:1rem; margin-bottom:4px;}
+  .howto div span{ font-size:.82rem; color:var(--ink-soft); }
+
+  /* ---- GAME SCREEN ---- */
+  .progress-track{
+    height: 10px; background: var(--bg-deep); border-radius: 999px; overflow:hidden; margin-bottom: 18px;
+    border: 1px solid var(--border);
+  }
+  .progress-fill{
+    height:100%; border-radius:999px; background: linear-gradient(90deg, var(--accent), var(--math));
+    width:0%; transition: width .4s ease;
+  }
+
+  .level-banner{
+    display:flex; align-items:center; gap:10px; margin-bottom: 14px;
+  }
+  .level-tag{
+    font-family:'Baloo 2'; font-weight:700; font-size:.95rem; padding: 6px 14px; border-radius: 999px; color:#fff;
+  }
+  .level-name{ font-family:'Baloo 2'; font-size:1.2rem; }
+
+  .game-grid{ display:grid; grid-template-columns: 1.4fr 1fr; gap: 18px; align-items:start; }
+  @media (max-width: 760px){ .game-grid{ grid-template-columns: 1fr; } }
+
+  .mission-card{
+    background: var(--card); border:1px solid var(--border); border-radius: 22px; padding: 24px;
+    box-shadow: var(--shadow); position:relative;
+  }
+  .scenario{
+    font-size: 1.05rem; line-height:1.5; margin: 0 0 18px; font-weight:600;
+  }
+  .scenario .qnum{ color: var(--ink-soft); font-weight:500; font-size:.82rem; display:block; margin-bottom:6px; }
+
+  .query-box{
+    background: #211732; border-radius: 16px; padding: 20px 18px; overflow-x:auto;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .query-line{
+    font-family:'Space Mono', monospace; font-size: 1.05rem; color:#F1EBFF; white-space: nowrap;
+    display:flex; align-items:center; flex-wrap:wrap; gap: 4px; line-height:2;
+  }
+  .kw{ color:#9BE7FF; }
+  .tbl{ color:#FFD27D; }
+  .punc{ color:#B9AEDD; }
+
+  .dropzone{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width: 92px; height: 34px; padding: 0 10px; margin: 0 2px;
+    border-radius: 10px; border: 2px dashed rgba(255,255,255,.35);
+    color: rgba(255,255,255,.55); font-weight:700; font-size:.9rem;
+    background: rgba(255,255,255,.04); transition: all .15s ease; cursor: pointer;
+  }
+  .dropzone.hover{ border-color:#fff; background: rgba(255,255,255,.14); transform: scale(1.05); }
+  .dropzone.filled{ border-style: solid; color:#211732; font-weight:800; }
+  .dropzone.correct{ background: var(--clause) !important; border-color: var(--clause) !important; color:#fff !important; }
+  .dropzone.wrong{ background: var(--aggregate) !important; border-color: var(--aggregate) !important; color:#fff !important; }
+
+  .table-card{
+    background: var(--card); border:1px solid var(--border); border-radius: 22px; padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .table-card h3{ margin: 0 0 4px; font-size:1rem; }
+  .table-card .sub{ font-size:.76rem; color:var(--ink-soft); margin-bottom:10px; }
+  table.data{ width:100%; border-collapse: collapse; font-size:.78rem; font-family:'Space Mono',monospace; }
+  table.data th{
+    background: var(--bg-deep); text-align:left; padding:6px 8px; font-size:.68rem;
+    text-transform:uppercase; letter-spacing:.4px; color: var(--ink-soft); font-family:'Inter'; font-weight:700;
+  }
+  table.data td{ padding:6px 8px; border-bottom:1px solid var(--border); }
+  table.data tr:last-child td{ border-bottom:none; }
+
+  .tray-card{
+    background: var(--card); border:1px solid var(--border); border-radius: 22px; padding: 20px;
+    box-shadow: var(--shadow); margin-top: 18px;
+  }
+  .tray-label{ font-size:.78rem; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:12px;}
+  .tray{
+    display:flex; flex-wrap:wrap; gap: 12px; min-height: 56px;
+  }
+  .tile{
+    font-family:'Space Mono', monospace; font-weight:700; font-size:.92rem;
+    padding: 12px 18px; border-radius: 12px; cursor: grab; user-select:none; touch-action:none;
+    box-shadow: var(--shadow-sm); border: 2px solid rgba(0,0,0,.05);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .tile:active{ cursor: grabbing; }
+  .tile:hover{ transform: translateY(-3px); box-shadow: 0 10px 18px rgba(88,66,150,.2); }
+  .tile.placed{ visibility: hidden; }
+
+  .dragging-clone{
+    position: fixed; z-index: 999; pointer-events:none; opacity:.95;
+    font-family:'Space Mono', monospace; font-weight:700; font-size:.92rem;
+    padding: 12px 18px; border-radius: 12px; box-shadow: 0 16px 30px rgba(0,0,0,.25);
+    transform: rotate(-3deg) scale(1.05);
+  }
+
+  .action-row{ display:flex; gap:12px; margin-top:20px; align-items:center; flex-wrap:wrap; }
+  .btn{
+    border:none; cursor:pointer; font-family:'Baloo 2'; font-weight:700; font-size:1rem;
+    padding: 13px 26px; border-radius: 999px; transition: transform .15s ease, opacity .15s ease;
+  }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:hover:not(:disabled){ transform: translateY(-2px); }
+  .btn-check{ background: var(--ink); color:#fff; }
+  .btn-next{ background: linear-gradient(135deg, var(--accent), var(--math)); color:#fff; display:none; }
+  .btn-reset{ background: transparent; color: var(--ink-soft); text-decoration:underline; font-family:'Inter'; font-weight:600; font-size:.85rem; padding:8px 4px;}
+
+  .feedback{
+    margin-top: 16px; padding: 14px 16px; border-radius: 14px; font-size:.92rem; line-height:1.5;
+    display:none; align-items:flex-start; gap:10px; font-weight:500;
+  }
+  .feedback.show{ display:flex; }
+  .feedback.ok{ background: var(--clause-soft); color:#0F6A3D; }
+  .feedback.bad{ background: var(--aggregate-soft); color:#A3251C; }
+  .feedback b{ font-family:'Baloo 2'; }
+
+  /* ---- END SCREEN ---- */
+  .end-card{
+    background: var(--card); border:1px solid var(--border); border-radius: 26px; padding: 42px 32px;
+    box-shadow: var(--shadow); text-align:center;
+  }
+  .end-card .medal{ font-size: 4rem; line-height:1; margin-bottom: 6px; }
+  .end-card h2{ font-size:1.9rem; margin: 6px 0 2px; }
+  .end-card .badge-title{ color: var(--math); font-weight:700; font-family:'Baloo 2'; font-size:1.2rem; }
+  .end-stats{ display:flex; gap: 14px; justify-content:center; margin: 26px 0; flex-wrap:wrap; }
+  .end-stats .box{
+    background: var(--bg); border-radius: 16px; padding: 16px 22px; min-width: 120px; border:1px solid var(--border);
+  }
+  .end-stats .box .num{ font-family:'Baloo 2'; font-size:1.6rem; }
+  .end-stats .box .lbl{ font-size:.75rem; color: var(--ink-soft); text-transform:uppercase; letter-spacing:.4px; }
+
+  /* ---- REFERENCE MODAL ---- */
+  .modal-backdrop{
+    position: fixed; inset:0; background: rgba(36,27,58,.55); backdrop-filter: blur(2px);
+    display:none; align-items:center; justify-content:center; z-index: 500; padding: 20px;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    background: var(--card); border-radius: 22px; max-width: 720px; width:100%; max-height: 84vh; overflow-y:auto;
+    padding: 26px 26px 30px; box-shadow: var(--shadow);
+  }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px; }
+  .modal-head h2{ margin:0; font-size:1.4rem; }
+  .close-x{ border:none; background: var(--bg-deep); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; font-weight:700; }
+  .ref-group{ margin-bottom: 18px; }
+  .ref-group h4{
+    display:inline-block; font-family:'Baloo 2'; font-size:.95rem; margin: 0 0 10px; padding:5px 12px; border-radius: 999px; color:#fff;
+  }
+  .ref-item{
+    display:flex; justify-content:space-between; gap:14px; padding: 9px 4px; border-bottom: 1px dashed var(--border);
+    font-size:.85rem; align-items:center;
+  }
+  .ref-item:last-child{ border-bottom:none; }
+  .ref-item .fn{ font-family:'Space Mono'; font-weight:700; min-width:150px; }
+  .ref-item .desc{ color: var(--ink-soft); text-align:right; }
+
+  /* confetti */
+  .confetti-piece{
+    position: fixed; top:-10px; width:8px; height:14px; z-index: 700; pointer-events:none;
+    animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform: translateY(105vh) rotate(540deg); opacity:.9; }
+  }
+  .shake{ animation: shake .4s ease; }
+  @keyframes shake{
+    10%,90%{ transform: translateX(-2px);} 20%,80%{ transform: translateX(4px);}
+    30%,50%,70%{ transform: translateX(-8px);} 40%,60%{ transform: translateX(8px);}
+  }
+
+  footer{ text-align:center; color: var(--ink-soft); font-size:.78rem; margin-top: 34px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <svg class="db-icon" width="42" height="42" viewBox="0 0 42 42" fill="none">
+        <ellipse cx="21" cy="9" rx="15" ry="6" fill="#8B5CF6"/>
+        <path d="M6 9v10c0 3.3 6.7 6 15 6s15-2.7 15-6V9" stroke="#241B3A" stroke-width="0" fill="#B79CFF"/>
+        <path d="M6 9v9c0 3.3 6.7 6 15 6s15-2.7 15-6V9" fill="#B79CFF"/>
+        <path d="M6 18v9c0 3.3 6.7 6 15 6s15-2.7 15-6v-9" fill="#D9CBFF"/>
+        <ellipse cx="21" cy="9" rx="15" ry="6" fill="#FF4FA0"/>
+        <ellipse cx="21" cy="9" rx="11.5" ry="4" fill="#fff" opacity=".35"/>
+      </svg>
+      <div>
+        <h1>SQL Function Quest</h1>
+        <div class="brand-sub">Class XII Informatics Practices · SQL functions, live</div>
+      </div>
+    </div>
+    <div class="stat-cluster">
+      <div class="pill">⭐ <span id="scoreVal">0</span></div>
+      <div class="pill hearts" id="heartsVal">♥ ♥ ♥</div>
+      <button class="ref-btn" id="openRef">📘 Function Reference</button>
+    </div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen active" id="startScreen">
+    <div class="start-hero">
+      <h2>Drag. Drop. Query.</h2>
+      <p>Complete real SQL statements by dragging the correct function into the blank. Play through 5 levels covering every SQL function on the CBSE Class XII Informatics Practices syllabus — aggregate, string, date and math functions, plus DISTINCT, GROUP BY, HAVING and ORDER BY.</p>
+
+      <div class="badge-row">
+        <div class="cat-chip" style="background:var(--aggregate-soft); color:#A3251C;">Aggregate <small>SUM · COUNT · MAX · MIN · AVG</small></div>
+        <div class="cat-chip" style="background:var(--string-soft); color:#0A7A70;">String <small>UPPER · LOWER · MID · LEFT...</small></div>
+        <div class="cat-chip" style="background:var(--date-soft); color:#8A5C00;">Date &amp; Time <small>NOW · DATE · MONTH · YEAR</small></div>
+        <div class="cat-chip" style="background:var(--math-soft); color:#5B21B6;">Math <small>ROUND · POWER · MOD</small></div>
+        <div class="cat-chip" style="background:var(--clause-soft); color:#0F6A3D;">Clauses <small>DISTINCT · GROUP BY · HAVING</small></div>
+      </div>
+
+      <button class="start-btn" id="startBtn">🚀 Start Quest</button>
+
+      <div class="howto">
+        <div><b>1. Read the mission</b><span>Each question gives you a real-world task, like "find the average marks".</span></div>
+        <div><b>2. Drag the tile</b><span>Pick the correct SQL function from the tray and drop it into the blank slot.</span></div>
+        <div><b>3. Check &amp; learn</b><span>Hit Check Answer to see if you're right, plus a one-line explanation.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="gameScreen">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="level-banner">
+      <span class="level-tag" id="levelTag">Level 1</span>
+      <span class="level-name" id="levelName">Aggregate Functions</span>
+    </div>
+
+    <div class="game-grid">
+      <div class="mission-card">
+        <p class="scenario"><span class="qnum" id="qNum">Question 1 of 24</span><span id="scenarioText"></span></p>
+        <div class="query-box">
+          <div class="query-line" id="queryLine"></div>
+        </div>
+
+        <div class="feedback" id="feedback">
+          <span id="feedbackIcon">✅</span>
+          <span id="feedbackText"></span>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-check" id="checkBtn" disabled>Check Answer</button>
+          <button class="btn btn-next" id="nextBtn">Next Question →</button>
+          <button class="btn-reset" id="resetTileBtn">clear my answer</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="table-card">
+          <h3>📋 Table: Student</h3>
+          <div class="sub">Use this sample data to picture what each query returns.</div>
+          <table class="data">
+            <thead><tr><th>RollNo</th><th>Name</th><th>Marks</th><th>City</th><th>DOB</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Aman Gupta</td><td>78</td><td>Delhi</td><td>2008-05-14</td></tr>
+              <tr><td>2</td><td>rohit sharma</td><td>45</td><td>Mumbai</td><td>2008-11-02</td></tr>
+              <tr><td>3</td><td>PRIYA singh</td><td>92</td><td>Delhi</td><td>2007-09-23</td></tr>
+              <tr><td>4</td><td>Kabir Khan</td><td>60</td><td>Jaipur</td><td>2008-01-30</td></tr>
+              <tr><td>5</td><td>Meera Nair</td><td>88</td><td>Chennai</td><td>2007-12-19</td></tr>
+              <tr><td>6</td><td>Aditya Verma</td><td>33</td><td>Delhi</td><td>2008-07-08</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="tray-card">
+      <div class="tray-label">🧩 Drag a function into the blank above</div>
+      <div class="tray" id="tray"></div>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div class="screen" id="endScreen">
+    <div class="end-card">
+      <div class="medal" id="endMedal">🏆</div>
+      <div class="badge-title" id="endBadge">SQL Master</div>
+      <h2>Quest Complete!</h2>
+      <div class="end-stats">
+        <div class="box"><div class="num" id="endScore">0</div><div class="lbl">Score</div></div>
+        <div class="box"><div class="num" id="endAccuracy">0%</div><div class="lbl">Accuracy</div></div>
+        <div class="box"><div class="num" id="endStreak">0</div><div class="lbl">Best Streak</div></div>
+      </div>
+      <button class="start-btn" id="replayBtn">🔁 Play Again</button>
+    </div>
+  </div>
+
+  <footer>Built for CBSE Class XII Informatics Practices · SQL functions practice game</footer>
+</div>
+
+<!-- REFERENCE MODAL -->
+<div class="modal-backdrop" id="refModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📘 SQL Function Reference</h2>
+      <button class="close-x" id="closeRef">✕</button>
+    </div>
+    <div id="refContent"></div>
+  </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const LEVELS = [
+  {
+    name: "Aggregate Functions", color: "var(--aggregate)", soft: "var(--aggregate-soft)", key:"aggregate",
+    questions: [
+      { scenario:"Find the total marks scored by all students.", parts:[["SELECT ","kw"],"BLANK",["(Marks) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"SUM", options:["SUM","AVG","COUNT","ROUND"], explain:"SUM() adds up all the numeric values in a column — here, the total of every student's marks." },
+      { scenario:"Find how many students are enrolled in the table.", parts:[["SELECT ","kw"],"BLANK",["(*) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"COUNT", options:["COUNT","SUM","LENGTH","MAX"], explain:"COUNT(*) counts the number of rows in the result — perfect for 'how many' questions." },
+      { scenario:"Find the highest marks scored by any student.", parts:[["SELECT ","kw"],"BLANK",["(Marks) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"MAX", options:["MAX","MIN","AVG","MOD"], explain:"MAX() returns the largest value in a column." },
+      { scenario:"Find the lowest marks scored by any student.", parts:[["SELECT ","kw"],"BLANK",["(Marks) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"MIN", options:["MIN","MAX","SUM","ROUND"], explain:"MIN() returns the smallest value in a column." },
+      { scenario:"Find the average marks scored by all students.", parts:[["SELECT ","kw"],"BLANK",["(Marks) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"AVG", options:["AVG","COUNT","UPPER","POWER"], explain:"AVG() calculates the mean (SUM ÷ COUNT) of a numeric column." },
+    ]
+  },
+  {
+    name: "String Functions", color:"var(--string)", soft:"var(--string-soft)", key:"string",
+    questions: [
+      { scenario:"Display every student's name in CAPITAL letters.", parts:[["SELECT ","kw"],"BLANK",["(Name) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"UPPER", options:["UPPER","LOWER","TRIM","LENGTH"], explain:"UPPER() converts all letters in a string to uppercase." },
+      { scenario:"Display every city name in small (lowercase) letters.", parts:[["SELECT ","kw"],"BLANK",["(City) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"LOWER", options:["LOWER","UPPER","MID","RIGHT"], explain:"LOWER() converts all letters in a string to lowercase." },
+      { scenario:"Find the number of characters in each student's name.", parts:[["SELECT ","kw"],"BLANK",["(Name) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"LENGTH", options:["LENGTH","COUNT","INSTR","LEFT"], explain:"LENGTH() (or LEN in some systems) returns how many characters a string contains." },
+      { scenario:"Extract the first 3 characters of each Name.", parts:[["SELECT ","kw"],"BLANK",["(Name,3) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"LEFT", options:["LEFT","RIGHT","MID","TRIM"], explain:"LEFT(string, n) returns the first n characters from the left of a string." },
+      { scenario:"Extract the last 4 characters of each Name.", parts:[["SELECT ","kw"],"BLANK",["(Name,4) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"RIGHT", options:["RIGHT","LEFT","MID","LENGTH"], explain:"RIGHT(string, n) returns the last n characters from the right of a string." },
+      { scenario:"Extract 3 characters from Name, starting at position 2.", parts:[["SELECT ","kw"],"BLANK",["(Name,2,3) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"MID", options:["MID","LEFT","RIGHT","INSTR"], explain:"MID(string, start, length) — also called SUBSTRING() — extracts characters from the middle of a string." },
+      { scenario:"Find the position of the letter 'a' within each Name.", parts:[["SELECT ","kw"],"BLANK",["(Name,'a') FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"INSTR", options:["INSTR","LENGTH","TRIM","MID"], explain:"INSTR(string, search) returns the position at which a substring first occurs." },
+    ]
+  },
+  {
+    name: "Date & Time Functions", color:"var(--date)", soft:"var(--date-soft)", key:"date",
+    questions: [
+      { scenario:"Display today's system date and time.", parts:[["SELECT ","kw"],"BLANK",["();","kw"]], answer:"NOW", options:["NOW","DATE","TIME","YEAR"], explain:"NOW() returns the current system date and time." },
+      { scenario:"Extract only the date part from the current date-time.", parts:[["SELECT ","kw"],"BLANK",["(NOW());","kw"]], answer:"DATE", options:["DATE","NOW","MONTH","TIME"], explain:"DATE() extracts just the date portion from a date-time value." },
+      { scenario:"Find the birth month of each student from their DOB.", parts:[["SELECT ","kw"],"BLANK",["(DOB) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"MONTH", options:["MONTH","YEAR","DATE","NOW"], explain:"MONTH() extracts the month number (1–12) from a date value." },
+      { scenario:"Find the birth year of each student from their DOB.", parts:[["SELECT ","kw"],"BLANK",["(DOB) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"YEAR", options:["YEAR","MONTH","TIME","DATE"], explain:"YEAR() extracts the four-digit year from a date value." },
+      { scenario:"Display only the current system time.", parts:[["SELECT ","kw"],"BLANK",["();","kw"]], answer:"TIME", options:["TIME","NOW","DATE","MOD"], explain:"TIME() returns only the current time, without the date." },
+    ]
+  },
+  {
+    name: "Math / Numeric Functions", color:"var(--math)", soft:"var(--math-soft)", key:"math",
+    questions: [
+      { scenario:"Round each student's marks to the nearest 10.", parts:[["SELECT ","kw"],"BLANK",["(Marks,-1) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"ROUND", options:["ROUND","MOD","POWER","AVG"], explain:"ROUND(number, decimals) rounds a value; a negative second argument rounds to tens, hundreds, etc." },
+      { scenario:"Find 2 raised to the power 5 (2⁵).", parts:[["SELECT ","kw"],"BLANK",["(2,5);","kw"]], answer:"POWER", options:["POWER","MOD","ROUND","SUM"], explain:"POWER(x, y) raises x to the power y." },
+      { scenario:"Find the remainder when each student's Marks is divided by 5.", parts:[["SELECT ","kw"],"BLANK",["(Marks,5) FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"MOD", options:["MOD","POWER","ROUND","COUNT"], explain:"MOD(a, b) returns the remainder of a divided by b." },
+    ]
+  },
+  {
+    name: "Clauses: DISTINCT · GROUP BY · HAVING · ORDER BY", color:"var(--clause)", soft:"var(--clause-soft)", key:"clause",
+    questions: [
+      { scenario:"List the unique cities students belong to, with no repeats.", parts:[["SELECT ","kw"],"BLANK",[" City FROM ","kw"],["Student","tbl"],[";","punc"]], answer:"DISTINCT", options:["DISTINCT","COUNT","GROUP BY","UNIQUE"], explain:"DISTINCT removes duplicate values from the result set." },
+      { scenario:"Find the number of students living in each city.", parts:[["SELECT City, COUNT(*) FROM ","kw"],["Student","tbl"],[" ","kw"],"BLANK",[" City;","kw"]], answer:"GROUP BY", options:["GROUP BY","ORDER BY","HAVING","DISTINCT"], explain:"GROUP BY groups rows that share a value (like City) so aggregate functions apply per group." },
+      { scenario:"Show only the cities that have more than 1 student.", parts:[["SELECT City, COUNT(*) FROM ","kw"],["Student","tbl"],[" GROUP BY City ","kw"],"BLANK",[" COUNT(*)>1;","kw"]], answer:"HAVING", options:["HAVING","WHERE","GROUP BY","ORDER BY"], explain:"HAVING filters groups after GROUP BY — WHERE cannot filter on aggregate results, but HAVING can." },
+      { scenario:"Display all students sorted by Marks, highest first.", parts:[["SELECT * FROM ","kw"],["Student","tbl"],[" ","kw"],"BLANK",[" Marks DESC;","kw"]], answer:"ORDER BY", options:["ORDER BY","GROUP BY","HAVING","SORT BY"], explain:"ORDER BY sorts the result set by one or more columns; DESC means descending order." },
+    ]
+  }
+];
+
+/* Flatten with level index for progress tracking */
+let flatQuestions = [];
+LEVELS.forEach((lvl, li) => lvl.questions.forEach(q => flatQuestions.push({...q, levelIndex: li})));
+
+/* ================= STATE ================= */
+let state = {
+  qIndex: 0,
+  score: 0,
+  lives: 3,
+  streak: 0,
+  bestStreak: 0,
+  correctCount: 0,
+  answered: false,
+  placedTile: null // {value, el}
+};
+
+/* ================= DOM refs ================= */
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const endScreen = document.getElementById('endScreen');
+const scoreVal = document.getElementById('scoreVal');
+const heartsVal = document.getElementById('heartsVal');
+const progressFill = document.getElementById('progressFill');
+const levelTag = document.getElementById('levelTag');
+const levelName = document.getElementById('levelName');
+const qNum = document.getElementById('qNum');
+const scenarioText = document.getElementById('scenarioText');
+const queryLine = document.getElementById('queryLine');
+const tray = document.getElementById('tray');
+const checkBtn = document.getElementById('checkBtn');
+const nextBtn = document.getElementById('nextBtn');
+const resetTileBtn = document.getElementById('resetTileBtn');
+const feedback = document.getElementById('feedback');
+const feedbackIcon = document.getElementById('feedbackIcon');
+const feedbackText = document.getElementById('feedbackText');
+
+const TILE_COLORS = ["#FF6B6B","#12B3A6","#F2A100","#8B5CF6","#22B573","#FF4FA0","#3B82F6"];
+
+function showScreen(id){
+  [startScreen, gameScreen, endScreen].forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ================= RENDER QUESTION ================= */
+function currentLevel(){ return LEVELS[flatQuestions[state.qIndex].levelIndex]; }
+
+function renderQuestion(){
+  const q = flatQuestions[state.qIndex];
+  const lvl = currentLevel();
+
+  levelTag.textContent = "Level " + (q.levelIndex+1);
+  levelTag.style.background = lvl.color;
+  levelName.textContent = lvl.name;
+  qNum.textContent = `Question ${state.qIndex+1} of ${flatQuestions.length}`;
+  scenarioText.textContent = q.scenario;
+  progressFill.style.width = (state.qIndex/flatQuestions.length*100) + "%";
+
+  // Build query line from the ordered parts array
+  queryLine.innerHTML = "";
+  state.dropzone = null;
+  q.parts.forEach(part => {
+    if(part === "BLANK"){
+      const dz = document.createElement('span');
+      dz.className = "dropzone";
+      dz.dataset.answer = q.answer;
+      dz.textContent = "______";
+      dz.addEventListener('click', () => { if(state.answered) return; clearDrop(); });
+      queryLine.appendChild(dz);
+      state.dropzone = dz;
+    } else {
+      appendSpan(queryLine, part[0], part[1]);
+    }
+  });
+
+  // Build tray
+  tray.innerHTML = "";
+  const shuffled = [...q.options].sort(() => Math.random()-0.5);
+  shuffled.forEach((opt, i) => {
+    const tile = document.createElement('div');
+    tile.className = "tile";
+    tile.textContent = opt;
+    tile.dataset.value = opt;
+    const c = TILE_COLORS[i % TILE_COLORS.length];
+    tile.style.background = hexToSoft(c);
+    tile.style.color = c;
+    tile.style.borderColor = c + "55";
+    makeDraggable(tile);
+    tray.appendChild(tile);
+  });
+
+  state.answered = false;
+  state.placedTile = null;
+  checkBtn.disabled = true;
+  nextBtn.style.display = "none";
+  checkBtn.style.display = "inline-block";
+  feedback.classList.remove('show','ok','bad');
+}
+
+function appendSpan(parent, text, cls){
+  const s = document.createElement('span');
+  if(cls) s.className = cls;
+  s.textContent = text;
+  parent.appendChild(s);
+}
+
+function hexToSoft(hex){
+  // returns a light tint background for a tile given its accent hex
+  const map = {
+    "#FF6B6B":"#FFE4E4", "#12B3A6":"#D2F6F2", "#F2A100":"#FFEECB",
+    "#8B5CF6":"#EAE0FF", "#22B573":"#D9F6E7", "#FF4FA0":"#FFE0F0", "#3B82F6":"#DCEBFF"
+  };
+  return map[hex] || "#F3F1FA";
+}
+
+/* ================= DRAG & DROP (pointer events, mouse+touch) ================= */
+function makeDraggable(tile){
+  tile.addEventListener('pointerdown', (e) => {
+    if(state.answered || tile.classList.contains('placed')) return;
+    e.preventDefault();
+    startDrag(tile, e);
+  });
+}
+
+function startDrag(tile, startEvent){
+  const rect = tile.getBoundingClientRect();
+  const clone = tile.cloneNode(true);
+  clone.classList.add('dragging-clone');
+  clone.style.background = tile.style.background;
+  clone.style.color = tile.style.color;
+  clone.style.width = rect.width + "px";
+  clone.style.left = rect.left + "px";
+  clone.style.top = rect.top + "px";
+  document.body.appendChild(clone);
+  tile.style.visibility = "hidden";
+
+  let hoveredDz = null;
+
+  function getXY(ev){
+    if(ev.touches && ev.touches[0]) return [ev.touches[0].clientX, ev.touches[0].clientY];
+    return [ev.clientX, ev.clientY];
+  }
+
+  function move(ev){
+    const [x,y] = getXY(ev);
+    clone.style.left = (x - rect.width/2) + "px";
+    clone.style.top = (y - rect.height/2) + "px";
+    clone.style.pointerEvents = "none";
+    const el = document.elementFromPoint(x,y);
+    const dz = el ? el.closest('.dropzone') : null;
+    if(hoveredDz && hoveredDz !== dz) hoveredDz.classList.remove('hover');
+    hoveredDz = dz;
+    if(hoveredDz) hoveredDz.classList.add('hover');
+  }
+
+  function up(ev){
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+    clone.remove();
+    if(hoveredDz && !state.answered){
+      hoveredDz.classList.remove('hover');
+      placeTile(tile, hoveredDz);
+    } else {
+      tile.style.visibility = "visible";
+    }
+  }
+
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
+  move(startEvent);
+}
+
+function placeTile(tile, dz){
+  // if a tile was already placed, return it to the tray first
+  if(state.placedTile){
+    state.placedTile.el.classList.remove('placed');
+    state.placedTile.el.style.visibility = "visible";
+  }
+  dz.textContent = tile.dataset.value;
+  dz.classList.add('filled');
+  dz.style.background = tile.style.background;
+  dz.style.color = tile.style.color;
+  dz.style.borderColor = tile.style.color;
+  tile.classList.add('placed');
+  state.placedTile = { value: tile.dataset.value, el: tile };
+  checkBtn.disabled = false;
+}
+
+function clearDrop(){
+  const dz = state.dropzone;
+  dz.textContent = "______";
+  dz.classList.remove('filled','correct','wrong');
+  dz.style.background = "";
+  dz.style.color = "";
+  dz.style.borderColor = "";
+  if(state.placedTile){
+    state.placedTile.el.classList.remove('placed');
+    state.placedTile.el.style.visibility = "visible";
+    state.placedTile = null;
+  }
+  checkBtn.disabled = true;
+}
+
+/* ================= CHECK ANSWER ================= */
+checkBtn.addEventListener('click', () => {
+  if(!state.placedTile || state.answered) return;
+  state.answered = true;
+  const q = flatQuestions[state.qIndex];
+  const correct = state.placedTile.value === q.answer;
+  const dz = state.dropzone;
+
+  if(correct){
+    dz.classList.add('correct');
+    state.streak++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    const bonus = Math.min(state.streak-1, 5) * 2;
+    state.score += 10 + bonus;
+    state.correctCount++;
+    feedback.classList.add('show','ok');
+    feedbackIcon.textContent = "✅";
+    feedbackText.innerHTML = `<b>Correct!</b> ${q.explain}`;
+    launchConfetti();
+  } else {
+    dz.classList.add('wrong');
+    state.streak = 0;
+    state.lives--;
+    feedback.classList.add('show','bad');
+    feedbackIcon.textContent = "❌";
+    feedbackText.innerHTML = `<b>Not quite.</b> The correct function is <b>${q.answer}</b>. ${q.explain}`;
+    gameScreen.querySelector('.mission-card').classList.add('shake');
+    setTimeout(()=> gameScreen.querySelector('.mission-card').classList.remove('shake'), 400);
+  }
+
+  scoreVal.textContent = state.score;
+  heartsVal.textContent = "♥ ".repeat(Math.max(state.lives,0)).trim() + " " + "🖤 ".repeat(3-Math.max(state.lives,0)).trim();
+  checkBtn.style.display = "none";
+  nextBtn.style.display = "inline-block";
+
+  if(state.lives <= 0){
+    setTimeout(endQuest, 900);
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  state.qIndex++;
+  if(state.qIndex >= flatQuestions.length){
+    endQuest();
+  } else {
+    renderQuestion();
+  }
+});
+
+resetTileBtn.addEventListener('click', () => { if(!state.answered) clearDrop(); });
+
+/* ================= START / END ================= */
+document.getElementById('startBtn').addEventListener('click', () => {
+  state = { qIndex:0, score:0, lives:3, streak:0, bestStreak:0, correctCount:0, answered:false, placedTile:null };
+  scoreVal.textContent = 0;
+  heartsVal.textContent = "♥ ♥ ♥";
+  showScreen('gameScreen');
+  renderQuestion();
+});
+
+document.getElementById('replayBtn').addEventListener('click', () => {
+  showScreen('startScreen');
+});
+
+function endQuest(){
+  progressFill.style.width = "100%";
+  const total = flatQuestions.length;
+  const accuracy = Math.round((state.correctCount / total) * 100);
+  document.getElementById('endScore').textContent = state.score;
+  document.getElementById('endAccuracy').textContent = accuracy + "%";
+  document.getElementById('endStreak').textContent = state.bestStreak;
+
+  let medal = "🥉", title = "Query Rookie";
+  if(state.lives <= 0){ medal = "💥"; title = "Quest Interrupted — Try Again!"; }
+  else if(accuracy >= 90){ medal = "🏆"; title = "SQL Master"; }
+  else if(accuracy >= 70){ medal = "🥇"; title = "Query Champion"; }
+  else if(accuracy >= 50){ medal = "🥈"; title = "Rising Query-ist"; }
+
+  document.getElementById('endMedal').textContent = medal;
+  document.getElementById('endBadge').textContent = title;
+  showScreen('endScreen');
+}
+
+/* ================= CONFETTI ================= */
+function launchConfetti(){
+  const colors = ["#FF6B6B","#12B3A6","#F2A100","#8B5CF6","#22B573","#FF4FA0"];
+  for(let i=0;i<28;i++){
+    const p = document.createElement('div');
+    p.className = "confetti-piece";
+    p.style.left = Math.random()*100 + "vw";
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration = (1.6 + Math.random()*1.2) + "s";
+    p.style.opacity = 0.7 + Math.random()*0.3;
+    document.body.appendChild(p);
+    setTimeout(()=> p.remove(), 3000);
+  }
+}
+
+/* ================= REFERENCE MODAL ================= */
+const REF_DATA = [
+  { key:"aggregate", title:"Aggregate Functions", color:"var(--aggregate)", items:[
+    ["SUM(col)","Adds up all values in a numeric column"],
+    ["AVG(col)","Returns the average of a numeric column"],
+    ["COUNT(col/*)","Counts rows or non-null values"],
+    ["MAX(col)","Returns the largest value"],
+    ["MIN(col)","Returns the smallest value"],
+  ]},
+  { key:"string", title:"String Functions", color:"var(--string)", items:[
+    ["UPPER(str)","Converts text to UPPERCASE"],
+    ["LOWER(str)","Converts text to lowercase"],
+    ["MID(str,pos,n) / SUBSTRING()","Extracts n characters starting at pos"],
+    ["LENGTH(str)","Number of characters in a string"],
+    ["LEFT(str,n)","First n characters from the left"],
+    ["RIGHT(str,n)","Last n characters from the right"],
+    ["TRIM(str)","Removes leading/trailing spaces"],
+    ["INSTR(str,sub)","Position of first occurrence of sub"],
+  ]},
+  { key:"date", title:"Date & Time Functions", color:"var(--date)", items:[
+    ["NOW()","Current system date and time"],
+    ["DATE(expr)","Extracts the date part"],
+    ["TIME(expr)","Extracts the time part"],
+    ["MONTH(date)","Month number (1–12) from a date"],
+    ["YEAR(date)","Four digit year from a date"],
+  ]},
+  { key:"math", title:"Math / Numeric Functions", color:"var(--math)", items:[
+    ["POWER(x,y)","x raised to the power y"],
+    ["ROUND(num,d)","Rounds num to d decimal places"],
+    ["MOD(a,b)","Remainder of a divided by b"],
+  ]},
+  { key:"clause", title:"Clauses", color:"var(--clause)", items:[
+    ["DISTINCT","Removes duplicate rows from the result"],
+    ["GROUP BY col","Groups rows sharing the same value"],
+    ["HAVING cond","Filters groups (used after GROUP BY)"],
+    ["ORDER BY col [ASC|DESC]","Sorts the result set"],
+  ]},
+];
+
+function buildReference(){
+  const wrap = document.getElementById('refContent');
+  wrap.innerHTML = "";
+  REF_DATA.forEach(group => {
+    const div = document.createElement('div');
+    div.className = "ref-group";
+    const h4 = document.createElement('h4');
+    h4.textContent = group.title;
+    h4.style.background = group.color;
+    div.appendChild(h4);
+    group.items.forEach(([fn,desc]) => {
+      const row = document.createElement('div');
+      row.className = "ref-item";
+      row.innerHTML = `<span class="fn">${fn}</span><span class="desc">${desc}</span>`;
+      div.appendChild(row);
+    });
+    wrap.appendChild(div);
+  });
+}
+buildReference();
+
+const refModal = document.getElementById('refModal');
+document.getElementById('openRef').addEventListener('click', () => refModal.classList.add('show'));
+document.getElementById('closeRef').addEventListener('click', () => refModal.classList.remove('show'));
+refModal.addEventListener('click', (e) => { if(e.target === refModal) refModal.classList.remove('show'); });
+
+</script>
+</body>
+</html>

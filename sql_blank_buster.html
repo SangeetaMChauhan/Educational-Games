@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>SQL Blank Buster — Fill the Query, Beat the Clock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FFF8EF;
+    --bg-deep: #FCEFDD;
+    --card: #FFFFFF;
+    --ink: #2B1740;
+    --ink-soft: #7A6E92;
+    --border: #F1E3CE;
+
+    --ddl: #FF6B4A;      --ddl-soft:#FFE3DA;
+    --dml: #2F80FF;      --dml-soft:#DEEBFF;
+    --ops: #7B5EFF;      --ops-soft:#EBE5FF;
+    --agg: #17C3B2;      --agg-soft:#D6F7F3;
+    --strdate: #F2A100;  --strdate-soft:#FFEECB;
+    --keys: #FF3E7F;     --keys-soft:#FFE1EC;
+
+    --good: #17A673;
+    --bad: #E5484D;
+    --shadow: 0 10px 30px rgba(80, 50, 20, 0.10);
+    --shadow-sm: 0 4px 14px rgba(80, 50, 20, 0.08);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    min-height:100vh; color:var(--ink); font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(circle at 6% 10%, #FFE7D9 0%, transparent 40%),
+      radial-gradient(circle at 94% 6%, #E4F0FF 0%, transparent 42%),
+      radial-gradient(circle at 90% 94%, #EAE1FF 0%, transparent 45%),
+      var(--bg);
+    overflow-x:hidden;
+  }
+  .mono{ font-family:'Space Mono', monospace; }
+  h1,h2,h3,.display{ font-family:'Fredoka', sans-serif; }
+
+  .wrap{ max-width: 960px; margin:0 auto; padding: 22px 18px 60px; }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand h1{ font-size:1.4rem; margin:0; }
+  .brand-sub{ font-size:.76rem; color:var(--ink-soft); margin-top:-2px; }
+  .stat-cluster{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pill{ background:var(--card); border:1px solid var(--border); border-radius:999px; padding:7px 14px; font-weight:700; font-size:.85rem; display:flex; align-items:center; gap:6px; box-shadow:var(--shadow-sm); }
+  .hearts{ color:#E5484D; }
+  .ref-btn{ background:var(--ink); color:#fff; border:none; border-radius:999px; padding:9px 16px; font-weight:700; font-size:.85rem; cursor:pointer; box-shadow:var(--shadow-sm); }
+  .ref-btn:hover{ transform:translateY(-2px); }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  /* ---- START ---- */
+  .start-hero{ background:var(--card); border:1px solid var(--border); border-radius:26px; padding:36px 30px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+  .start-hero::before{ content:""; position:absolute; left:-70px; bottom:-70px; width:220px; height:220px; border-radius:50%;
+    background: conic-gradient(from 90deg, var(--ddl), var(--dml), var(--ops), var(--agg), var(--strdate), var(--keys), var(--ddl)); opacity:.16; }
+  .start-hero h2{ font-size:2rem; margin:0 0 8px; position:relative; }
+  .start-hero p{ color:var(--ink-soft); max-width:580px; line-height:1.55; position:relative; }
+  .roadmap{ display:flex; align-items:center; gap:4px; margin:26px 0; position:relative; flex-wrap:wrap; }
+  .station{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width: 84px; }
+  .station .dot{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Fredoka'; font-weight:700; color:#fff; font-size:1rem; box-shadow:var(--shadow-sm); }
+  .station .lbl{ font-size:.68rem; color:var(--ink-soft); text-align:center; font-weight:600; max-width:90px; }
+  .track{ flex:1; height:3px; background: var(--border); min-width: 16px; margin-top:-24px; }
+
+  .start-btn{ border:none; cursor:pointer; font-family:'Fredoka'; font-weight:700; font-size:1.1rem; color:#fff; padding:15px 32px; border-radius:999px;
+    background: linear-gradient(135deg, var(--keys), var(--ops)); box-shadow: 0 12px 26px rgba(123,94,255,.32); position:relative; }
+  .start-btn:hover{ transform: translateY(-3px) scale(1.02); }
+
+  .howto{ margin-top:24px; display:grid; grid-template-columns:repeat(3,1fr); gap:14px; position:relative; }
+  .howto div{ background:var(--bg); border-radius:16px; padding:14px 16px; border:1px dashed var(--border); }
+  .howto div b{ display:block; font-family:'Fredoka'; margin-bottom:4px; }
+  .howto div span{ font-size:.82rem; color:var(--ink-soft); }
+
+  /* ---- GAME ---- */
+  .mini-roadmap{ display:flex; gap:6px; margin-bottom:16px; }
+  .mini-roadmap .seg{ flex:1; height:8px; border-radius:999px; background:var(--bg-deep); overflow:hidden; }
+  .mini-roadmap .seg i{ display:block; height:100%; width:0%; background: var(--ink); border-radius:999px; transition: width .3s ease; }
+  .mini-roadmap .seg.done i{ width:100%; }
+  .mini-roadmap .seg.active i{ background: linear-gradient(90deg, var(--ops), var(--keys)); }
+
+  .level-banner{ display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .level-tag{ font-family:'Fredoka'; font-weight:700; font-size:.9rem; padding:6px 14px; border-radius:999px; color:#fff; }
+  .level-name{ font-family:'Fredoka'; font-size:1.15rem; }
+  .qnum{ font-size:.78rem; color:var(--ink-soft); margin-left:auto; font-weight:600; }
+
+  .timer-track{ height:8px; background:var(--bg-deep); border-radius:999px; overflow:hidden; margin-bottom:16px; border:1px solid var(--border); }
+  .timer-fill{ height:100%; background: linear-gradient(90deg, var(--agg), var(--strdate)); width:100%; transition: width 1s linear, background .3s ease; }
+  .timer-fill.warn{ background: linear-gradient(90deg, var(--strdate), var(--bad)); }
+
+  .mission-card{ background:var(--card); border:1px solid var(--border); border-radius:22px; padding:26px; box-shadow:var(--shadow); }
+  .scenario{ font-size:1.03rem; line-height:1.5; margin:0 0 16px; font-weight:600; }
+  .query-box{ background:#20142F; border-radius:16px; padding:20px 18px; overflow-x:auto; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); margin-bottom:22px; }
+  .query-line{ font-family:'Space Mono',monospace; font-size:1.03rem; color:#F3EDFF; white-space:pre-wrap; line-height:1.9; }
+  .blank-slot{ display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:2px 12px; margin:0 3px;
+    border-radius:8px; border:2px dashed rgba(255,255,255,.35); color: rgba(255,255,255,.5); font-weight:700; }
+  .blank-slot.picked{ border-style:solid; color:#20142F; background:#fff; }
+  .blank-slot.correct{ background:var(--good) !important; border-color:var(--good) !important; color:#fff !important; }
+  .blank-slot.wrong{ background:var(--bad) !important; border-color:var(--bad) !important; color:#fff !important; }
+
+  .options-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  @media (max-width:520px){ .options-grid{ grid-template-columns:1fr; } }
+  .opt-btn{ font-family:'Space Mono',monospace; font-weight:700; font-size:.95rem; text-align:left; padding:14px 16px; border-radius:14px;
+    border:2px solid var(--border); background:var(--bg); cursor:pointer; transition: all .15s ease; }
+  .opt-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .opt-btn.selected{ border-color: var(--ops); background: var(--ops-soft); }
+  .opt-btn.correct{ border-color: var(--good); background: #E4F8EE; color:#0F6A3D; }
+  .opt-btn.wrong{ border-color: var(--bad); background: #FDE7E7; color:#A3251C; }
+  .opt-btn:disabled{ cursor:not-allowed; }
+
+  .feedback{ margin-top:16px; padding:14px 16px; border-radius:14px; font-size:.92rem; line-height:1.5; display:none; align-items:flex-start; gap:10px; font-weight:500; }
+  .feedback.show{ display:flex; }
+  .feedback.ok{ background:#E4F8EE; color:#0F6A3D; }
+  .feedback.bad{ background:#FDE7E7; color:#A3251C; }
+  .feedback b{ font-family:'Fredoka'; }
+
+  .action-row{ display:flex; gap:12px; margin-top:20px; align-items:center; flex-wrap:wrap; }
+  .btn{ border:none; cursor:pointer; font-family:'Fredoka'; font-weight:700; font-size:1rem; padding:13px 26px; border-radius:999px; transition: transform .15s ease, opacity .15s ease; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:hover:not(:disabled){ transform: translateY(-2px); }
+  .btn-check{ background:var(--ink); color:#fff; }
+  .btn-next{ background: linear-gradient(135deg, var(--keys), var(--ops)); color:#fff; display:none; }
+
+  /* ---- END ---- */
+  .end-card{ background:var(--card); border:1px solid var(--border); border-radius:26px; padding:42px 32px; box-shadow:var(--shadow); text-align:center; }
+  .end-card .medal{ font-size:4rem; line-height:1; margin-bottom:6px; }
+  .end-card h2{ font-size:1.9rem; margin:6px 0 2px; }
+  .end-card .badge-title{ color:var(--ops); font-weight:700; font-family:'Fredoka'; font-size:1.2rem; }
+  .end-stats{ display:flex; gap:14px; justify-content:center; margin:26px 0; flex-wrap:wrap; }
+  .end-stats .box{ background:var(--bg); border-radius:16px; padding:16px 22px; min-width:120px; border:1px solid var(--border); }
+  .end-stats .box .num{ font-family:'Fredoka'; font-size:1.6rem; }
+  .end-stats .box .lbl{ font-size:.75rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px; }
+
+  /* ---- MODAL ---- */
+  .modal-backdrop{ position:fixed; inset:0; background: rgba(43,23,64,.55); backdrop-filter: blur(2px); display:none; align-items:center; justify-content:center; z-index:500; padding:20px; }
+  .modal-backdrop.show{ display:flex; }
+  .modal{ background:var(--card); border-radius:22px; max-width:720px; width:100%; max-height:84vh; overflow-y:auto; padding:26px 26px 30px; box-shadow:var(--shadow); }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .modal-head h2{ margin:0; font-size:1.4rem; }
+  .close-x{ border:none; background:var(--bg-deep); width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:1rem; font-weight:700; }
+  .ref-group{ margin-bottom:18px; }
+  .ref-group h4{ display:inline-block; font-family:'Fredoka'; font-size:.95rem; margin:0 0 10px; padding:5px 12px; border-radius:999px; color:#fff; }
+  .ref-item{ display:flex; justify-content:space-between; gap:14px; padding:9px 4px; border-bottom:1px dashed var(--border); font-size:.85rem; align-items:center; }
+  .ref-item:last-child{ border-bottom:none; }
+  .ref-item .fn{ font-family:'Space Mono'; font-weight:700; min-width:150px; }
+  .ref-item .desc{ color:var(--ink-soft); text-align:right; }
+
+  .confetti-piece{ position:fixed; top:-10px; width:8px; height:14px; z-index:700; pointer-events:none; animation: fall linear forwards; }
+  @keyframes fall{ to{ transform: translateY(105vh) rotate(540deg); opacity:.9; } }
+  .shake{ animation: shake .4s ease; }
+  @keyframes shake{ 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);} }
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:.78rem; margin-top:34px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
+        <circle cx="21" cy="21" r="19" fill="#FFE1EC"/>
+        <path d="M21 7 L34 14 L34 28 L21 35 L8 28 L8 14 Z" fill="#FF3E7F"/>
+        <text x="21" y="26" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="14" fill="#fff">?</text>
+      </svg>
+      <div>
+        <h1>SQL Blank Buster</h1>
+        <div class="brand-sub">Class XII Informatics Practices · fill the blank, beat the clock</div>
+      </div>
+    </div>
+    <div class="stat-cluster">
+      <div class="pill">⭐ <span id="scoreVal">0</span></div>
+      <div class="pill hearts" id="heartsVal">♥ ♥ ♥</div>
+      <button class="ref-btn" id="openRef">📘 Quick Reference</button>
+    </div>
+  </div>
+
+  <!-- START -->
+  <div class="screen active" id="startScreen">
+    <div class="start-hero">
+      <h2>Fill it. Nail it. Level up.</h2>
+      <p>Every question drops one word or phrase out of a real SQL statement. Pick the correct option before the timer runs out. Six stations, five questions each — covering table commands, data commands, operators, aggregate functions, string &amp; date functions, and keys &amp; joins from the CBSE Class XII IP syllabus.</p>
+
+      <div class="roadmap" id="startRoadmap"></div>
+
+      <button class="start-btn" id="startBtn">🎯 Start the Buster</button>
+
+      <div class="howto">
+        <div><b>1. Read the query</b><span>One word is missing from a real SQL statement — figure out what belongs there.</span></div>
+        <div><b>2. Pick an option</b><span>Tap the option you think is correct before the timer bar runs out.</span></div>
+        <div><b>3. Submit &amp; learn</b><span>Hit Submit to lock it in, then read the quick explanation either way.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="gameScreen">
+    <div class="mini-roadmap" id="miniRoadmap"></div>
+
+    <div class="level-banner">
+      <span class="level-tag" id="levelTag">Level 1</span>
+      <span class="level-name" id="levelName">Table Commands</span>
+      <span class="qnum" id="qNum">Question 1 of 30</span>
+    </div>
+
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+
+    <div class="mission-card">
+      <p class="scenario" id="scenarioText"></p>
+      <div class="query-box"><div class="query-line" id="queryLine"></div></div>
+
+      <div class="options-grid" id="optionsGrid"></div>
+
+      <div class="feedback" id="feedback">
+        <span id="feedbackIcon">✅</span>
+        <span id="feedbackText"></span>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-check" id="checkBtn" disabled>Submit Answer</button>
+        <button class="btn btn-next" id="nextBtn">Next Question →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="endScreen">
+    <div class="end-card">
+      <div class="medal" id="endMedal">🏆</div>
+      <div class="badge-title" id="endBadge">SQL Master</div>
+      <h2>Buster Complete!</h2>
+      <div class="end-stats">
+        <div class="box"><div class="num" id="endScore">0</div><div class="lbl">Score</div></div>
+        <div class="box"><div class="num" id="endAccuracy">0%</div><div class="lbl">Accuracy</div></div>
+        <div class="box"><div class="num" id="endStreak">0</div><div class="lbl">Best Streak</div></div>
+      </div>
+      <button class="start-btn" id="replayBtn">🔁 Play Again</button>
+    </div>
+  </div>
+
+  <footer>Built for CBSE Class XII Informatics Practices · SQL command &amp; clause practice game</footer>
+</div>
+
+<div class="modal-backdrop" id="refModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📘 Quick SQL Reference</h2>
+      <button class="close-x" id="closeRef">✕</button>
+    </div>
+    <div id="refContent"></div>
+  </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const LEVELS = [
+  {
+    name:"Table Commands (DDL)", color:"var(--ddl)", key:"ddl",
+    questions:[
+      { scenario:"Create a brand-new table called Student.", query:"{{BLANK}} TABLE Student (RollNo INT PRIMARY KEY, Name VARCHAR(30));", answer:"CREATE", options:["CREATE","ALTER","INSERT","UPDATE"], explain:"CREATE TABLE defines a new table and its columns." },
+      { scenario:"Add a new column, Email, to the existing Student table.", query:"ALTER TABLE Student {{BLANK}} COLUMN Email VARCHAR(40);", answer:"ADD", options:["ADD","MODIFY","DROP","INSERT"], explain:"ALTER TABLE ... ADD COLUMN inserts a new column into an existing table." },
+      { scenario:"Change the size of the existing Name column to hold 50 characters.", query:"ALTER TABLE Student {{BLANK}} Name VARCHAR(50);", answer:"MODIFY", options:["MODIFY","ADD","ALTER","CHANGE"], explain:"ALTER TABLE ... MODIFY changes the datatype or size of an existing column." },
+      { scenario:"Remove the Email column from Student entirely.", query:"ALTER TABLE Student {{BLANK}} COLUMN Email;", answer:"DROP", options:["DROP","DELETE","REMOVE","ADD"], explain:"ALTER TABLE ... DROP COLUMN removes a column and its data from a table." },
+      { scenario:"Make sure RollNo uniquely identifies every row and is never blank.", query:"CREATE TABLE Student (RollNo INT {{BLANK}}, Name VARCHAR(30));", answer:"PRIMARY KEY", options:["PRIMARY KEY","NOT NULL","UNIQUE","DEFAULT"], explain:"PRIMARY KEY makes a column both unique and NOT NULL, uniquely identifying each row." },
+    ]
+  },
+  {
+    name:"Data Commands (DML)", color:"var(--dml)", key:"dml",
+    questions:[
+      { scenario:"Add a new row of data into the Student table.", query:"{{BLANK}} INTO Student VALUES (7,'Zara Ali',81,'Pune');", answer:"INSERT", options:["INSERT","UPDATE","ADD","CREATE"], explain:"INSERT INTO ... VALUES adds a new row of data to a table." },
+      { scenario:"Change Priya's marks to 95 in the existing row.", query:"{{BLANK}} Student SET Marks=95 WHERE Name='PRIYA singh';", answer:"UPDATE", options:["UPDATE","ALTER","SET","MODIFY"], explain:"UPDATE ... SET ... WHERE changes existing values in a table." },
+      { scenario:"Remove the row for RollNo 6 from Student.", query:"{{BLANK}} FROM Student WHERE RollNo=6;", answer:"DELETE", options:["DELETE","DROP","REMOVE","TRUNCATE"], explain:"DELETE FROM ... WHERE removes specific rows from a table." },
+      { scenario:"Retrieve every column for every student.", query:"{{BLANK}} * FROM Student;", answer:"SELECT", options:["SELECT","SHOW","GET","FETCH"], explain:"SELECT is used to query and retrieve data from a table." },
+      { scenario:"Empty out all rows in Student but keep the table structure intact.", query:"{{BLANK}} TABLE Student;", answer:"TRUNCATE", options:["TRUNCATE","DELETE","DROP","CLEAR"], explain:"TRUNCATE TABLE removes all rows quickly while keeping the table's structure." },
+    ]
+  },
+  {
+    name:"Operators & Clauses", color:"var(--ops)", key:"ops",
+    questions:[
+      { scenario:"Find students whose marks lie between 60 and 90, inclusive.", query:"SELECT * FROM Student WHERE Marks {{BLANK}} 60 AND 90;", answer:"BETWEEN", options:["BETWEEN","IN","LIKE","AND"], explain:"BETWEEN a AND b selects values within an inclusive range." },
+      { scenario:"Find students who live in Delhi, Mumbai or Jaipur.", query:"SELECT * FROM Student WHERE City {{BLANK}} ('Delhi','Mumbai','Jaipur');", answer:"IN", options:["IN","BETWEEN","LIKE","OR"], explain:"IN (...) matches a value against a list of possibilities." },
+      { scenario:"Find students whose Name starts with the letter 'A'.", query:"SELECT * FROM Student WHERE Name {{BLANK}} 'A%';", answer:"LIKE", options:["LIKE","IN","BETWEEN","="], explain:"LIKE with the % wildcard matches a text pattern." },
+      { scenario:"Find rows where the Email column has never been filled in.", query:"SELECT * FROM Student WHERE Email {{BLANK}};", answer:"IS NULL", options:["IS NULL","=NULL","IS EMPTY","=''"], explain:"IS NULL checks for missing values; NULL can never be compared using =." },
+      { scenario:"Display students who live in Delhi AND scored above 70.", query:"SELECT * FROM Student WHERE City='Delhi' {{BLANK}} Marks>70;", answer:"AND", options:["AND","OR","IN","BETWEEN"], explain:"AND requires both conditions to be true at once." },
+    ]
+  },
+  {
+    name:"Aggregate Functions & Grouping", color:"var(--agg)", key:"agg",
+    questions:[
+      { scenario:"Find the combined marks of all students living in Delhi.", query:"SELECT {{BLANK}}(Marks) FROM Student WHERE City='Delhi';", answer:"SUM", options:["SUM","AVG","COUNT","MAX"], explain:"SUM() adds up all the values in a numeric column." },
+      { scenario:"Find how many distinct cities the students come from.", query:"SELECT COUNT({{BLANK}} City) FROM Student;", answer:"DISTINCT", options:["DISTINCT","ALL","UNIQUE","ONLY"], explain:"DISTINCT removes duplicate values before COUNT tallies them." },
+      { scenario:"List each city with its student count, but only cities with more than one student.", query:"SELECT City, COUNT(*) FROM Student GROUP BY City {{BLANK}} COUNT(*)>1;", answer:"HAVING", options:["HAVING","WHERE","GROUP BY","ORDER BY"], explain:"HAVING filters groups after GROUP BY — WHERE cannot filter on aggregate results." },
+      { scenario:"Show the average marks scored, broken down city by city.", query:"SELECT City, AVG(Marks) FROM Student {{BLANK}} City;", answer:"GROUP BY", options:["GROUP BY","ORDER BY","HAVING","DISTINCT"], explain:"GROUP BY groups rows sharing a value so aggregate functions apply per group." },
+      { scenario:"Arrange the student list alphabetically by Name.", query:"SELECT * FROM Student {{BLANK}} Name;", answer:"ORDER BY", options:["ORDER BY","GROUP BY","SORT","ARRANGE BY"], explain:"ORDER BY sorts the result set by one or more columns." },
+    ]
+  },
+  {
+    name:"String & Date Functions", color:"var(--strdate)", key:"strdate",
+    questions:[
+      { scenario:"Display each student's Name and City joined into a single string.", query:"SELECT {{BLANK}}(Name,' - ',City) FROM Student;", answer:"CONCAT", options:["CONCAT","JOIN","MID","ADD"], explain:"CONCAT() joins two or more strings together into one." },
+      { scenario:"Display the City column entirely in uppercase.", query:"SELECT {{BLANK}}(City) FROM Student;", answer:"UPPER", options:["UPPER","LOWER","MID","TRIM"], explain:"UPPER() converts all letters in a string to capitals." },
+      { scenario:"Extract just the first 2 characters — the area code — from each Pincode.", query:"SELECT {{BLANK}}(Pincode,2) FROM Student;", answer:"LEFT", options:["LEFT","RIGHT","MID","LENGTH"], explain:"LEFT(string, n) returns the first n characters from the left." },
+      { scenario:"Extract only the birth year from each student's DOB.", query:"SELECT {{BLANK}}(DOB) FROM Student;", answer:"YEAR", options:["YEAR","MONTH","DATE","NOW"], explain:"YEAR() extracts the four-digit year from a date value." },
+      { scenario:"Round the class's average marks to zero decimal places.", query:"SELECT {{BLANK}}(AVG(Marks),0) FROM Student;", answer:"ROUND", options:["ROUND","MOD","POWER","TRUNCATE"], explain:"ROUND(number, decimals) rounds a value to the given number of decimal places." },
+    ]
+  },
+  {
+    name:"Keys, Constraints & Joins", color:"var(--keys)", key:"keys",
+    questions:[
+      { scenario:"Which constraint stops a column from ever storing a blank value?", query:"CREATE TABLE Student (RollNo INT, Name VARCHAR(30) {{BLANK}});", answer:"NOT NULL", options:["NOT NULL","PRIMARY KEY","UNIQUE","DEFAULT"], explain:"NOT NULL forces a column to always contain a value." },
+      { scenario:"Which key in one table refers back to the Primary Key of another table?", query:"CREATE TABLE Marks (RollNo INT {{BLANK}} REFERENCES Student(RollNo), Score INT);", answer:"FOREIGN KEY", options:["FOREIGN KEY","PRIMARY KEY","CANDIDATE KEY","ALTERNATE KEY"], explain:"A FOREIGN KEY links a column to the PRIMARY KEY of another table, enforcing referential integrity." },
+      { scenario:"Combine matching rows from the Student and Marks tables using their common RollNo.", query:"SELECT * FROM Student {{BLANK}} Marks ON Student.RollNo=Marks.RollNo;", answer:"JOIN", options:["JOIN","UNION","WITH","AND"], explain:"JOIN combines rows from two tables based on a related column." },
+      { scenario:"Ensure every Email value is different from every other, though it may be left blank.", query:"CREATE TABLE Student (Email VARCHAR(40) {{BLANK}});", answer:"UNIQUE", options:["UNIQUE","PRIMARY KEY","NOT NULL","CHECK"], explain:"UNIQUE ensures no two rows share the same value, but unlike PRIMARY KEY it still allows one NULL." },
+      { scenario:"Automatically set a City value when none is given during insert.", query:"CREATE TABLE Student (City VARCHAR(20) {{BLANK}} 'Delhi');", answer:"DEFAULT", options:["DEFAULT","UNIQUE","CHECK","AUTO"], explain:"DEFAULT supplies a fallback value when no value is given for that column." },
+    ]
+  }
+];
+
+let flatQuestions = [];
+LEVELS.forEach((lvl, li) => lvl.questions.forEach(q => flatQuestions.push({...q, levelIndex: li})));
+
+const TOTAL_Q = flatQuestions.length;
+const TIME_LIMIT = 18;
+
+/* ================= STATE ================= */
+let state = { qIndex:0, score:0, lives:3, streak:0, bestStreak:0, correctCount:0, answered:false, selected:null, timeLeft:TIME_LIMIT, timerId:null };
+
+/* ================= DOM ================= */
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const endScreen = document.getElementById('endScreen');
+const scoreVal = document.getElementById('scoreVal');
+const heartsVal = document.getElementById('heartsVal');
+const miniRoadmap = document.getElementById('miniRoadmap');
+const levelTag = document.getElementById('levelTag');
+const levelName = document.getElementById('levelName');
+const qNum = document.getElementById('qNum');
+const scenarioText = document.getElementById('scenarioText');
+const queryLine = document.getElementById('queryLine');
+const optionsGrid = document.getElementById('optionsGrid');
+const checkBtn = document.getElementById('checkBtn');
+const nextBtn = document.getElementById('nextBtn');
+const feedback = document.getElementById('feedback');
+const feedbackIcon = document.getElementById('feedbackIcon');
+const feedbackText = document.getElementById('feedbackText');
+const timerFill = document.getElementById('timerFill');
+
+function showScreen(id){ [startScreen,gameScreen,endScreen].forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+/* ---- roadmaps ---- */
+function buildStartRoadmap(){
+  const el = document.getElementById('startRoadmap');
+  el.innerHTML = "";
+  LEVELS.forEach((lvl,i) => {
+    const st = document.createElement('div'); st.className = "station";
+    const dot = document.createElement('div'); dot.className = "dot"; dot.style.background = lvl.color; dot.textContent = i+1;
+    const lbl = document.createElement('div'); lbl.className = "lbl"; lbl.textContent = lvl.name;
+    st.appendChild(dot); st.appendChild(lbl);
+    el.appendChild(st);
+    if(i < LEVELS.length-1){ const tr = document.createElement('div'); tr.className = "track"; el.appendChild(tr); }
+  });
+}
+buildStartRoadmap();
+
+function buildMiniRoadmap(){
+  miniRoadmap.innerHTML = "";
+  const curLevel = flatQuestions[state.qIndex].levelIndex;
+  LEVELS.forEach((lvl,i) => {
+    const seg = document.createElement('div');
+    seg.className = "seg" + (i < curLevel ? " done" : i === curLevel ? " active" : "");
+    const bar = document.createElement('i');
+    if(i === curLevel){
+      const qInLevel = state.qIndex - LEVELS.slice(0,i).reduce((a,l)=>a+l.questions.length,0);
+      bar.style.width = (qInLevel / lvl.questions.length * 100) + "%";
+    }
+    seg.appendChild(bar);
+    miniRoadmap.appendChild(seg);
+  });
+}
+
+/* ================= RENDER ================= */
+function currentLevel(){ return LEVELS[flatQuestions[state.qIndex].levelIndex]; }
+
+function renderQuestion(){
+  const q = flatQuestions[state.qIndex];
+  const lvl = currentLevel();
+
+  buildMiniRoadmap();
+  levelTag.textContent = "Level " + (q.levelIndex+1);
+  levelTag.style.background = lvl.color;
+  levelName.textContent = lvl.name;
+  qNum.textContent = `Question ${state.qIndex+1} of ${TOTAL_Q}`;
+  scenarioText.textContent = q.scenario;
+
+  const [before, after] = q.query.split("{{BLANK}}");
+  queryLine.innerHTML = "";
+  queryLine.appendChild(document.createTextNode(before));
+  const blank = document.createElement('span');
+  blank.className = "blank-slot";
+  blank.id = "blankSlot";
+  blank.textContent = "______";
+  queryLine.appendChild(blank);
+  queryLine.appendChild(document.createTextNode(after));
+
+  optionsGrid.innerHTML = "";
+  const shuffled = [...q.options].sort(()=>Math.random()-0.5);
+  shuffled.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = "opt-btn";
+    b.textContent = opt;
+    b.addEventListener('click', () => selectOption(b, opt));
+    optionsGrid.appendChild(b);
+  });
+
+  state.answered = false;
+  state.selected = null;
+  checkBtn.disabled = true;
+  checkBtn.style.display = "inline-block";
+  nextBtn.style.display = "none";
+  feedback.classList.remove('show','ok','bad');
+
+  startTimer();
+}
+
+function selectOption(btn, value){
+  if(state.answered) return;
+  [...optionsGrid.children].forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.selected = { btn, value };
+  document.getElementById('blankSlot').textContent = value;
+  document.getElementById('blankSlot').classList.add('picked');
+  checkBtn.disabled = false;
+}
+
+/* ================= TIMER ================= */
+function startTimer(){
+  clearInterval(state.timerId);
+  state.timeLeft = TIME_LIMIT;
+  timerFill.style.width = "100%";
+  timerFill.classList.remove('warn');
+  state.timerId = setInterval(() => {
+    state.timeLeft--;
+    const pct = Math.max(state.timeLeft,0) / TIME_LIMIT * 100;
+    timerFill.style.width = pct + "%";
+    if(state.timeLeft <= 6) timerFill.classList.add('warn');
+    if(state.timeLeft <= 0){
+      clearInterval(state.timerId);
+      if(!state.answered) submitAnswer(true);
+    }
+  }, 1000);
+}
+
+/* ================= SUBMIT ================= */
+checkBtn.addEventListener('click', () => submitAnswer(false));
+
+function submitAnswer(timedOut){
+  if(state.answered) return;
+  state.answered = true;
+  clearInterval(state.timerId);
+  const q = flatQuestions[state.qIndex];
+  const blank = document.getElementById('blankSlot');
+  const chosen = state.selected ? state.selected.value : null;
+  const correct = chosen === q.answer;
+
+  [...optionsGrid.children].forEach(b => {
+    b.disabled = true;
+    if(b.textContent === q.answer) b.classList.add('correct');
+    else if(b.classList.contains('selected')) b.classList.add('wrong');
+  });
+
+  if(correct){
+    blank.classList.add('correct');
+    state.streak++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    const bonus = Math.min(state.streak-1,5) * 2;
+    state.score += 10 + bonus;
+    state.correctCount++;
+    feedback.classList.add('show','ok');
+    feedbackIcon.textContent = "✅";
+    feedbackText.innerHTML = `<b>Correct!</b> ${q.explain}`;
+    launchConfetti();
+  } else {
+    blank.textContent = q.answer;
+    blank.classList.add('wrong');
+    state.streak = 0;
+    state.lives--;
+    feedback.classList.add('show','bad');
+    feedbackIcon.textContent = "❌";
+    feedbackText.innerHTML = timedOut
+      ? `<b>Time's up!</b> The correct answer is <b>${q.answer}</b>. ${q.explain}`
+      : `<b>Not quite.</b> The correct answer is <b>${q.answer}</b>. ${q.explain}`;
+    gameScreen.querySelector('.mission-card').classList.add('shake');
+    setTimeout(()=>gameScreen.querySelector('.mission-card').classList.remove('shake'), 400);
+  }
+
+  scoreVal.textContent = state.score;
+  heartsVal.textContent = "♥ ".repeat(Math.max(state.lives,0)).trim() + " " + "🖤 ".repeat(3-Math.max(state.lives,0)).trim();
+  checkBtn.style.display = "none";
+  nextBtn.style.display = "inline-block";
+
+  if(state.lives <= 0) setTimeout(endQuest, 900);
+}
+
+nextBtn.addEventListener('click', () => {
+  state.qIndex++;
+  if(state.qIndex >= TOTAL_Q) endQuest();
+  else renderQuestion();
+});
+
+/* ================= START / END ================= */
+document.getElementById('startBtn').addEventListener('click', () => {
+  state = { qIndex:0, score:0, lives:3, streak:0, bestStreak:0, correctCount:0, answered:false, selected:null, timeLeft:TIME_LIMIT, timerId:null };
+  scoreVal.textContent = 0;
+  heartsVal.textContent = "♥ ♥ ♥";
+  showScreen('gameScreen');
+  renderQuestion();
+});
+
+document.getElementById('replayBtn').addEventListener('click', () => { clearInterval(state.timerId); showScreen('startScreen'); });
+
+function endQuest(){
+  clearInterval(state.timerId);
+  const accuracy = Math.round((state.correctCount / TOTAL_Q) * 100);
+  document.getElementById('endScore').textContent = state.score;
+  document.getElementById('endAccuracy').textContent = accuracy + "%";
+  document.getElementById('endStreak').textContent = state.bestStreak;
+
+  let medal="🥉", title="Query Rookie";
+  if(state.lives <= 0){ medal="💥"; title="Buster Interrupted — Try Again!"; }
+  else if(accuracy >= 90){ medal="🏆"; title="SQL Master"; }
+  else if(accuracy >= 70){ medal="🥇"; title="Blank-Busting Champion"; }
+  else if(accuracy >= 50){ medal="🥈"; title="Rising Query-ist"; }
+
+  document.getElementById('endMedal').textContent = medal;
+  document.getElementById('endBadge').textContent = title;
+  showScreen('endScreen');
+}
+
+/* ================= CONFETTI ================= */
+function launchConfetti(){
+  const colors = ["#FF6B4A","#2F80FF","#7B5EFF","#17C3B2","#F2A100","#FF3E7F"];
+  for(let i=0;i<26;i++){
+    const p = document.createElement('div');
+    p.className = "confetti-piece";
+    p.style.left = Math.random()*100 + "vw";
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration = (1.6 + Math.random()*1.2) + "s";
+    p.style.opacity = 0.7 + Math.random()*0.3;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 3000);
+  }
+}
+
+/* ================= REFERENCE MODAL ================= */
+const REF_DATA = [
+  { title:"Table Commands (DDL)", color:"var(--ddl)", items:[
+    ["CREATE TABLE","Defines a new table and its columns"],
+    ["ALTER TABLE ... ADD","Adds a new column"],
+    ["ALTER TABLE ... MODIFY","Changes a column's datatype/size"],
+    ["ALTER TABLE ... DROP","Removes a column"],
+  ]},
+  { title:"Data Commands (DML)", color:"var(--dml)", items:[
+    ["INSERT INTO ... VALUES","Adds a new row"],
+    ["UPDATE ... SET ... WHERE","Modifies existing rows"],
+    ["DELETE FROM ... WHERE","Removes specific rows"],
+    ["SELECT","Retrieves data"],
+    ["TRUNCATE TABLE","Empties a table, keeps its structure"],
+  ]},
+  { title:"Operators & Clauses", color:"var(--ops)", items:[
+    ["BETWEEN a AND b","Value lies in an inclusive range"],
+    ["IN (list)","Value matches one from a list"],
+    ["LIKE 'pattern%'","Matches a text pattern"],
+    ["IS NULL","Checks for a missing value"],
+    ["AND / OR","Combines conditions"],
+  ]},
+  { title:"Aggregate & Grouping", color:"var(--agg)", items:[
+    ["SUM / AVG / COUNT / MAX / MIN","Aggregate functions on a column"],
+    ["DISTINCT","Removes duplicate values"],
+    ["GROUP BY col","Groups rows sharing a value"],
+    ["HAVING cond","Filters groups after GROUP BY"],
+    ["ORDER BY col","Sorts the result set"],
+  ]},
+  { title:"String & Date Functions", color:"var(--strdate)", items:[
+    ["CONCAT(a,b,...)","Joins strings together"],
+    ["UPPER() / LOWER()","Changes letter case"],
+    ["LEFT() / RIGHT() / MID()","Extracts part of a string"],
+    ["YEAR() / MONTH() / DATE()","Extracts parts of a date"],
+    ["ROUND(num,d)","Rounds a number to d decimals"],
+  ]},
+  { title:"Keys, Constraints & Joins", color:"var(--keys)", items:[
+    ["PRIMARY KEY","Uniquely identifies each row, never NULL"],
+    ["FOREIGN KEY ... REFERENCES","Links to another table's Primary Key"],
+    ["NOT NULL","Column can never be left blank"],
+    ["UNIQUE","No two rows share this value"],
+    ["DEFAULT value","Fallback value if none supplied"],
+    ["JOIN ... ON","Combines rows from two related tables"],
+  ]},
+];
+
+function buildReference(){
+  const wrap = document.getElementById('refContent');
+  wrap.innerHTML = "";
+  REF_DATA.forEach(group => {
+    const div = document.createElement('div');
+    div.className = "ref-group";
+    const h4 = document.createElement('h4');
+    h4.textContent = group.title;
+    h4.style.background = group.color;
+    div.appendChild(h4);
+    group.items.forEach(([fn,desc]) => {
+      const row = document.createElement('div');
+      row.className = "ref-item";
+      row.innerHTML = `<span class="fn">${fn}</span><span class="desc">${desc}</span>`;
+      div.appendChild(row);
+    });
+    wrap.appendChild(div);
+  });
+}
+buildReference();
+
+const refModal = document.getElementById('refModal');
+document.getElementById('openRef').addEventListener('click', () => refModal.classList.add('show'));
+document.getElementById('closeRef').addEventListener('click', () => refModal.classList.remove('show'));
+refModal.addEventListener('click', (e) => { if(e.target === refModal) refModal.classList.remove('show'); });
+</script>
+</body>
+</html>
