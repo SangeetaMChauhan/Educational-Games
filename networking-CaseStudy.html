@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetVerse — 12 Case Studies | CBSE XII Networking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-2:#F6F9FF;
+    --card:#FFFFFF;
+    --ink:#172B4D;
+    --ink-soft:#5A6B8C;
+    --blue:#2F6FED; --blue-dark:#1D4ED8;
+    --teal:#0EA5A0;
+    --amber:#F5A524;
+    --coral:#F65E6D;
+    --green:#22B573;
+    --purple:#7C5CFC;
+    --pink:#E0559B;
+    --border:#DCE6FA;
+    --shadow:0 10px 30px rgba(47,111,237,0.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(circle at 8% 8%, #DCEBFF 0%, transparent 40%),
+      radial-gradient(circle at 95% 15%, #E4FBF6 0%, transparent 45%),
+      radial-gradient(circle at 50% 100%, #FFF2E0 0%, transparent 40%),
+      var(--bg-2);
+    color:var(--ink);
+    min-height:100vh;
+    padding:24px 16px 64px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  header.hero{text-align:center;margin-bottom:24px;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.08em;
+    color:var(--blue-dark);background:#E6F1FB;border:1px solid #B5D4F4;
+    padding:6px 14px;border-radius:999px;text-transform:uppercase;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(34,181,115,.2);}
+  h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(26px,5vw,40px);margin:14px 0 8px;letter-spacing:-0.02em;}
+  h1 span{color:var(--blue);}
+  .sub{color:var(--ink-soft);font-size:15px;max-width:600px;margin:0 auto;line-height:1.6;}
+
+  /* MENU */
+  .menu-toolbar{display:flex;justify-content:center;margin:22px 0 20px;}
+  .case-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+  .case-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:16px 16px 14px;box-shadow:var(--shadow);cursor:pointer;
+    transition:transform .15s ease, border-color .15s ease;text-align:left;
+  }
+  .case-card:hover{transform:translateY(-3px);border-color:var(--blue);}
+  .case-icon{
+    width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:20px;margin-bottom:10px;
+  }
+  .case-card h3{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:0 0 6px;line-height:1.3;}
+  .case-card p{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.5;}
+  .case-card .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:600;color:var(--ink-soft);background:#F1F4FB;border-radius:999px;padding:3px 8px;}
+  .tag.score{color:#fff;}
+  .tag.score.ok{background:var(--green);}
+  .tag.score.mid{background:var(--amber);}
+  .tag.score.low{background:var(--coral);}
+
+  /* PROGRESS */
+  .path-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 20px 12px;margin-bottom:18px;box-shadow:var(--shadow);overflow-x:auto;}
+  #pathSvg{display:block;min-width:600px;width:100%;height:70px;}
+  .subdots{display:flex;justify-content:center;gap:8px;margin-top:6px;}
+  .subdot{width:9px;height:9px;border-radius:50%;background:#DCE6FA;transition:background .15s ease;}
+  .subdot.done-ok{background:var(--green);}
+  .subdot.done-no{background:var(--coral);}
+  .subdot.now{background:var(--blue);box-shadow:0 0 0 4px rgba(47,111,237,0.18);}
+
+  /* SCENARIO */
+  .scenario{background:linear-gradient(180deg,#FFFFFF 0%, #F7FAFF 100%);border:1px solid var(--border);border-radius:18px;padding:20px 22px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .scenario .stitle{
+    font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--teal);margin:0 0 4px;display:flex;align-items:center;gap:8px;
+  }
+  .scenario .stitle::before{content:"◆";color:var(--teal);}
+  .scenario h2{font-family:'Space Grotesk',sans-serif;font-size:19px;margin:0 0 10px;}
+  .scenario p{margin:0 0 8px;line-height:1.65;font-size:14.5px;color:var(--ink);}
+  .scenario p:last-child{margin-bottom:0;}
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px;}
+  .info-chip{background:#fff;border:1px solid var(--border);border-radius:12px;padding:9px 11px;font-size:12.5px;}
+  .info-chip b{display:block;font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--blue-dark);margin-bottom:2px;}
+  .info-chip .mono{font-family:'JetBrains Mono',monospace;color:var(--ink-soft);font-size:11.5px;}
+
+  /* QUESTION CARD */
+  .qcard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px 24px 20px;box-shadow:var(--shadow);}
+  .qmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .qnum{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;color:var(--blue-dark);background:#E6F1FB;border-radius:999px;padding:5px 12px;}
+  .qtype{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);}
+  .qprompt{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;line-height:1.5;margin:0 0 16px;color:var(--ink);}
+
+  .options{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;}
+  .opt{border:2px solid var(--border);border-radius:14px;background:#FCFDFF;padding:13px 15px;font-size:14.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:all .15s ease;display:flex;align-items:center;gap:10px;text-align:left;}
+  .opt .bullet{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;font-weight:700;}
+  .opt:hover{border-color:var(--blue);background:#F0F6FF;transform:translateY(-1px);}
+  .opt.selected{border-color:var(--blue);background:#E6F1FB;}
+  .opt.selected .bullet{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .opt.correct{border-color:var(--green);background:#EAF9F1;}
+  .opt.correct .bullet{background:var(--green);border-color:var(--green);color:#fff;}
+  .opt.wrong{border-color:var(--coral);background:#FDEEEF;}
+  .opt.wrong .bullet{background:var(--coral);border-color:var(--coral);color:#fff;}
+  .opt.disabled{cursor:default;}
+
+  .dragzone-line{font-size:16px;line-height:2.4;color:var(--ink);}
+  .dropzone{display:inline-flex;align-items:center;justify-content:center;min-width:150px;min-height:38px;border:2px dashed var(--blue);border-radius:10px;background:#F0F6FF;padding:4px 12px;margin:0 4px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--blue-dark);vertical-align:middle;transition:all .15s ease;}
+  .dropzone.filled{border-style:solid;background:#E6F1FB;}
+  .dropzone.hover{background:#D5E7FF;border-color:var(--blue-dark);}
+  .dropzone.correct{border-color:var(--green);background:#EAF9F1;color:#0F6E56;}
+  .dropzone.wrong{border-color:var(--coral);background:#FDEEEF;color:#993C1D;}
+
+  .bank{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px;padding:14px;border-radius:14px;background:#FFF8ED;border:1px dashed #F0C989;}
+  .chip{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;background:#fff;border:2px solid var(--amber);color:#854F0B;padding:8px 14px;border-radius:10px;cursor:grab;user-select:none;touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+  .chip.dragging{opacity:0;}
+  .chip.placed{display:none;}
+  .floating-chip{position:fixed;z-index:999;pointer-events:none;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;background:#fff;border:2px solid var(--blue);color:var(--blue-dark);padding:8px 14px;border-radius:10px;box-shadow:0 8px 20px rgba(47,111,237,0.3);transform:translate(-50%,-50%);}
+
+  .controls{display:flex;justify-content:flex-end;align-items:center;margin-top:18px;gap:12px;flex-wrap:wrap;}
+  button.btn{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;border:none;border-radius:12px;padding:12px 22px;cursor:pointer;transition:all .15s ease;}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-primary:hover{background:var(--blue-dark);transform:translateY(-1px);}
+  .btn-primary:disabled{background:#B8C9E8;cursor:not-allowed;transform:none;}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--border);}
+  .btn-ghost:hover{background:#F0F4FB;}
+
+  .feedback{margin-top:16px;padding:14px 16px;border-radius:12px;font-size:14px;line-height:1.6;display:none;}
+  .feedback.show{display:block;}
+  .feedback.good{background:#EAF9F1;border:1px solid #97C459;color:#173404;}
+  .feedback.bad{background:#FDEEEF;border:1px solid #F09595;color:#4A1B0C;}
+  .feedback b{font-family:'Space Grotesk',sans-serif;}
+
+  .center-card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:32px 28px;text-align:center;}
+  .big-btn{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;background:var(--blue);color:#fff;border:none;border-radius:14px;padding:14px 30px;cursor:pointer;box-shadow:0 8px 20px rgba(47,111,237,0.3);margin:4px;}
+  .big-btn:hover{background:var(--blue-dark);}
+  .big-btn.secondary{background:#fff;color:var(--blue-dark);border:1px solid var(--border);box-shadow:none;}
+  .big-btn.secondary:hover{background:#F0F6FF;}
+
+  .score-num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:32px;color:var(--blue-dark);}
+  .grade-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;margin-bottom:14px;letter-spacing:.05em;}
+  .review-list{text-align:left;margin-top:22px;border-top:1px solid var(--border);padding-top:18px;}
+  .review-group h4{font-family:'Space Grotesk',sans-serif;font-size:13px;margin:16px 0 8px;color:var(--blue-dark);}
+  .review-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px;border-bottom:1px dashed var(--border);}
+  .review-item:last-child{border-bottom:none;}
+  .review-tag{flex:none;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;margin-top:1px;}
+  .review-tag.ok{background:var(--green);}
+  .review-tag.no{background:var(--coral);}
+
+  .hidden{display:none !important;}
+  footer{text-align:center;margin-top:30px;color:var(--ink-soft);font-size:12px;font-family:'JetBrains Mono',monospace;}
+  @media(max-width:600px){.qcard{padding:18px;} .qprompt{font-size:16.5px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow"><span class="dot"></span> CBSE Class XII · Computer Science · Networking</span>
+    <h1>Net<span>Verse</span> — 12 Case Studies</h1>
+    <p class="sub">Practice the exact CBSE board format: a real-world scenario followed by 5 sub-questions each. Pick one case study or take on all 12 (60 questions) in a row.</p>
+  </header>
+
+  <!-- MENU SCREEN -->
+  <div id="menuScreen">
+    <div class="menu-toolbar">
+      <button class="big-btn" id="playAllBtn">▶ Start full challenge — all 12 case studies</button>
+    </div>
+    <div class="case-grid" id="caseGrid"></div>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="gameArea" class="hidden">
+    <div class="path-card">
+      <svg id="pathSvg" viewBox="0 0 900 60" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="subdots" id="subdots"></div>
+    </div>
+
+    <div class="scenario" id="scenarioCard"></div>
+
+    <div class="qcard" id="qcard">
+      <div class="qmeta">
+        <span class="qnum" id="qnumLabel"></span>
+        <span class="qtype" id="qtypeLabel"></span>
+      </div>
+      <p class="qprompt" id="qprompt"></p>
+      <div id="qbody"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="controls">
+        <button class="btn btn-ghost" id="menuBtn">← Case studies</button>
+        <button class="btn btn-primary" id="checkBtn" disabled>Check answer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASE COMPLETE INTERSTITIAL -->
+  <div id="caseCompleteScreen" class="center-card hidden">
+    <div class="grade-badge" id="caseGradeBadge">SCORE</div>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;margin:6px 0 4px;" id="caseCompleteTitle"></h2>
+    <div class="score-num" id="caseScore">0/5</div>
+    <p class="sub" id="caseMsg" style="margin:10px auto 20px;"></p>
+    <button class="big-btn" id="continueBtn"></button>
+    <button class="big-btn secondary" id="caseMenuBtn">Back to case studies</button>
+  </div>
+
+  <!-- FINAL END SCREEN -->
+  <div id="endScreen" class="center-card hidden">
+    <div class="grade-badge" id="gradeBadge">GRADE</div>
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:24px;margin:6px 0 4px;">Network deployed!</h2>
+    <div class="score-num" id="finalScore">0/60</div>
+    <p class="sub" id="finalMsg"></p>
+    <button class="big-btn" id="restartBtn">Back to case studies</button>
+    <div class="review-list" id="reviewList"></div>
+  </div>
+
+  <footer>Built for CBSE XII Computer Science · Networking &amp; Communication · syllabus ref: cbseacademic.nic.in</footer>
+</div>
+
+<script>
+/* ================= DATA: 12 CASE STUDIES x 5 SUB-QUESTIONS ================= */
+const COLORS = ['blue','teal','coral','amber','purple','pink'];
+const caseStudies = [
+{
+  icon:"🏫", color:"blue",
+  title:"Sunrise International School",
+  teaser:"Topology, server placement, devices and media across a 4-building campus.",
+  scenarioTitle:"Case study 1 · Campus network",
+  scenarioHTML:`<h2>Sunrise International School</h2>
+    <p>Sunrise International School, Chennai, is expanding its network across four buildings. The admin team must choose the right topology, server location, device and cabling for the campus.</p>`,
+  info:[["Junior Wing","50 computers · 60m from Admin"],["Senior Wing","130 computers · 90m from Admin"],["Admin Block","20 computers · central hub"],["Sports Complex","5 computers · 450m from Admin"]],
+  questions:[
+    {type:"mcq", prompt:"The Senior Wing has 130 computers on a single floor. A single cable fault should be easy to isolate without disrupting other computers. Which topology fits best?",
+      options:["Bus Topology","Star Topology","Ring Topology","Mesh Topology"], answer:"Star Topology",
+      explain:"A <b>star topology</b> connects every computer to a central switch, so one faulty cable only isolates that node."},
+    {type:"mcq", prompt:"The main file server should go in the building giving the fastest access to the maximum number of users. Which building should host it?",
+      options:["Junior Wing (50 computers)","Senior Wing (130 computers)","Admin Block (20 computers)","Sports Complex (5 computers)"], answer:"Senior Wing (130 computers)",
+      explain:"The server should sit in the building with the <b>maximum number of computers</b> — the Senior Wing — for the best overall access speed."},
+    {type:"drag-fill", prompt:"To join the LANs of all four buildings and forward data only to the intended computer instead of broadcasting it everywhere, the admin should install a ___ at the Admin Block.",
+      bank:["Switch","Repeater","Modem","MAC Address"], zoneAnswer:"Switch",
+      explain:"A <b>switch</b> forwards frames only to the intended destination using MAC addresses, unlike a hub which broadcasts to everyone."},
+    {type:"drag-fill", prompt:"The Sports Complex is 450m from the Admin Block, and the signal weakens over that copper cable run. Which device should regenerate the signal? ___",
+      bank:["Repeater","Gateway","Router","Firewall"], zoneAnswer:"Repeater",
+      explain:"A <b>repeater</b> amplifies and regenerates a weakening signal so it can travel further without data loss."},
+    {type:"mcq", prompt:"For wiring between the four buildings, the school wants very high speed and complete immunity to electromagnetic interference. Which medium fits best?",
+      options:["Twisted Pair Cable","Coaxial Cable","Optical Fibre Cable","Infrared"], answer:"Optical Fibre Cable",
+      explain:"<b>Optical fibre</b> carries data as light, giving high bandwidth over long distances with no electromagnetic interference."}
+  ]
+},
+{
+  icon:"🏢", color:"teal",
+  title:"TechNova Pvt Ltd",
+  teaser:"Connecting a Bengaluru HQ with branch offices — WAN devices and email/call protocols.",
+  scenarioTitle:"Case study 2 · Multi-city offices",
+  scenarioHTML:`<h2>TechNova Pvt Ltd</h2>
+    <p>TechNova has its head office in Bengaluru, with branch offices in Pune (700 km away) and Hyderabad (570 km away). All three offices need to share files, email and hold live video meetings.</p>`,
+  info:[["Bengaluru HQ","Head office · main server"],["Pune Branch","700 km from HQ"],["Hyderabad Branch","570 km from HQ"]],
+  questions:[
+    {type:"mcq", prompt:"A network connecting offices spread across multiple cities in the same country is called a:",
+      options:["LAN","PAN","MAN","WAN"], answer:"WAN",
+      explain:"A <b>WAN (Wide Area Network)</b> spans cities, states or countries — exactly what connects Bengaluru, Pune and Hyderabad."},
+    {type:"mcq", prompt:"Which device should be installed at each office to connect its internal LAN to the internet and to the other branch offices?",
+      options:["Hub","Router","Repeater","Switch"], answer:"Router",
+      explain:"A <b>router</b> connects a LAN to other networks (like the internet or a WAN), directing data between them."},
+    {type:"drag-fill", prompt:"To let employees at all three offices hold real-time audio-video meetings over the internet, TechNova should use ___.",
+      bank:["VoIP","FTP","SMTP","POP3"], zoneAnswer:"VoIP",
+      explain:"<b>VoIP (Voice over Internet Protocol)</b> carries voice and video calls over an internet connection."},
+    {type:"mcq", prompt:"Which protocol is used when an employee's email client sends a new message out to the mail server?",
+      options:["SMTP","POP3","HTTP","FTP"], answer:"SMTP",
+      explain:"<b>SMTP (Simple Mail Transfer Protocol)</b> is used to send outgoing email from a client to a mail server."},
+    {type:"mcq", prompt:"Which protocol is used to retrieve/download received emails from the mail server onto the employee's device?",
+      options:["POP3","SMTP","HTTPS","VoIP"], answer:"POP3",
+      explain:"<b>POP3 (Post Office Protocol)</b> is used to download emails from the mail server to a local device."}
+  ]
+},
+{
+  icon:"🏥", color:"coral",
+  title:"City General Hospital",
+  teaser:"Securing patient records and sharing scan images fast within one building.",
+  scenarioTitle:"Case study 3 · Hospital network",
+  scenarioHTML:`<h2>City General Hospital</h2>
+    <p>City General Hospital wants to connect all its departments within one building to share patient records instantly, while keeping the network safe from outside threats and letting patients securely view reports online.</p>`,
+  info:[["Departments","12 · all in one building"],["Radiology","Shares large scan images"],["Patient Portal","Accessed over the internet"]],
+  questions:[
+    {type:"mcq", prompt:"A network confined to the hospital's single building is an example of a:",
+      options:["LAN","MAN","WAN","PAN"], answer:"LAN",
+      explain:"A <b>LAN (Local Area Network)</b> covers a small area like one building — exactly the hospital's setup."},
+    {type:"drag-fill", prompt:"To stop unauthorised users on the internet from accessing the hospital's internal network, the admin should install a ___.",
+      bank:["Firewall","Hub","Bridge","Modem"], zoneAnswer:"Firewall",
+      explain:"A <b>firewall</b> monitors and filters incoming/outgoing traffic based on security rules, blocking unauthorised access."},
+    {type:"mcq", prompt:"For patients to securely view their reports on the hospital's online portal, which protocol should the portal use?",
+      options:["HTTP","HTTPS","FTP","SMTP"], answer:"HTTPS",
+      explain:"<b>HTTPS</b> encrypts data between the browser and server, keeping sensitive medical data safe in transit."},
+    {type:"mcq", prompt:"Which transmission medium should be used within the hospital for fast, interference-free transfer of large scan images?",
+      options:["Optical Fibre Cable","Telephone Wire","Infrared","Coaxial Cable"], answer:"Optical Fibre Cable",
+      explain:"<b>Optical fibre</b> offers very high speed and is unaffected by electromagnetic interference from hospital equipment."},
+    {type:"mcq", prompt:"Which device should connect the hospital's internal LAN to a completely different type of external network, like the internet?",
+      options:["Gateway","Repeater","Switch","Hub"], answer:"Gateway",
+      explain:"A <b>gateway</b> connects two dissimilar networks, translating between different protocols if needed."}
+  ]
+},
+{
+  icon:"🏠", color:"amber",
+  title:"Rohan's Smart Home",
+  teaser:"PAN, Bluetooth and WiFi behind everyday smart devices at home.",
+  scenarioTitle:"Case study 4 · Smart home",
+  scenarioHTML:`<h2>Rohan's Smart Home</h2>
+    <p>Rohan owns a smartphone, a smart TV, a wireless speaker and a fitness band, all within a few metres of each other at home, connected to his home WiFi router.</p>`,
+  info:[["Devices","Phone, TV, speaker, fitness band"],["Range","A few metres"],["Router","Provides home internet"]],
+  questions:[
+    {type:"mcq", prompt:"The network formed by Rohan's personal devices spread over just a few metres is an example of a:",
+      options:["PAN","LAN","MAN","WAN"], answer:"PAN",
+      explain:"A <b>PAN (Personal Area Network)</b> connects an individual's personal devices over a very short range."},
+    {type:"mcq", prompt:"Which short-range wireless technology most likely connects Rohan's fitness band to his smartphone?",
+      options:["Bluetooth","Satellite","Optical Fibre","Coaxial Cable"], answer:"Bluetooth",
+      explain:"<b>Bluetooth</b> is designed for short-range wireless links between personal devices like a fitness band and phone."},
+    {type:"mcq", prompt:"Which wireless technology connects Rohan's laptop to his home router for internet access?",
+      options:["WiFi","Bluetooth","Infrared","VoIP"], answer:"WiFi",
+      explain:"<b>WiFi</b> lets devices connect wirelessly to a router for internet access within a home or office."},
+    {type:"drag-fill", prompt:"Rohan needs one device at home that supplies internet access to his router and all connected smart devices. This device is called a ___.",
+      bank:["Modem","Repeater","Switch","Firewall"], zoneAnswer:"Modem",
+      explain:"A <b>modem</b> connects a home network to the internet service provider's line, supplying internet to the router."},
+    {type:"mcq", prompt:"Rohan's smart TV, placed far from the router, keeps getting a weak signal. What should he add to boost WiFi coverage?",
+      options:["A WiFi Repeater/Extender","A new Modem","A Gateway","A Firewall"], answer:"A WiFi Repeater/Extender",
+      explain:"A <b>WiFi repeater/extender</b> rebroadcasts the signal to cover areas with weak WiFi reception."}
+  ]
+},
+{
+  icon:"🛒", color:"purple",
+  title:"ShopEase Online Store",
+  teaser:"Web servers, browsers, domain names, URLs and hosting behind an e-commerce site.",
+  scenarioTitle:"Case study 5 · E-commerce website",
+  scenarioHTML:`<h2>ShopEase Online Store</h2>
+    <p>ShopEase has launched an online store. Customers type <b>shopease.com</b> in their browser to view products, which are stored on a remote computer maintained by a hosting company.</p>`,
+  info:[["Address","shopease.com"],["Customers","Browse via app/browser"],["Files","Stored on a remote computer"]],
+  questions:[
+    {type:"mcq", prompt:"The remote computer that stores ShopEase's website files and responds to browser requests is called a:",
+      options:["Web Browser","Web Server","Web Host","Domain"], answer:"Web Server",
+      explain:"A <b>web server</b> stores website files and sends the requested pages to a visitor's browser."},
+    {type:"mcq", prompt:"The software a customer uses on their device to view the ShopEase website is called a:",
+      options:["Web Browser","Web Server","Search Engine","Web Script"], answer:"Web Browser",
+      explain:"A <b>web browser</b> (like Chrome or Edge) is the application used to request and display web pages."},
+    {type:"mcq", prompt:"\"shopease.com\" is an easy-to-remember example of a:",
+      options:["IP Address","Domain Name","MAC Address","Protocol"], answer:"Domain Name",
+      explain:"A <b>domain name</b> is the human-readable text version of a website's numeric IP address."},
+    {type:"drag-fill", prompt:"A full address like https://www.shopease.com/summer-offers, which points to one exact page, is called a ___.",
+      bank:["URL","Cookie","Gateway","Bandwidth"], zoneAnswer:"URL",
+      explain:"A <b>URL (Uniform Resource Locator)</b> is the complete address used to locate a specific resource on the web."},
+    {type:"mcq", prompt:"The service that stores ShopEase's website on a server and makes it accessible to the public 24x7 is called:",
+      options:["Web Hosting","Web Scripting","Web Browsing","Web Cookies"], answer:"Web Hosting",
+      explain:"<b>Web hosting</b> is the service that keeps a website's files on a server, accessible over the internet at all times."}
+  ]
+},
+{
+  icon:"🏧", color:"pink",
+  title:"SecureBank ATMs",
+  teaser:"City-wide ATM network, encrypted transactions and device addressing.",
+  scenarioTitle:"Case study 6 · Bank ATM network",
+  scenarioHTML:`<h2>SecureBank ATM Network</h2>
+    <p>SecureBank runs ATMs across the whole city, all connected to a central server. Every transaction must be encrypted, and every machine must be uniquely identified on the network.</p>`,
+  info:[["ATMs","Spread across the whole city"],["Server","Central, at head office"],["Security","Encrypted transactions"]],
+  questions:[
+    {type:"mcq", prompt:"A network connecting ATMs spread across an entire city is best described as a:",
+      options:["LAN","PAN","MAN","WAN"], answer:"MAN",
+      explain:"A <b>MAN (Metropolitan Area Network)</b> spans a city — larger than a LAN but smaller than a WAN."},
+    {type:"mcq", prompt:"Which protocol ensures a customer's online banking session is encrypted and secure?",
+      options:["HTTP","HTTPS","FTP","SMTP"], answer:"HTTPS",
+      explain:"<b>HTTPS</b> encrypts the connection between the browser and the bank's server, protecting sensitive data."},
+    {type:"drag-fill", prompt:"To stop unauthorised external traffic from reaching the bank's central server, SecureBank should deploy a ___.",
+      bank:["Firewall","Hub","Repeater","Modem"], zoneAnswer:"Firewall",
+      explain:"A <b>firewall</b> filters incoming and outgoing traffic, blocking unauthorised access to the central server."},
+    {type:"mcq", prompt:"The unique physical address burnt into the network card of each ATM machine is called its:",
+      options:["IP Address","MAC Address","Domain Name","URL"], answer:"MAC Address",
+      explain:"A <b>MAC address</b> is a unique hardware identifier assigned to a device's network interface card."},
+    {type:"mcq", prompt:"The unique logical/numeric address assigned to each ATM so data reaches the correct machine is called its:",
+      options:["MAC Address","IP Address","Bandwidth","Gateway"], answer:"IP Address",
+      explain:"An <b>IP address</b> is a unique numeric address assigned to a device for identification on a network."}
+  ]
+},
+{
+  icon:"🎓", color:"blue",
+  title:"Global University",
+  teaser:"Multi-country campuses, satellite links and a library's own topology.",
+  scenarioTitle:"Case study 7 · Multi-city and multi-country campuses",
+  scenarioHTML:`<h2>Global University</h2>
+    <p>Global University has campuses in Delhi and Mumbai, plus a research centre in London. It also runs a 2-floor library with 40 computers that all need to work smoothly even during floor-level cable faults.</p>`,
+  info:[["Delhi Campus","Main campus"],["Mumbai Campus","Regional campus"],["London Centre","Overseas research centre"],["Library","2 floors · 40 computers"]],
+  questions:[
+    {type:"mcq", prompt:"The network connecting the Delhi campus with the London research centre is an example of a:",
+      options:["LAN","MAN","WAN","PAN"], answer:"WAN",
+      explain:"A <b>WAN</b> connects locations across countries — like Delhi and London here."},
+    {type:"mcq", prompt:"For a link between India and the UK, where laying physical cable is impossible, which medium should be used?",
+      options:["Twisted Pair Cable","Satellite Link","Coaxial Cable","Optical Fibre"], answer:"Satellite Link",
+      explain:"A <b>satellite link</b> is the practical wireless choice for very long-distance, cross-country connectivity."},
+    {type:"mcq", prompt:"The library spans two floors and needs a structure where each floor's own star network connects up to one central backbone. This is an example of:",
+      options:["Bus Topology","Tree Topology","Ring Topology","Mesh Topology"], answer:"Tree Topology",
+      explain:"A <b>tree topology</b> links multiple star networks (like each floor) through a central backbone cable."},
+    {type:"drag-fill", prompt:"For live video lectures to be held between the Delhi and London campuses, the university should use ___.",
+      bank:["VoIP","FTP","POP3","MAC Address"], zoneAnswer:"VoIP",
+      explain:"<b>VoIP</b> enables real-time voice and video communication over the internet, ideal for live lectures."},
+    {type:"mcq", prompt:"Which device should connect the Delhi and Mumbai campus LANs to each other over the internet?",
+      options:["Router","Hub","Repeater","Firewall"], answer:"Router",
+      explain:"A <b>router</b> directs data between separate networks, connecting the two campus LANs via the internet."}
+  ]
+},
+{
+  icon:"📶", color:"teal",
+  title:"JioNet Telecom",
+  teaser:"From voice-only 1G to ultra-fast 5G — matching mobile generations to features.",
+  scenarioTitle:"Case study 8 · Mobile network generations",
+  scenarioHTML:`<h2>JioNet Telecom</h2>
+    <p>JioNet is explaining how mobile networks have evolved over the decades to a group of new engineers — from networks that could only carry a phone call to today's networks that support AR, VR and millions of connected devices.</p>`,
+  info:[["1G","Analog, voice only"],["2G","Digital, SMS added"],["3G","Mobile internet arrives"],["4G / 5G","Broadband and ultra-low latency"]],
+  questions:[
+    {type:"mcq", prompt:"Which mobile generation supported only analog voice calls, with no data services at all?",
+      options:["1G","2G","3G","4G"], answer:"1G",
+      explain:"<b>1G</b> was the first generation of mobile networks, supporting only analog voice calls."},
+    {type:"mcq", prompt:"Which generation introduced digital voice along with SMS and basic internet (GPRS)?",
+      options:["1G","2G","4G","5G"], answer:"2G",
+      explain:"<b>2G</b> moved to digital signals and introduced SMS along with basic data services like GPRS."},
+    {type:"mcq", prompt:"Which generation first made mobile web browsing and video calling practical at moderate speeds?",
+      options:["1G","2G","3G","5G"], answer:"3G",
+      explain:"<b>3G</b> offered enough bandwidth for mobile internet browsing and video calls."},
+    {type:"mcq", prompt:"Which generation delivers high-speed mobile broadband, enabling smooth HD video streaming?",
+      options:["1G","2G","3G","4G"], answer:"4G",
+      explain:"<b>4G</b> brought high-speed broadband to mobiles, enabling smooth HD streaming and fast browsing."},
+    {type:"mcq", prompt:"Which is the latest generation, offering ultra-low latency and supporting massive IoT and AR/VR use?",
+      options:["3G","4G","5G","2G"], answer:"5G",
+      explain:"<b>5G</b> offers extremely high speed and ultra-low latency, supporting IoT at scale and AR/VR applications."}
+  ]
+},
+{
+  icon:"🛡️", color:"coral",
+  title:"Green Valley School — Cyber Safety",
+  teaser:"Phishing, cyberbullying, cookies and firewalls for a student digital-safety drive.",
+  scenarioTitle:"Case study 9 · Cyber safety",
+  scenarioHTML:`<h2>Green Valley School — Digital Safety Drive</h2>
+    <p>Green Valley School is running a cyber-safety awareness session after students reported suspicious emails, unknown friend requests, and one case of online bullying.</p>`,
+  info:[["Incidents","Suspicious emails, bullying"],["Audience","Students, grades 9–12"],["Goal","Safe and responsible internet use"]],
+  questions:[
+    {type:"mcq", prompt:"Repeatedly sending threatening or abusive messages to a classmate online is called:",
+      options:["Phishing","Cyberbullying","Cookies","Hacking"], answer:"Cyberbullying",
+      explain:"<b>Cyberbullying</b> is the use of digital platforms to harass, threaten or abuse someone repeatedly."},
+    {type:"mcq", prompt:"A fraudulent email or link that tricks a user into revealing their password or bank details is an example of:",
+      options:["Phishing","Cookies","Firewall","Bandwidth"], answer:"Phishing",
+      explain:"<b>Phishing</b> uses fake emails or websites to trick users into giving up sensitive information."},
+    {type:"mcq", prompt:"Small text files a website stores in the browser to remember login details or preferences are called:",
+      options:["Cookies","Viruses","Firewalls","Cache Servers"], answer:"Cookies",
+      explain:"<b>Cookies</b> are small files websites store on your browser to remember information between visits."},
+    {type:"mcq", prompt:"A malicious program that can replicate itself and spread to damage files or systems is called a:",
+      options:["Virus","Cookie","Gateway","Domain"], answer:"Virus",
+      explain:"A <b>virus</b> is malicious software that can replicate and spread, often damaging files or systems."},
+    {type:"drag-fill", prompt:"The school should install a ___ to filter unwanted or unauthorised traffic and keep its network safe from outside threats.",
+      bank:["Firewall","Modem","Switch","Repeater"], zoneAnswer:"Firewall",
+      explain:"A <b>firewall</b> is software/hardware that filters network traffic, protecting systems from unauthorised access."}
+  ]
+},
+{
+  icon:"📡", color:"amber",
+  title:"NetLink Broadband",
+  teaser:"Bandwidth, data transfer rate and channels explained through an ISP's plans.",
+  scenarioTitle:"Case study 10 · Data communication basics",
+  scenarioHTML:`<h2>NetLink Broadband</h2>
+    <p>NetLink is an internet service provider explaining broadband plans to a new customer, using terms like speed, channel capacity, and the actual rate at which data moves.</p>`,
+  info:[["Plan speed","Advertised in Mbps"],["Channel","The path data travels on"],["Actual rate","Varies with network load"]],
+  questions:[
+    {type:"mcq", prompt:"The maximum amount of data a channel can carry in a given time is called its:",
+      options:["Bandwidth","Data Transfer Rate","Latency","Frequency"], answer:"Bandwidth",
+      explain:"<b>Bandwidth</b> is the maximum capacity of a communication channel to carry data."},
+    {type:"mcq", prompt:"The actual speed at which data moves between sender and receiver at a given moment is called the:",
+      options:["Bandwidth","Data Transfer Rate","Topology","Protocol"], answer:"Data Transfer Rate",
+      explain:"<b>Data transfer rate</b> is the real, measured speed of data movement, which can be lower than the maximum bandwidth."},
+    {type:"mcq", prompt:"The medium or path through which data actually travels between sender and receiver is called the:",
+      options:["Channel","Gateway","Firewall","Cookie"], answer:"Channel",
+      explain:"A <b>communication channel</b> is the physical or wireless path data travels along between devices."},
+    {type:"mcq", prompt:"Internet speeds like those in a broadband plan are most commonly measured in:",
+      options:["Mbps (Megabits per second)","Kilograms","Decibels","Litres per second"], answer:"Mbps (Megabits per second)",
+      explain:"Data transfer speed is measured in bits per second, commonly shown as <b>Mbps</b> for broadband plans."},
+    {type:"mcq", prompt:"Which of these is an unguided (wireless) transmission medium, unlike the other three?",
+      options:["Twisted Pair Cable","Coaxial Cable","Optical Fibre Cable","Infrared"], answer:"Infrared",
+      explain:"<b>Infrared</b> travels through open air with no physical wire, making it an unguided medium — unlike the other three wired options."}
+  ]
+},
+{
+  icon:"🏭", color:"purple",
+  title:"Precision Works Factory",
+  teaser:"IP vs MAC addressing and interference-proof cabling across three factory floors.",
+  scenarioTitle:"Case study 11 · Factory network and addressing",
+  scenarioHTML:`<h2>Precision Works Factory</h2>
+    <p>Precision Works has a 3-floor factory with heavy electrical machinery running constantly. Each floor has its own department, and every computer needs a unique identity on the internal network.</p>`,
+  info:[["Floors","3 · one department each"],["Machinery","Causes electrical interference"],["Network","All floors, single factory building"]],
+  questions:[
+    {type:"mcq", prompt:"The unique numeric address given to every device on the factory's network, used for identification, is its:",
+      options:["MAC Address","IP Address","Domain Name","URL"], answer:"IP Address",
+      explain:"An <b>IP address</b> is the unique logical address that identifies a device on a network."},
+    {type:"mcq", prompt:"The unique physical identifier permanently built into each computer's network card is its:",
+      options:["IP Address","MAC Address","Bandwidth","Channel"], answer:"MAC Address",
+      explain:"A <b>MAC address</b> is a hardware-level identifier that is fixed to a device's network interface card."},
+    {type:"mcq", prompt:"The network connecting all computers within this single factory building is an example of a:",
+      options:["WAN","MAN","LAN","PAN"], answer:"LAN",
+      explain:"A <b>LAN</b> covers a small area like one building — matching the factory's single-site network."},
+    {type:"drag-fill", prompt:"To connect the three floor-LANs and forward data only to the correct destination device, the factory should install a ___ instead of a hub.",
+      bank:["Switch","Repeater","Modem","Firewall"], zoneAnswer:"Switch",
+      explain:"A <b>switch</b> sends data only to the intended device using MAC addresses, avoiding unnecessary broadcast traffic."},
+    {type:"mcq", prompt:"Given the heavy electrical machinery causing interference, which cable should be used on the factory floor?",
+      options:["Optical Fibre Cable","Unshielded Twisted Pair","Telephone Wire","Infrared"], answer:"Optical Fibre Cable",
+      explain:"<b>Optical fibre</b> uses light instead of electrical signals, making it immune to electrical interference from machinery."}
+  ]
+},
+{
+  icon:"💻", color:"pink",
+  title:"WorkConnect Inc.",
+  teaser:"Remote teams, video meetings, cloud files and secure portal access.",
+  scenarioTitle:"Case study 12 · Remote-work company",
+  scenarioHTML:`<h2>WorkConnect Inc.</h2>
+    <p>WorkConnect's employees work from different cities and even different countries. They hold daily video meetings, upload large project files to a central server, and log into the company's HR portal.</p>`,
+  info:[["Team","Spread across cities & countries"],["Meetings","Daily video calls"],["Files","Large uploads to central server"]],
+  questions:[
+    {type:"mcq", prompt:"Which protocol allows WorkConnect employees to hold voice and video meetings over the internet?",
+      options:["VoIP","FTP","SMTP","POP3"], answer:"VoIP",
+      explain:"<b>VoIP</b> carries real-time voice and video over an internet connection, powering the daily meetings."},
+    {type:"mcq", prompt:"Which protocol is used when employees upload or download large project files to the central server?",
+      options:["FTP","HTTP","SMTP","VoIP"], answer:"FTP",
+      explain:"<b>FTP (File Transfer Protocol)</b> is built specifically for transferring files between computers."},
+    {type:"mcq", prompt:"When employees log into the company's HR portal, which protocol keeps their login data encrypted?",
+      options:["HTTP","HTTPS","POP3","VoIP"], answer:"HTTPS",
+      explain:"<b>HTTPS</b> encrypts the connection between the browser and the server, protecting login credentials."},
+    {type:"mcq", prompt:"The network connecting WorkConnect's employees across different countries is an example of a:",
+      options:["LAN","PAN","MAN","WAN"], answer:"WAN",
+      explain:"A <b>WAN</b> spans countries and continents — matching WorkConnect's globally distributed team."},
+    {type:"drag-fill", prompt:"WorkConnect needs a device to connect its internal office network to the internet so remote employees can reach it. This device is a ___.",
+      bank:["Router","Repeater","Hub","MAC Address"], zoneAnswer:"Router",
+      explain:"A <b>router</b> connects an internal network to the internet, allowing remote access from outside."}
+  ]
+}
+];
+
+/* ================= STATE ================= */
+let playOrder = [];     // indices of caseStudies to play, in order
+let ptr = 0;            // pointer into playOrder
+let qIdx = 0;           // 0-4 within current case study
+let answered = false;
+let caseScore = 0;
+let overallScore = 0;
+let overallReview = []; // {caseTitle, prompt, correct, explain}
+let caseResults = {};   // caseIndex -> {score, total}
+let soloMode = false;
+
+/* ================= DOM ================= */
+const menuScreen = document.getElementById('menuScreen');
+const gameArea = document.getElementById('gameArea');
+const caseCompleteScreen = document.getElementById('caseCompleteScreen');
+const endScreen = document.getElementById('endScreen');
+const caseGrid = document.getElementById('caseGrid');
+const scenarioCard = document.getElementById('scenarioCard');
+const qnumLabel = document.getElementById('qnumLabel');
+const qtypeLabel = document.getElementById('qtypeLabel');
+const qprompt = document.getElementById('qprompt');
+const qbody = document.getElementById('qbody');
+const feedback = document.getElementById('feedback');
+const checkBtn = document.getElementById('checkBtn');
+const pathSvg = document.getElementById('pathSvg');
+const subdots = document.getElementById('subdots');
+
+/* ================= MENU RENDER ================= */
+function renderMenu(){
+  caseGrid.innerHTML = '';
+  caseStudies.forEach((cs, i)=>{
+    const card = document.createElement('div');
+    card.className='case-card';
+    const res = caseResults[i];
+    let scoreTag = '';
+    if(res){
+      const cls = res.score===5 ? 'ok' : (res.score>=3 ? 'mid' : 'low');
+      scoreTag = `<span class="tag score ${cls}">${res.score}/5</span>`;
+    }
+    card.innerHTML = `
+      <div class="case-icon" style="background:var(--${cs.color});color:#fff;">${cs.icon}</div>
+      <h3>${i+1}. ${cs.title}</h3>
+      <p>${cs.teaser}</p>
+      <div class="tags"><span class="tag">5 questions</span>${scoreTag}</div>
+    `;
+    card.style.setProperty('--iconbg', cs.color);
+    card.addEventListener('click', ()=>{
+      soloMode = true;
+      playOrder = [i];
+      ptr = 0;
+      startCase();
+    });
+    caseGrid.appendChild(card);
+  });
+}
+renderMenu();
+
+document.getElementById('playAllBtn').addEventListener('click', ()=>{
+  soloMode = false;
+  playOrder = caseStudies.map((_,i)=>i);
+  ptr = 0;
+  startCase();
+});
+document.getElementById('menuBtn').addEventListener('click', backToMenu);
+document.getElementById('caseMenuBtn').addEventListener('click', backToMenu);
+document.getElementById('restartBtn').addEventListener('click', backToMenu);
+
+function backToMenu(){
+  menuScreen.classList.remove('hidden');
+  gameArea.classList.add('hidden');
+  caseCompleteScreen.classList.add('hidden');
+  endScreen.classList.add('hidden');
+  renderMenu();
+}
+
+/* ================= CASE FLOW ================= */
+function startCase(){
+  menuScreen.classList.add('hidden');
+  caseCompleteScreen.classList.add('hidden');
+  endScreen.classList.add('hidden');
+  gameArea.classList.remove('hidden');
+  qIdx = 0;
+  caseScore = 0;
+  renderScenario();
+  buildPath();
+  renderQuestion();
+}
+
+function renderScenario(){
+  const cs = caseStudies[playOrder[ptr]];
+  let infoHTML = '';
+  if(cs.info){
+    infoHTML = '<div class="info-grid">' + cs.info.map(([k,v])=>`<div class="info-chip"><b>${k}</b><span class="mono">${v}</span></div>`).join('') + '</div>';
+  }
+  scenarioCard.innerHTML = `<div class="stitle">${cs.scenarioTitle}</div>${cs.scenarioHTML}${infoHTML}`;
+}
+
+function buildPath(){
+  const cs = caseStudies[playOrder[ptr]];
+  const total = cs.questions.length;
+  const w = 900, y = 30, marginX = 40;
+  const step = total>1 ? (w - marginX*2)/(total-1) : 0;
+  let html='';
+  for(let i=0;i<total-1;i++){
+    const x1=marginX+i*step, x2=marginX+(i+1)*step;
+    html += `<line id="pedge${i}" x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#DCE6FA" stroke-width="4" stroke-linecap="round"/>`;
+  }
+  for(let i=0;i<total;i++){
+    const x = marginX + i*step;
+    html += `<g><circle id="pnode${i}" cx="${x}" cy="${y}" r="13" fill="#FFFFFF" stroke="#B5D4F4" stroke-width="3"/>
+      <text id="pntext${i}" x="${x}" y="${y+4}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#2F6FED">${i+1}</text></g>`;
+  }
+  pathSvg.setAttribute('viewBox','0 0 900 60');
+  pathSvg.innerHTML = html;
+  updatePathVisual();
+}
+
+function updatePathVisual(){
+  const cs = caseStudies[playOrder[ptr]];
+  for(let i=0;i<cs.questions.length;i++){
+    const node = document.getElementById('pnode'+i);
+    const text = document.getElementById('pntext'+i);
+    if(!node) continue;
+    if(i < qIdx){
+      const wasOk = perQAnswers[i];
+      node.setAttribute('fill', wasOk ? '#22B573' : '#F65E6D');
+      node.setAttribute('stroke', wasOk ? '#22B573' : '#F65E6D');
+      text.setAttribute('fill', '#FFFFFF'); text.textContent = wasOk ? '✓' : '✕';
+    } else if(i === qIdx){
+      node.setAttribute('fill', '#2F6FED'); node.setAttribute('stroke', '#2F6FED');
+      text.setAttribute('fill', '#FFFFFF'); text.textContent = i+1;
+    } else {
+      node.setAttribute('fill', '#FFFFFF'); node.setAttribute('stroke', '#B5D4F4');
+      text.setAttribute('fill', '#2F6FED'); text.textContent = i+1;
+    }
+  }
+  subdots.innerHTML = cs.questions.map((_,i)=>{
+    let cls = 'subdot';
+    if(i < qIdx) cls += perQAnswers[i] ? ' done-ok' : ' done-no';
+    else if(i === qIdx) cls += ' now';
+    return `<span class="${cls}"></span>`;
+  }).join('');
+}
+
+let perQAnswers = [];
+
+/* ================= QUESTION RENDER ================= */
+function renderQuestion(){
+  answered = false;
+  const cs = caseStudies[playOrder[ptr]];
+  const q = cs.questions[qIdx];
+  qnumLabel.textContent = `Sub-question ${qIdx+1} of ${cs.questions.length}`;
+  qtypeLabel.textContent = q.type === 'mcq' ? 'Multiple choice' : 'Drag to fill';
+  feedback.className='feedback'; feedback.innerHTML='';
+  checkBtn.disabled = true; checkBtn.textContent = 'Check answer';
+  qbody.innerHTML='';
+
+  if(q.type === 'mcq'){
+    qprompt.innerHTML = q.prompt;
+    const optsWrap = document.createElement('div');
+    optsWrap.className='options';
+    q.options.forEach(opt=>{
+      const div = document.createElement('button');
+      div.className='opt'; div.type='button';
+      div.innerHTML = `<span class="bullet"></span><span>${opt}</span>`;
+      div.dataset.value = opt;
+      div.addEventListener('click', ()=>{
+        if(answered) return;
+        [...optsWrap.children].forEach(c=>c.classList.remove('selected'));
+        div.classList.add('selected');
+        optsWrap.dataset.selected = opt;
+        checkBtn.disabled = false;
+      });
+      optsWrap.appendChild(div);
+    });
+    qbody.appendChild(optsWrap);
+  }
+
+  if(q.type === 'drag-fill'){
+    const parts = q.prompt.split('___');
+    qprompt.innerHTML='';
+    const line = document.createElement('div');
+    line.className='dragzone-line';
+    line.innerHTML = `${parts[0]}<span class="dropzone" id="dz0" data-answer="${q.zoneAnswer}">drop here</span>${parts[1]||''}`;
+    qbody.appendChild(line);
+
+    const bank = document.createElement('div');
+    bank.className='bank';
+    shuffle([...q.bank]).forEach(word=>{
+      const chip = document.createElement('div');
+      chip.className='chip'; chip.textContent=word; chip.dataset.value=word;
+      bank.appendChild(chip);
+    });
+    qbody.appendChild(bank);
+    enableDrag(qbody);
+  }
+  updatePathVisual();
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+/* ================= DRAG ENGINE ================= */
+function enableDrag(container){
+  let floating=null, sourceChip=null, originZone=null;
+  container.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      sourceChip = chip;
+      originZone = chip.closest('.dropzone');
+      chip.classList.add('dragging');
+      floating = document.createElement('div');
+      floating.className='floating-chip';
+      floating.textContent = chip.dataset.value;
+      floating.style.left = e.clientX+'px'; floating.style.top = e.clientY+'px';
+      document.body.appendChild(floating);
+      document.body.style.userSelect='none';
+    });
+  });
+  document.addEventListener('pointermove', (e)=>{
+    if(!floating) return;
+    floating.style.left = e.clientX+'px'; floating.style.top = e.clientY+'px';
+    container.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('hover'));
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const zone = el ? el.closest('.dropzone') : null;
+    if(zone && container.contains(zone)) zone.classList.add('hover');
+  });
+  document.addEventListener('pointerup', (e)=>{
+    if(!floating) return;
+    container.querySelectorAll('.dropzone').forEach(z=>z.classList.remove('hover'));
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const zone = el ? el.closest('.dropzone') : null;
+    if(zone && container.contains(zone)){
+      if(zone.dataset.filled){
+        const oldChip = container.querySelector(`.chip[data-value="${CSS.escape(zone.dataset.filled)}"]`);
+        if(oldChip) oldChip.classList.remove('placed');
+      }
+      if(originZone && originZone !== zone){
+        originZone.textContent='drop here'; originZone.classList.remove('filled'); delete originZone.dataset.filled;
+      }
+      zone.textContent = sourceChip.dataset.value;
+      zone.dataset.filled = sourceChip.dataset.value;
+      zone.classList.add('filled');
+      sourceChip.classList.add('placed');
+      checkBtn.disabled = false;
+    }
+    sourceChip.classList.remove('dragging');
+    document.body.removeChild(floating);
+    floating=null; sourceChip=null; originZone=null;
+    document.body.style.userSelect='';
+  });
+}
+
+/* ================= CHECK / NEXT ================= */
+checkBtn.addEventListener('click', ()=>{
+  if(answered){ advance(); return; }
+  const cs = caseStudies[playOrder[ptr]];
+  const q = cs.questions[qIdx];
+  let correct=false;
+
+  if(q.type==='mcq'){
+    const optsWrap = qbody.querySelector('.options');
+    const selected = optsWrap.dataset.selected;
+    correct = selected === q.answer;
+    [...optsWrap.children].forEach(c=>{
+      c.classList.add('disabled');
+      if(c.dataset.value === q.answer) c.classList.add('correct');
+      else if(c.dataset.value === selected) c.classList.add('wrong');
+    });
+  }
+  if(q.type==='drag-fill'){
+    const zone = qbody.querySelector('#dz0');
+    correct = zone.dataset.filled === zone.dataset.answer;
+    zone.classList.add(correct ? 'correct' : 'wrong');
+  }
+
+  answered = true;
+  perQAnswers[qIdx] = correct;
+  if(correct){ caseScore++; overallScore++; }
+  overallReview.push({caseTitle: cs.title, prompt:q.prompt, correct, explain:q.explain});
+
+  feedback.className = 'feedback show ' + (correct?'good':'bad');
+  feedback.innerHTML = `<b>${correct?'✓ Correct!':'✕ Not quite.'}</b><br>${q.explain}`;
+  checkBtn.textContent = qIdx === cs.questions.length-1 ? 'Finish case study →' : 'Next question →';
+  updatePathVisual();
+});
+
+function advance(){
+  const cs = caseStudies[playOrder[ptr]];
+  qIdx++;
+  if(qIdx >= cs.questions.length){
+    finishCase();
+  } else {
+    renderQuestion();
+  }
+}
+
+function finishCase(){
+  const idx = playOrder[ptr];
+  caseResults[idx] = {score: caseScore, total: caseStudies[idx].questions.length};
+  perQAnswers = [];
+  gameArea.classList.add('hidden');
+  caseCompleteScreen.classList.remove('hidden');
+  document.getElementById('caseCompleteTitle').textContent = caseStudies[idx].title + ' — complete';
+  document.getElementById('caseScore').textContent = `${caseScore}/5`;
+  const badge = document.getElementById('caseGradeBadge');
+  const msg = document.getElementById('caseMsg');
+  if(caseScore===5){ badge.textContent='PERFECT'; badge.style.background='#EAF9F1'; badge.style.color='#0F6E56'; msg.textContent='All five answered correctly — this concept is solid.'; }
+  else if(caseScore>=3){ badge.textContent='GOOD'; badge.style.background='#FAEEDA'; badge.style.color='#854F0B'; msg.textContent='Solid attempt — review the explanations for the ones you missed.'; }
+  else { badge.textContent='REVISE'; badge.style.background='#FDEEEF'; badge.style.color='#993C1D'; msg.textContent='Worth another look — revisit this topic before moving on.'; }
+
+  const continueBtn = document.getElementById('continueBtn');
+  const isLast = ptr >= playOrder.length-1;
+  if(!soloMode && !isLast){
+    continueBtn.textContent = 'Continue to next case study →';
+    continueBtn.classList.remove('hidden');
+    continueBtn.onclick = ()=>{ ptr++; startCase(); };
+  } else if(!soloMode && isLast){
+    continueBtn.textContent = 'See full results →';
+    continueBtn.classList.remove('hidden');
+    continueBtn.onclick = showFinalResults;
+  } else {
+    continueBtn.classList.add('hidden');
+  }
+}
+
+/* ================= FINAL RESULTS ================= */
+function showFinalResults(){
+  caseCompleteScreen.classList.add('hidden');
+  endScreen.classList.remove('hidden');
+  const totalQ = playOrder.reduce((s,i)=>s+caseStudies[i].questions.length,0);
+  document.getElementById('finalScore').textContent = `${overallScore} / ${totalQ}`;
+  const pct = overallScore/totalQ;
+  const badge = document.getElementById('gradeBadge');
+  const msg = document.getElementById('finalMsg');
+  if(pct===1){ badge.textContent='NETWORK ADMIN — A1'; badge.style.background='#EAF9F1'; badge.style.color='#0F6E56'; msg.textContent='Flawless run across all 12 case studies!'; }
+  else if(pct>=0.75){ badge.textContent='JUNIOR ENGINEER — B1'; badge.style.background='#E6F1FB'; badge.style.color='#185FA5'; msg.textContent='Strong performance — review the missed concepts below.'; }
+  else if(pct>=0.5){ badge.textContent='INTERN — C1'; badge.style.background='#FAEEDA'; badge.style.color='#854F0B'; msg.textContent='Good attempt — a few topics need revision.'; }
+  else { badge.textContent='TRAINEE — TRY AGAIN'; badge.style.background='#FDEEEF'; badge.style.color='#993C1D'; msg.textContent='Revisit the concepts below and try again.'; }
+
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '<div style="font-family:\'Space Grotesk\',sans-serif;font-weight:600;font-size:14px;">Full concept recap</div>';
+  let lastCase = '';
+  overallReview.forEach(r=>{
+    if(r.caseTitle !== lastCase){
+      const h = document.createElement('h4');
+      h.textContent = r.caseTitle;
+      list.appendChild(h);
+      lastCase = r.caseTitle;
+    }
+    const div = document.createElement('div');
+    div.className='review-item';
+    div.innerHTML = `<span class="review-tag ${r.correct?'ok':'no'}">${r.correct?'✓':'✕'}</span><span>${r.explain}</span>`;
+    list.appendChild(div);
+  });
+  overallReview = [];
+  overallScore = 0;
+}
+</script>
+</body>
+</html>
