@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pandas.Series — Learn by Dragging (Game Mode)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F7F0;
+    --card:#FFFFFF;
+    --border:#DDE4D6;
+    --ink:#20291F;
+    --ink-soft:#5B6B5A;
+    --gold:#C08F22;
+    --pine:#2F6F4E;
+    --pine-dark:#1E4E35;
+    --pine-tint:#E6F0E9;
+    --brick:#B3462B;
+    --brick-tint:#FBEAE5;
+    --blue:#3E6C8C;
+    --tile-bg:#EFF3EA;
+    --tile-border:#C9D6C0;
+    --shadow: 0 1px 2px rgba(32,41,31,0.06), 0 6px 18px rgba(32,41,31,0.05);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(to bottom, transparent, transparent 39px, rgba(47,111,78,0.05) 40px),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding-bottom:80px;
+  }
+  code, .mono{font-family:'IBM Plex Mono',monospace;}
+  h1,h2,h3{font-family:'Fraunces',serif; margin:0;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:sticky; top:0; z-index:40;
+    background:rgba(245,247,240,0.92);
+    backdrop-filter: blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:18px 24px;
+  }
+  .hero-inner{
+    max-width:1080px; margin:0 auto;
+    display:flex; gap:24px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  }
+  .hero-title-wrap{display:flex; flex-direction:column; gap:4px;}
+  .hero-eyebrow{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.08em;
+    color:var(--pine); text-transform:uppercase; font-weight:600;
+  }
+  .hero-title{font-size:28px; font-weight:600; color:var(--ink);}
+  .hero-title span{color:var(--gold);}
+  .hero-sub{font-size:13.5px; color:var(--ink-soft); max-width:540px;}
+
+  .series-panel{
+    background:var(--ink); color:#EAF2EC;
+    border-radius:10px; padding:12px 16px;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    min-width:220px; box-shadow:var(--shadow);
+  }
+  .series-panel .sp-title{color:#9FD8B4; font-size:11px; letter-spacing:.05em; margin-bottom:6px;}
+  .series-repr{white-space:pre; line-height:1.5;}
+  .series-repr .row-true{color:#8FE0A8;}
+  .series-panel .sp-foot{margin-top:6px; color:#C7D6CC; font-size:11.5px; border-top:1px solid #3A473C; padding-top:6px;}
+  .series-panel .sp-combo{
+    margin-top:6px; font-size:11.5px; font-weight:600; color:var(--gold);
+    display:flex; align-items:center; gap:5px; min-height:15px;
+  }
+  .series-panel .sp-combo.active{animation:pop .3s ease;}
+
+  /* ---------- REWARDS: rank + points + badges ---------- */
+  .rank-panel{
+    display:flex; flex-direction:column; gap:6px;
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:12px 16px; box-shadow:var(--shadow); min-width:200px;
+  }
+  .rank-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .rank-name{font-family:'Fraunces',serif; font-weight:600; font-size:15px; color:var(--pine-dark);}
+  .rank-points{font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:700; color:var(--gold);}
+  .rank-points .unit{font-size:10.5px; color:var(--ink-soft); font-weight:600; margin-left:2px;}
+  .rank-bar-outer{height:6px; border-radius:99px; background:var(--tile-bg); border:1px solid var(--tile-border); overflow:hidden;}
+  .rank-bar-inner{height:100%; width:0%; background:linear-gradient(90deg, var(--gold), var(--pine)); transition:width .4s ease;}
+  .rank-next{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft);}
+  .badge-row{display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;}
+  .badge{
+    width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:15px; background:var(--tile-bg); border:1.5px solid var(--tile-border);
+    filter:grayscale(1); opacity:.4; transition:.2s ease; cursor:default;
+  }
+  .badge.earned{
+    filter:none; opacity:1; background:#FBF2DD; border-color:var(--gold);
+    box-shadow:0 0 0 2px rgba(192,143,34,0.18);
+  }
+  .badge.pop{animation:pop .4s ease;}
+
+  /* floating +points reward that flies up from a solved blank */
+  .float-pts{
+    position:absolute; left:50%; top:0; transform:translate(-50%,0);
+    font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:15px;
+    color:var(--pine-dark); background:#FBF2DD; border:1.5px solid var(--gold);
+    padding:2px 9px; border-radius:20px; pointer-events:none;
+    animation:floatUp 1s ease forwards; z-index:30; white-space:nowrap;
+  }
+  @keyframes floatUp{
+    0%{opacity:0; transform:translate(-50%,4px) scale(.85);}
+    15%{opacity:1; transform:translate(-50%,-8px) scale(1.05);}
+    75%{opacity:1; transform:translate(-50%,-34px) scale(1);}
+    100%{opacity:0; transform:translate(-50%,-46px) scale(1);}
+  }
+
+  /* ---------- BADGE-UNLOCK MODAL ---------- */
+  .badge-modal-bg{
+    position:fixed; inset:0; background:rgba(32,41,31,0.55);
+    display:none; align-items:center; justify-content:center; padding:20px; z-index:110;
+  }
+  .badge-modal-bg.show{display:flex;}
+  .badge-modal{
+    background:var(--ink); color:#EAF2EC; border-radius:16px; max-width:340px; width:100%;
+    padding:28px 24px; text-align:center; box-shadow:0 10px 0 rgba(0,0,0,0.4);
+    animation:modalIn .35s ease;
+  }
+  .badge-modal .badge-icon{
+    width:64px; height:64px; border-radius:50%; margin:0 auto 12px;
+    background:#FBF2DD; border:2px solid var(--gold); display:flex; align-items:center; justify-content:center;
+    font-size:32px; animation:pop .5s ease;
+  }
+  .badge-modal .badge-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#9FD8B4; margin-bottom:4px;}
+  .badge-modal .badge-title{font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin-bottom:6px;}
+  .badge-modal .badge-desc{font-size:12.5px; color:#C7D6CC; margin-bottom:16px;}
+  .badge-modal button{
+    background:var(--gold); color:var(--ink); border:none; font-family:'Fraunces',serif; font-weight:600;
+    font-size:13.5px; padding:9px 18px; border-radius:8px; cursor:pointer;
+  }
+
+  .progress-outer{
+    max-width:1080px; margin:12px auto 0; padding:0 24px;
+  }
+  .progress-bar-outer{
+    height:8px; border-radius:99px; background:var(--tile-bg); border:1px solid var(--tile-border); overflow:hidden;
+  }
+  .progress-bar-inner{
+    height:100%; width:0%; background:linear-gradient(90deg, var(--pine), var(--gold));
+    transition:width .4s ease;
+  }
+  .progress-label{font-size:11.5px; color:var(--ink-soft); margin-top:4px; font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- NAV CHIPS (level select) ---------- */
+  .nav-chips{
+    max-width:1080px; margin:16px auto 0; padding:0 24px;
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .chip{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 12px;
+    border-radius:99px; border:1px solid var(--tile-border); background:var(--card);
+    color:var(--ink-soft); text-decoration:none; cursor:pointer;
+    transition:.15s ease; display:inline-flex; align-items:center; gap:6px;
+  }
+  .chip:hover{border-color:var(--pine); color:var(--pine);}
+  .chip .stars{color:var(--gold); font-size:11px; letter-spacing:1px;}
+  .chip.done{border-color:var(--pine); background:var(--pine-tint); color:var(--pine-dark);}
+  .chip.locked{opacity:.55; cursor:not-allowed; border-style:dashed;}
+  .chip.locked:hover{border-color:var(--tile-border); color:var(--ink-soft);}
+  .chip.flash{animation:shake .35s ease; border-color:var(--brick);}
+
+  /* ---------- MAIN ---------- */
+  main{max-width:1080px; margin:0 auto; padding:20px 24px;}
+  .section{margin-top:44px; position:relative; transition:opacity .3s ease, filter .3s ease;}
+  .section.locked{opacity:.42; filter:grayscale(.5); pointer-events:none;}
+  .section-head{display:flex; align-items:baseline; gap:10px; margin-bottom:10px; border-bottom:2px solid var(--ink); padding-bottom:8px; flex-wrap:wrap;}
+  .section-num{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-weight:700; font-size:14px;}
+  .section-title{font-size:22px; font-weight:600;}
+  .section-stars{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--gold); letter-spacing:2px;}
+
+  .lock-banner{
+    display:none; align-items:center; gap:8px;
+    background:#EFE7D8; border:1px dashed var(--gold); color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    padding:9px 14px; border-radius:8px; margin-bottom:16px;
+  }
+  .section.locked .lock-banner{display:flex;}
+
+  .qcard{
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px; margin-bottom:16px; box-shadow:var(--shadow);
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .qcard.solved{border-color:var(--pine); background:linear-gradient(180deg, var(--pine-tint), var(--card) 40%);}
+  .qmeta{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .qtag{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;
+    color:var(--blue); background:#EAF1F6; border:1px solid #CFE0E9;
+    padding:2px 8px; border-radius:6px;
+  }
+  .qcard.solved .qtag{color:var(--pine); background:var(--pine-tint); border-color:#BFDBC9;}
+  .qpoints{margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--gold); font-weight:700; opacity:0; transition:opacity .2s ease;}
+  .qcard.solved .qpoints{opacity:1;}
+  .qtext{font-size:16px; line-height:1.75; margin:0 0 14px 0; position:relative;}
+  .qtext code{background:var(--tile-bg); padding:1px 6px; border-radius:4px; font-size:14.5px;}
+
+  .blank{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:96px; height:32px; padding:0 10px; margin:0 2px;
+    border:2px dashed var(--tile-border); border-radius:8px;
+    background:#FBFCF9; vertical-align:middle;
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13.5px;
+    color:var(--ink-soft); transition:.15s ease; cursor:pointer;
+  }
+  .blank.hover-ok{border-color:var(--pine); background:var(--pine-tint);}
+  .blank.filled{border-style:solid; color:var(--ink); background:var(--tile-bg);}
+  .blank.correct{border-color:var(--pine); background:var(--pine-tint); color:var(--pine-dark); cursor:default;}
+  .blank.wrong{border-color:var(--brick); background:var(--brick-tint); color:var(--brick); animation:shake .35s ease;}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-5px);}
+    40%{transform:translateX(5px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+  @keyframes pop{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.06);}
+    100%{transform:scale(1);}
+  }
+  @keyframes modalIn{
+    0%{transform:translateY(14px) scale(.97); opacity:0;}
+    100%{transform:translateY(0) scale(1); opacity:1;}
+  }
+
+  .tray{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; padding-top:12px; border-top:1px dashed var(--border);}
+  .tile{
+    font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:600;
+    background:var(--tile-bg); border:1.5px solid var(--tile-border); color:var(--ink);
+    padding:7px 14px; border-radius:8px; cursor:grab; user-select:none;
+    touch-action:none; transition:.15s ease;
+  }
+  .tile:hover{border-color:var(--blue); transform:translateY(-1px);}
+  .tile.selected{border-color:var(--gold); background:#FBF2DD; box-shadow:0 0 0 2px rgba(192,143,34,0.25);}
+  .tile.used{visibility:hidden; pointer-events:none;}
+  .ghost-tile{
+    position:fixed; z-index:999; pointer-events:none;
+    font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:600;
+    background:var(--gold); color:#fff; padding:7px 14px; border-radius:8px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.25); transform:translate(-50%,-50%);
+  }
+  .explain{font-size:13px; color:var(--ink-soft); margin-top:10px; display:none;}
+  .qcard.solved .explain{display:block;}
+
+  .hint-row{font-size:11.5px; color:var(--ink-soft); margin-top:2px; font-style:italic;}
+
+  footer.done-banner{
+    display:none; max-width:1080px; margin:36px auto 0; padding:24px;
+    background:var(--ink); color:#EAF2EC; border-radius:12px; text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  footer.done-banner.show{display:block; animation:pop .5s ease;}
+  footer.done-banner .big{font-family:'Fraunces',serif; font-size:22px; color:#8FE0A8; margin-bottom:6px;}
+  footer.done-banner .stat-row{margin-top:12px; display:flex; gap:18px; justify-content:center; flex-wrap:wrap; font-size:13px;}
+  footer.done-banner .stat-row b{color:var(--gold); font-size:15px;}
+  footer.done-banner button{
+    margin-top:16px; background:var(--gold); color:var(--ink); border:none;
+    font-family:'Fraunces',serif; font-weight:600; font-size:14px;
+    padding:10px 20px; border-radius:8px; cursor:pointer;
+  }
+
+  /* ---------- LEVEL-UP TOAST ---------- */
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(16px);
+    background:var(--ink); color:#EAF2EC; padding:10px 20px; border-radius:30px;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
+    z-index:80; border:2px solid var(--gold);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.good{border-color:var(--pine);}
+  .toast.bad{border-color:var(--brick);}
+
+  /* ---------- SECTION-COMPLETE MODAL ---------- */
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(32,41,31,0.55);
+    display:none; align-items:center; justify-content:center; padding:20px; z-index:100;
+  }
+  .modal-bg.show{display:flex;}
+  .modal{
+    background:var(--card); border:2px solid var(--ink); border-radius:16px;
+    max-width:400px; width:100%; padding:30px 26px; text-align:center;
+    box-shadow:0 10px 0 rgba(32,41,31,0.85);
+    animation:modalIn .35s ease;
+  }
+  .modal .stars-big{font-size:30px; letter-spacing:6px; color:var(--gold); margin-bottom:6px;}
+  .modal .big{font-family:'Fraunces',serif; font-weight:600; font-size:24px; margin:0 0 6px;}
+  .modal p{color:var(--ink-soft); font-size:13.5px; margin:0 0 18px;}
+  .modal .score-line{
+    font-family:'IBM Plex Mono',monospace; font-size:14px; background:var(--ink); color:#EAF2EC;
+    display:inline-block; padding:8px 16px; border-radius:8px; margin-bottom:20px;
+  }
+  .modal button{
+    background:var(--gold); color:var(--ink); border:none;
+    font-family:'Fraunces',serif; font-weight:600; font-size:15px;
+    padding:12px 24px; border-radius:9px; cursor:pointer;
+    box-shadow:0 4px 0 #916A17; transition:transform .1s ease;
+  }
+  .modal button:hover{transform:translateY(-2px);}
+  .modal button:active{transform:translateY(1px); box-shadow:0 2px 0 #916A17;}
+
+  @media (max-width:640px){
+    .hero-inner{flex-direction:column; align-items:flex-start;}
+    .series-panel{width:100%;}
+    .rank-panel{width:100%;}
+    .section-stars{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-title-wrap">
+      <span class="hero-eyebrow">interactive drill · game mode</span>
+      <h1 class="hero-title">pandas.<span>Series</span></h1>
+      <p class="hero-sub">Drag the correct tile into each blank. Clear every question in a section to unlock the next one, chain correct answers for a combo bonus, and earn up to 3 stars per section.</p>
+    </div>
+    <div class="series-panel">
+      <div class="sp-title">&gt;&gt;&gt; correct</div>
+      <div class="series-repr" id="seriesRepr">Series([], dtype: bool)</div>
+      <div class="sp-foot" id="seriesFoot">Score: 0 / 35</div>
+      <div class="sp-combo" id="comboLine"></div>
+    </div>
+    <div class="rank-panel">
+      <div class="rank-top">
+        <span class="rank-name" id="rankName">Series Novice</span>
+        <span class="rank-points" id="rankPoints">0<span class="unit">pts</span></span>
+      </div>
+      <div class="rank-bar-outer"><div class="rank-bar-inner" id="rankBar"></div></div>
+      <div class="rank-next" id="rankNext">30 pts to Index Apprentice</div>
+      <div class="badge-row" id="badgeRow"></div>
+    </div>
+  </div>
+  <div class="progress-outer">
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-label" id="progressLabel">0 of 35 solved · drag a tile, or tap a tile then tap a blank</div>
+  </div>
+</div>
+
+<div class="nav-chips" id="navChips"></div>
+
+<main id="mainContent"></main>
+
+<footer class="done-banner" id="doneBanner">
+  <div class="big">s.all() → True 🎉</div>
+  <div>You matched all 35 blanks correctly and cleared every level. Nice work learning the pandas Series API!</div>
+  <div class="stat-row">
+    <div>Final score<br><b id="finalScoreStat">0</b></div>
+    <div>Stars earned<br><b id="finalStarsStat">0 / 21</b></div>
+    <div>Best combo<br><b id="finalComboStat">x1</b></div>
+  </div>
+  <button id="restartBtn">Play again</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<div class="badge-modal-bg" id="badgeModal">
+  <div class="badge-modal">
+    <div class="badge-eyebrow">Badge unlocked</div>
+    <div class="badge-icon" id="badgeModalIcon">🏅</div>
+    <div class="badge-title" id="badgeModalTitle">Badge name</div>
+    <div class="badge-desc" id="badgeModalDesc">Description of the badge.</div>
+    <button id="badgeModalBtn">Nice!</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="sectionModal">
+  <div class="modal">
+    <div class="stars-big" id="modalStars">★★★</div>
+    <p class="big" id="modalTitle">Section clear!</p>
+    <p id="modalText">You matched every blank in this section.</p>
+    <div class="score-line" id="modalScore">Score: 0</div><br>
+    <button id="modalContinueBtn">Continue →</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const SECTIONS = [
+  "Creating a Series",
+  "Attributes",
+  "Indexing & Selection",
+  "Core Methods",
+  "Aggregation & Stats",
+  "Missing Data, Strings & Combining",
+  "Transforming & Converting"
+];
+
+const DATA = [
+  // Section 0: Creating a Series
+  {sec:0, text:"pd.Series([10, 20, 30]) creates a Series with a default RangeIndex starting at ___.",
+   options:["0","1","-1","None"], correct:"0",
+   explain:"Without an explicit index, pandas assigns a RangeIndex beginning at 0."},
+  {sec:0, text:"When you build a Series from a dictionary, the dictionary keys become the ___.",
+   options:["index","values","dtype","name"], correct:"index",
+   explain:"pd.Series({'a':1,'b':2}) uses the dict keys as the index and the dict values as the data."},
+  {sec:0, text:"In pd.Series(data, index=[...]), the index list must match data in ___.",
+   options:["length","dtype","order","memory size"], correct:"length",
+   explain:"Index and data are paired position by position, so their lengths must be equal."},
+  {sec:0, text:"A pandas Series is fundamentally a ___-dimensional labeled array.",
+   options:["1","2","3","0"], correct:"1",
+   explain:"Series is 1-D; DataFrame is its 2-D counterpart."},
+  {sec:0, text:"pd.Series(5, index=['a','b','c']) causes the scalar 5 to be ___ across every label.",
+   options:["broadcast","appended","subtracted","sorted"], correct:"broadcast",
+   explain:"A scalar passed as data is repeated (broadcast) for every index label."},
+
+  // Section 1: Attributes
+  {sec:1, text:"s.values returns the underlying data as a ___.",
+   options:["NumPy array","Python list","dict","DataFrame"], correct:"NumPy array",
+   explain:"s.values exposes the raw data buffer as a NumPy ndarray (or extension array)."},
+  {sec:1, text:"s.index returns an ___ object holding the row labels.",
+   options:["Index","Array","Series","Tuple"], correct:"Index",
+   explain:"The labels live in a pandas Index object, accessible via s.index."},
+  {sec:1, text:"s.dtype tells you the ___ of the elements stored in the Series.",
+   options:["data type","memory address","index name","shape"], correct:"data type",
+   explain:"dtype reports the element type, e.g. int64, float64, or object."},
+  {sec:1, text:"s.name stores the ___ of the Series, used as the column name if converted to a DataFrame.",
+   options:["name","index","dtype","length"], correct:"name",
+   explain:"pd.DataFrame(s) will use s.name as the resulting column's header."},
+  {sec:1, text:"s.shape returns a tuple like (n,), where n is the number of ___.",
+   options:["elements","columns","dimensions","bytes"], correct:"elements",
+   explain:"Since a Series is 1-D, shape is a one-item tuple giving its length."},
+
+  // Section 2: Indexing & Selection
+  {sec:2, text:"s.loc[] selects data using ___-based indexing.",
+   options:["label","position","hash","boolean-only"], correct:"label",
+   explain:"loc looks items up by their index label, e.g. s.loc['a']."},
+  {sec:2, text:"s.iloc[] selects data using integer ___-based indexing.",
+   options:["position","label","name","hash"], correct:"position",
+   explain:"iloc works like list indexing, by integer position regardless of labels."},
+  {sec:2, text:"s[s > 5] filters the Series using ___ indexing.",
+   options:["boolean","positional","label","fancy-only"], correct:"boolean",
+   explain:"s > 5 produces a boolean mask that keeps only the True positions."},
+  {sec:2, text:"s.at[label] is a faster, scalar-only alternative to ___.",
+   options:["loc","iloc","iat","get"], correct:"loc",
+   explain:"at is optimized for retrieving a single scalar by label, like loc but quicker."},
+  {sec:2, text:"s.iat[pos] is a faster, scalar-only alternative to ___.",
+   options:["iloc","loc","at","index"], correct:"iloc",
+   explain:"iat retrieves a single scalar by integer position, faster than iloc for one value."},
+
+  // Section 3: Core Methods
+  {sec:3, text:"s.head(n) returns the first ___ elements of the Series.",
+   options:["n","n-1","n+1","5"], correct:"n",
+   explain:"head(n) previews the first n rows; it defaults to 5 if n is omitted."},
+  {sec:3, text:"s.sort_values() sorts the Series by its ___.",
+   options:["values","index","dtype","name"], correct:"values",
+   explain:"sort_values reorders rows by the data itself, ascending by default."},
+  {sec:3, text:"s.sort_index() sorts the Series by its ___.",
+   options:["index","values","dtype","name"], correct:"index",
+   explain:"sort_index reorders rows using the index labels rather than the values."},
+  {sec:3, text:"s.unique() returns the ___ values in the Series as a NumPy array.",
+   options:["unique","sorted","duplicate","missing"], correct:"unique",
+   explain:"unique() lists each distinct value once, in order of first appearance."},
+  {sec:3, text:"s.value_counts() returns counts for each ___ value, sorted descending by default.",
+   options:["unique","missing","negative","index"], correct:"unique",
+   explain:"value_counts tallies how often each distinct value occurs."},
+
+  // Section 4: Aggregation & Stats
+  {sec:4, text:"s.mean() computes the arithmetic mean, ___ NaNs by default.",
+   options:["ignoring","including","replacing","doubling"], correct:"ignoring",
+   explain:"Most aggregation methods skip NaN values by default (skipna=True)."},
+  {sec:4, text:"s.describe() returns count, mean, std, min, ___, and max.",
+   options:["quartiles","mode","variance","skew"], correct:"quartiles",
+   explain:"describe() also reports the 25th, 50th, and 75th percentiles."},
+  {sec:4, text:"s.cumsum() returns the ___ sum of the elements.",
+   options:["cumulative","running average","total","reverse"], correct:"cumulative",
+   explain:"Each output element is the running total up to that position."},
+  {sec:4, text:"s.idxmax() returns the ___ of the first occurrence of the maximum value.",
+   options:["index label","position","value","dtype"], correct:"index label",
+   explain:"idxmax gives you where the max is (its label), not the max value itself."},
+  {sec:4, text:"s.corr(other) computes the ___ between two Series.",
+   options:["correlation","covariance","sum","difference"], correct:"correlation",
+   explain:"corr() measures how two Series move together, using Pearson's r by default."},
+
+  // Section 5: Missing Data, Strings & Combining
+  {sec:5, text:"s.isna() returns a boolean Series marking which values are ___.",
+   options:["missing (NaN)","duplicated","negative","zero"], correct:"missing (NaN)",
+   explain:"isna() (or isnull()) flags NaN / None entries as True."},
+  {sec:5, text:"s.fillna(0) replaces every missing value with ___.",
+   options:["0","the mean","the previous value","NaN"], correct:"0",
+   explain:"fillna() substitutes NaNs with whatever value or method you pass in — here, 0."},
+  {sec:5, text:"s.dropna() removes ___ from the Series.",
+   options:["missing values","duplicate values","all values","the index"], correct:"missing values",
+   explain:"dropna() returns a copy with all NaN/None entries excluded."},
+  {sec:5, text:"s.str.upper() converts each string element to ___.",
+   options:["uppercase","lowercase","title case","reversed text"], correct:"uppercase",
+   explain:"The .str accessor exposes vectorized string methods like .upper()."},
+  {sec:5, text:"pd.concat([s1, s2]) combines two Series along the ___ by default.",
+   options:["index (axis=0)","columns (axis=1)","values only","dtype"], correct:"index (axis=0)",
+   explain:"concat stacks Series end-to-end along the index unless axis=1 is specified."},
+
+  // Section 6: Transforming & Converting (NEW)
+  {sec:6, text:"s.apply(func) runs func on every ___ of the Series and collects the results.",
+   options:["element","index","dtype","name"], correct:"element",
+   explain:"apply() calls your function once per element, returning a new Series of results."},
+  {sec:6, text:"s.map(func_or_dict) is commonly used to ___ each value via a function, dict, or another Series.",
+   options:["substitute","sort","aggregate","broadcast"], correct:"substitute",
+   explain:"map() is ideal for recoding values, e.g. mapping category codes to labels via a dict."},
+  {sec:6, text:"s.astype('float64') converts every element to a new ___.",
+   options:["data type","index","name","shape"], correct:"data type",
+   explain:"astype() casts the Series to the specified dtype, returning a new Series."},
+  {sec:6, text:"s.duplicated() returns a boolean Series flagging ___ values.",
+   options:["duplicate","missing","unique","negative"], correct:"duplicate",
+   explain:"duplicated() marks repeated values True, keeping the first occurrence False by default."},
+  {sec:6, text:"s.to_dict() converts the Series into a Python ___.",
+   options:["dictionary","list","tuple","set"], correct:"dictionary",
+   explain:"to_dict() pairs each index label with its value as key:value entries."}
+];
+
+/* ---------------- STATE ---------------- */
+let score = 0;
+const total = DATA.length;
+let selectedTile = null; // for click-to-place fallback
+let combo = 0;
+let bestCombo = 1;
+
+/* ---------------- REWARDS: ranks & badges ---------------- */
+const RANKS = [
+  {min:0,   name:"Series Novice"},
+  {min:30,  name:"Index Apprentice"},
+  {min:80,  name:"loc/iloc Adept"},
+  {min:150, name:"Aggregation Expert"},
+  {min:230, name:"Series Virtuoso"},
+  {min:320, name:"pandas Master"}
+];
+
+const BADGES = [
+  {id:"first",    icon:"🥇", title:"First Blood",     desc:"Solve your first blank correctly.",
+   test:()=> sectionMeta.reduce((s,m)=>s+m.solved,0) >= 1},
+  {id:"combo5",   icon:"🔥", title:"On Fire",          desc:"Reach a combo of x5 with no mistakes.",
+   test:()=> combo >= 5},
+  {id:"flawless", icon:"⭐", title:"Flawless Level",   desc:"Clear a section with zero wrong attempts.",
+   test:()=> sectionMeta.some(m => m.solved === m.total && m.wrongAttempts === 0)},
+  {id:"halfway",  icon:"🏆", title:"Halfway Hero",     desc:"Solve 18 or more of the 35 questions.",
+   test:()=> sectionMeta.reduce((s,m)=>s+m.solved,0) >= 18},
+  {id:"points200",icon:"💎", title:"Double Century",   desc:"Earn 200 points or more.",
+   test:()=> score >= 200},
+  {id:"master",   icon:"👑", title:"Series Master",    desc:"Complete every section in the game.",
+   test:()=> sectionMeta.every(m => m.solved === m.total)}
+];
+const earnedBadges = new Set();
+const badgeQueue = [];
+let badgeModalShowing = false;
+
+// per-section progress tracking
+const sectionMeta = SECTIONS.map((name, i)=>({
+  name, total:0, solved:0, wrongAttempts:0, stars:0,
+  unlocked: i===0
+}));
+DATA.forEach(q => sectionMeta[q.sec].total++);
+
+/* ---------------- HELPERS ---------------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function pointsForCorrect(){
+  // base 10, +2 per combo step beyond the first, capped at +20 bonus
+  return 10 + Math.min(combo * 2, 20);
+}
+
+function starsForSection(meta){
+  if(meta.wrongAttempts === 0) return 3;
+  if(meta.wrongAttempts <= 2) return 2;
+  return 1;
+}
+
+/* ---------------- REWARDS RENDER ---------------- */
+const badgeRow = document.getElementById('badgeRow');
+BADGES.forEach(b=>{
+  const el = document.createElement('div');
+  el.className = 'badge';
+  el.id = 'badge-' + b.id;
+  el.textContent = b.icon;
+  el.title = b.title + ' — ' + b.desc;
+  badgeRow.appendChild(el);
+});
+
+function updateRankPanel(){
+  document.getElementById('rankPoints').innerHTML = score + '<span class="unit">pts</span>';
+  let current = RANKS[0], next = null;
+  for(let i=0;i<RANKS.length;i++){
+    if(score >= RANKS[i].min) current = RANKS[i];
+    else { next = RANKS[i]; break; }
+  }
+  document.getElementById('rankName').textContent = current.name;
+  const bar = document.getElementById('rankBar');
+  const nextLabel = document.getElementById('rankNext');
+  if(next){
+    const span = next.min - current.min;
+    const pct = Math.min(100, ((score - current.min) / span) * 100);
+    bar.style.width = pct + '%';
+    nextLabel.textContent = `${next.min - score} pts to ${next.name}`;
+  } else {
+    bar.style.width = '100%';
+    nextLabel.textContent = 'Top rank reached!';
+  }
+}
+
+function checkBadges(){
+  BADGES.forEach(b=>{
+    if(!earnedBadges.has(b.id) && b.test()){
+      earnedBadges.add(b.id);
+      const el = document.getElementById('badge-' + b.id);
+      if(el){ el.classList.add('earned','pop'); }
+      badgeQueue.push(b);
+    }
+  });
+  processBadgeQueue();
+}
+
+function processBadgeQueue(){
+  if(badgeModalShowing || badgeQueue.length === 0) return;
+  const b = badgeQueue.shift();
+  badgeModalShowing = true;
+  document.getElementById('badgeModalIcon').textContent = b.icon;
+  document.getElementById('badgeModalTitle').textContent = b.title;
+  document.getElementById('badgeModalDesc').textContent = b.desc;
+  const modalBg = document.getElementById('badgeModal');
+  modalBg.classList.add('show');
+  document.getElementById('badgeModalBtn').onclick = ()=>{
+    modalBg.classList.remove('show');
+    badgeModalShowing = false;
+    processBadgeQueue();
+  };
+}
+
+function spawnFloatingPoints(qtextEl, amount){
+  const f = document.createElement('span');
+  f.className = 'float-pts';
+  f.textContent = '+' + amount;
+  qtextEl.appendChild(f);
+  setTimeout(()=> f.remove(), 1050);
+}
+
+/* ---------------- RENDER NAV ---------------- */
+const navChips = document.getElementById('navChips');
+function renderNavChips(){
+  navChips.innerHTML = '';
+  SECTIONS.forEach((s,i)=>{
+    const meta = sectionMeta[i];
+    const a = document.createElement('a');
+    a.className = 'chip';
+    if(meta.solved === meta.total) a.classList.add('done');
+    if(!meta.unlocked) a.classList.add('locked');
+    const starStr = meta.stars > 0 ? ' ' + '★'.repeat(meta.stars) : '';
+    a.innerHTML = `${i+1}. ${s}` + (starStr ? `<span class="stars">${starStr}</span>` : '');
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      if(!meta.unlocked){
+        a.classList.remove('flash'); void a.offsetWidth; a.classList.add('flash');
+        showToast('🔒 Finish the previous section first', false);
+        return;
+      }
+      document.getElementById('sec-'+i).scrollIntoView({behavior:'smooth', block:'start'});
+    });
+    navChips.appendChild(a);
+  });
+}
+
+/* ---------------- RENDER QUESTIONS ---------------- */
+const main = document.getElementById('mainContent');
+let globalIdx = 0;
+
+SECTIONS.forEach((secName, secIdx)=>{
+  const section = document.createElement('section');
+  section.className = 'section' + (sectionMeta[secIdx].unlocked ? '' : ' locked');
+  section.id = 'sec-'+secIdx;
+  section.dataset.secIdx = secIdx;
+
+  const head = document.createElement('div');
+  head.className = 'section-head';
+  head.innerHTML = `<span class="section-num">§${secIdx+1}</span><h2 class="section-title">${secName}</h2><span class="section-stars" id="stars-${secIdx}"></span>`;
+  section.appendChild(head);
+
+  const lockBanner = document.createElement('div');
+  lockBanner.className = 'lock-banner';
+  lockBanner.innerHTML = `🔒 Locked — clear <b>&nbsp;§${secIdx}&nbsp;${SECTIONS[secIdx-1]||''}</b> to unlock this level.`;
+  section.appendChild(lockBanner);
+
+  DATA.forEach((q, qIdx)=>{
+    if(q.sec !== secIdx) return;
+    const myIndex = globalIdx++;
+    const card = document.createElement('div');
+    card.className = 'qcard';
+    card.dataset.qid = myIndex;
+    card.dataset.solved = 'false';
+
+    const meta = document.createElement('div');
+    meta.className = 'qmeta';
+    meta.innerHTML = `<span class="qtag">s[${myIndex}]</span><span class="qpoints" id="pts-${myIndex}"></span>`;
+    card.appendChild(meta);
+
+    // build sentence with blank
+    const p = document.createElement('p');
+    p.className = 'qtext';
+    const parts = q.text.split('___');
+    p.appendChild(document.createTextNode(parts[0]));
+    const blank = document.createElement('span');
+    blank.className = 'blank';
+    blank.dataset.qid = myIndex;
+    blank.textContent = '⠀⠀⠀⠀';
+    p.appendChild(blank);
+    p.appendChild(document.createTextNode(parts[1]));
+    card.appendChild(p);
+
+    const tray = document.createElement('div');
+    tray.className = 'tray';
+    tray.dataset.qid = myIndex;
+    const shuffled = shuffle(q.options);
+    shuffled.forEach(optLabel=>{
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.setAttribute('draggable','false');
+      tile.dataset.qid = myIndex;
+      tile.dataset.value = optLabel;
+      tile.dataset.correct = (optLabel === q.correct) ? 'true' : 'false';
+      tile.textContent = optLabel;
+      tray.appendChild(tile);
+    });
+    card.appendChild(tray);
+
+    const hint = document.createElement('div');
+    hint.className = 'hint-row';
+    hint.textContent = 'drag a tile into the blank above';
+    card.appendChild(hint);
+
+    const explain = document.createElement('div');
+    explain.className = 'explain';
+    explain.textContent = q.explain;
+    card.appendChild(explain);
+
+    section.appendChild(card);
+  });
+
+  main.appendChild(section);
+});
+
+renderNavChips();
+
+/* ---------------- DRAG ENGINE (pointer events, mouse+touch) ---------------- */
+let dragTile = null;
+let ghost = null;
+let startX=0, startY=0, moved=false;
+const MOVE_THRESHOLD = 6;
+
+function isLocked(el){
+  const section = el.closest('.section');
+  return section && section.classList.contains('locked');
+}
+
+document.addEventListener('pointerdown', (e)=>{
+  const tile = e.target.closest('.tile');
+  if(!tile || tile.classList.contains('used')) return;
+  if(isLocked(tile)) return;
+  const qcard = tile.closest('.qcard');
+  if(qcard.dataset.solved === 'true') return;
+
+  dragTile = tile;
+  startX = e.clientX; startY = e.clientY;
+  moved = false;
+  tile.setPointerCapture && tile.setPointerCapture(e.pointerId);
+});
+
+document.addEventListener('pointermove', (e)=>{
+  if(!dragTile) return;
+  const dx = e.clientX - startX, dy = e.clientY - startY;
+  if(!moved && Math.hypot(dx,dy) > MOVE_THRESHOLD){
+    moved = true;
+    ghost = document.createElement('div');
+    ghost.className = 'ghost-tile';
+    ghost.textContent = dragTile.dataset.value;
+    document.body.appendChild(ghost);
+    clearSelection();
+  }
+  if(moved && ghost){
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top = e.clientY + 'px';
+    document.querySelectorAll('.blank.hover-ok').forEach(b=>b.classList.remove('hover-ok'));
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const blank = under && under.closest('.blank');
+    if(blank && blank.dataset.qid === dragTile.dataset.qid && !blank.classList.contains('correct')){
+      blank.classList.add('hover-ok');
+    }
+  }
+});
+
+document.addEventListener('pointerup', (e)=>{
+  if(!dragTile) return;
+  if(moved && ghost){
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const blank = under && under.closest('.blank');
+    ghost.remove(); ghost = null;
+    document.querySelectorAll('.blank.hover-ok').forEach(b=>b.classList.remove('hover-ok'));
+    if(blank && blank.dataset.qid === dragTile.dataset.qid){
+      attemptPlace(dragTile, blank);
+    }
+  } else {
+    // treated as a click -> toggle select for tap-to-place
+    toggleSelect(dragTile);
+  }
+  dragTile = null;
+  moved = false;
+});
+
+// click on a blank places the currently selected tile (tap-to-place fallback)
+document.addEventListener('click', (e)=>{
+  const blank = e.target.closest('.blank');
+  if(!blank) return;
+  if(isLocked(blank)) return;
+  if(blank.classList.contains('correct')) return;
+  if(selectedTile && selectedTile.dataset.qid === blank.dataset.qid){
+    attemptPlace(selectedTile, blank);
+    clearSelection();
+  } else if(blank.classList.contains('filled')){
+    // unfill on click if not correct
+    resetBlank(blank);
+  }
+});
+
+function toggleSelect(tile){
+  if(selectedTile === tile){
+    clearSelection();
+  } else {
+    clearSelection();
+    selectedTile = tile;
+    tile.classList.add('selected');
+  }
+}
+function clearSelection(){
+  if(selectedTile) selectedTile.classList.remove('selected');
+  selectedTile = null;
+}
+
+function resetBlank(blank){
+  const qid = blank.dataset.qid;
+  const prevVal = blank.dataset.filledValue;
+  blank.textContent = '⠀⠀⠀⠀';
+  blank.classList.remove('filled','wrong');
+  delete blank.dataset.filledValue;
+  if(prevVal){
+    const prevTile = document.querySelector(`.tile[data-qid="${qid}"][data-value="${CSS.escape(prevVal)}"]`);
+    if(prevTile) prevTile.classList.remove('used');
+  }
+}
+
+function attemptPlace(tile, blank){
+  const isCorrect = tile.dataset.correct === 'true';
+  // if blank already has something else filled (not correct), restore it first
+  if(blank.classList.contains('filled') && blank.dataset.filledValue !== tile.dataset.value){
+    resetBlank(blank);
+  }
+  blank.textContent = tile.dataset.value;
+  blank.dataset.filledValue = tile.dataset.value;
+  blank.classList.add('filled');
+  tile.classList.add('used');
+
+  if(isCorrect){
+    blank.classList.remove('wrong');
+    blank.classList.add('correct');
+    blank.style.animation = 'pop .3s ease';
+    markSolved(tile.closest('.qcard') || document.querySelector(`.qcard[data-qid="${blank.dataset.qid}"]`));
+  } else {
+    const secIdx = parseInt(blank.closest('.section').dataset.secIdx);
+    sectionMeta[secIdx].wrongAttempts++;
+    updateCombo(false);
+    blank.classList.add('wrong');
+    showToast('Not quite — combo reset', false);
+    setTimeout(()=>{
+      tile.classList.remove('used');
+      resetBlank(blank);
+    }, 550);
+  }
+}
+
+/* ---------------- COMBO ---------------- */
+function updateCombo(correct){
+  const comboLine = document.getElementById('comboLine');
+  if(correct){
+    combo++;
+    if(combo > bestCombo) bestCombo = combo;
+    if(combo >= 2){
+      comboLine.textContent = `🔥 Combo x${combo}`;
+      comboLine.classList.remove('active'); void comboLine.offsetWidth; comboLine.classList.add('active');
+    } else {
+      comboLine.textContent = '';
+    }
+  } else {
+    combo = 0;
+    comboLine.textContent = '';
+  }
+}
+
+/* ---------------- SOLVE / SCORE ---------------- */
+function markSolved(card){
+  if(!card) card = document.querySelector('.qcard[data-solved="false"]');
+  if(!card || card.dataset.solved === 'true') return;
+  card.dataset.solved = 'true';
+  card.classList.add('solved');
+  const hint = card.querySelector('.hint-row');
+  if(hint) hint.textContent = 'correct!';
+
+  const earned = pointsForCorrect();
+  updateCombo(true);
+  score += earned;
+  const ptsEl = document.getElementById('pts-' + card.dataset.qid);
+  if(ptsEl) ptsEl.textContent = `+${earned}`;
+  const qtextEl = card.querySelector('.qtext');
+  if(qtextEl) spawnFloatingPoints(qtextEl, earned);
+
+  const secIdx = parseInt(card.closest('.section').dataset.secIdx);
+  const meta = sectionMeta[secIdx];
+  meta.solved++;
+
+  updateSeriesPanel();
+  updateProgress();
+  updateRankPanel();
+  checkBadges();
+  showToast(`Correct! +${earned}`, true);
+
+  if(meta.solved === meta.total){
+    meta.stars = starsForSection(meta);
+    const starsEl = document.getElementById('stars-' + secIdx);
+    if(starsEl) starsEl.textContent = '★'.repeat(meta.stars) + '☆'.repeat(3-meta.stars);
+
+    // unlock next section
+    const nextIdx = secIdx + 1;
+    if(nextIdx < SECTIONS.length){
+      sectionMeta[nextIdx].unlocked = true;
+      const nextSection = document.getElementById('sec-' + nextIdx);
+      if(nextSection) nextSection.classList.remove('locked');
+    }
+    renderNavChips();
+
+    if(score === totalPossibleReachedCheck() || allSectionsSolved()){
+      finishGame();
+    } else {
+      setTimeout(()=> openSectionModal(secIdx), 400);
+    }
+  }
+}
+
+function allSectionsSolved(){
+  return sectionMeta.every(m => m.solved === m.total);
+}
+function totalPossibleReachedCheck(){ return -1; } // unused guard, kept for clarity
+
+function openSectionModal(secIdx){
+  const meta = sectionMeta[secIdx];
+  document.getElementById('modalStars').textContent = '★'.repeat(meta.stars) + '☆'.repeat(3-meta.stars);
+  document.getElementById('modalTitle').textContent = `Section ${secIdx+1} clear!`;
+  document.getElementById('modalText').textContent = `You matched every blank in "${meta.name}". On to the next level.`;
+  document.getElementById('modalScore').textContent = `Score: ${score}`;
+  document.getElementById('sectionModal').classList.add('show');
+  document.getElementById('modalContinueBtn').onclick = ()=>{
+    document.getElementById('sectionModal').classList.remove('show');
+    const nextSection = document.getElementById('sec-' + (secIdx+1));
+    if(nextSection) nextSection.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+}
+
+function finishGame(){
+  const totalStars = sectionMeta.reduce((sum,m)=>sum+m.stars, 0);
+  document.getElementById('finalScoreStat').textContent = score;
+  document.getElementById('finalStarsStat').textContent = `${totalStars} / ${SECTIONS.length*3}`;
+  document.getElementById('finalComboStat').textContent = `x${bestCombo}`;
+  document.getElementById('doneBanner').classList.add('show');
+  document.getElementById('doneBanner').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function updateProgress(){
+  const bar = document.getElementById('progressBar');
+  bar.style.width = (score>0 ? (sectionMeta.reduce((s,m)=>s+m.solved,0)/total*100) : 0) + '%';
+  const solvedCount = sectionMeta.reduce((s,m)=>s+m.solved,0);
+  document.getElementById('progressLabel').textContent =
+    `${solvedCount} of ${total} solved · drag a tile, or tap a tile then tap a blank`;
+}
+
+function updateSeriesPanel(){
+  const repr = document.getElementById('seriesRepr');
+  const foot = document.getElementById('seriesFoot');
+  const solvedCount = sectionMeta.reduce((s,m)=>s+m.solved,0);
+  if(solvedCount === 0){
+    repr.textContent = 'Series([], dtype: bool)';
+  } else {
+    let lines = [];
+    const showCount = Math.min(solvedCount, 8);
+    for(let i=0;i<showCount;i++){
+      lines.push(`${i}     True`);
+    }
+    if(solvedCount > 8){
+      lines.push('...   ...');
+    }
+    repr.textContent = lines.join('\n');
+  }
+  foot.textContent = `Length: ${solvedCount}  ·  dtype: bool  ·  Score: ${score}`;
+}
+
+function showToast(msg, good){
+  const toastEl = document.getElementById('toast');
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show ' + (good ? 'good':'bad');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toastEl.classList.remove('show'), 1100);
+}
+
+document.getElementById('restartBtn').addEventListener('click', ()=> location.reload());
+
+updateSeriesPanel();
+updateProgress();
+updateRankPanel();
+</script>
+</body>
+</html>
