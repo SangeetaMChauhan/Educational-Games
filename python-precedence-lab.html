@@ -8,31 +8,31 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0f1e;
-    --bg-grid: rgba(255,255,255,0.025);
-    --panel:#121a30;
-    --panel-2:#0d1424;
-    --border:#26314f;
-    --border-soft:#1b2440;
-    --text:#e7ecf7;
-    --muted:#8b9ac0;
-    --muted-2:#5d6c93;
-    --blue:#5aa1e3;
-    --yellow:#ffd43b;
-    --green:#3ddc97;
-    --red:#ff6b6b;
+    --bg:#f3f5fb;
+    --bg-grid: rgba(20,30,65,0.045);
+    --panel:#ffffff;
+    --panel-2:#eef1f9;
+    --border:#c9d2e8;
+    --border-soft:#dbe1f2;
+    --text:#10162b;
+    --muted:#48547a;
+    --muted-2:#6b7699;
+    --blue:#2b6fc9;
+    --yellow:#b8860b;
+    --green:#158a5f;
+    --red:#d13b3b;
 
     /* precedence spectrum: cool = loose binding, hot = tight binding */
-    --t0:#c084fc; /* ternary if/else */
-    --t1:#8b5cf6; /* or / and / not */
-    --t2:#3b82f6; /* comparisons */
-    --t3:#14b8a6; /* | */
-    --t4:#10b981; /* ^ */
-    --t5:#22c55e; /* & */
-    --t6:#84cc16; /* << >> */
-    --t7:#f59e0b; /* + - */
-    --t8:#fb923c; /* * / // % */
-    --t9:#ef4444; /* ** / unary */
+    --t0:#9333ea; /* ternary if/else */
+    --t1:#7c3aed; /* or / and / not */
+    --t2:#2563eb; /* comparisons */
+    --t3:#0d9488; /* | */
+    --t4:#059669; /* ^ */
+    --t5:#16a34a; /* & */
+    --t6:#65a30d; /* << >> */
+    --t7:#d97706; /* + - */
+    --t8:#ea580c; /* * / // % */
+    --t9:#dc2626; /* ** / unary */
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -41,12 +41,13 @@
     background:
       linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/100% 42px,
       linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/42px 100%,
-      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(90,161,227,0.12), transparent),
-      radial-gradient(ellipse 900px 600px at 100% 10%, rgba(255,212,59,0.07), transparent),
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(43,111,201,0.08), transparent),
+      radial-gradient(ellipse 900px 600px at 100% 10%, rgba(184,134,11,0.06), transparent),
       var(--bg);
     color:var(--text);
     font-family:'Inter',sans-serif;
-    font-size:17px;
+    font-size:18px;
+    font-weight:500;
     padding:28px 16px 60px;
   }
   .wrap{max-width:880px;margin:0 auto;}
@@ -54,16 +55,16 @@
   /* ---------- header ---------- */
   .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
   .brand-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);}
-  .brand-label{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:.06em;}
+  .brand-label{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--muted);letter-spacing:.06em;}
   h1{
     font-family:'Space Grotesk',sans-serif;
-    font-size:clamp(28px,5vw,42px);
+    font-size:clamp(30px,5vw,46px);
     margin:4px 0 6px;
     font-weight:700;
     line-height:1.1;
   }
   h1 .accent{color:var(--yellow);}
-  .sub{color:var(--muted);font-size:16px;font-weight:500;max-width:60ch;margin-bottom:22px;}
+  .sub{color:var(--muted);font-size:17px;font-weight:600;max-width:60ch;margin-bottom:22px;}
 
   /* ---------- precedence legend (signature element) ---------- */
   .legend{
@@ -79,7 +80,8 @@
   .legend-title{
     width:100%;
     font-family:'JetBrains Mono',monospace;
-    font-size:11px;
+    font-size:12px;
+    font-weight:700;
     color:var(--muted-2);
     text-transform:uppercase;
     letter-spacing:.08em;
@@ -87,16 +89,17 @@
   }
   .legend-chip{
     font-family:'JetBrains Mono',monospace;
-    font-size:12.5px;
+    font-size:13px;
     padding:4px 9px;
     border-radius:999px;
-    color:#0a0f1e;
+    color:#ffffff;
     font-weight:700;
     opacity:.92;
+    text-shadow:0 1px 1px rgba(0,0,0,0.25);
     transition:transform .15s, opacity .15s;
   }
   .legend-chip.dim{opacity:.35;}
-  .legend-chip.active{transform:scale(1.12);opacity:1;box-shadow:0 0 0 2px rgba(255,255,255,0.35);}
+  .legend-chip.active{transform:scale(1.12);opacity:1;box-shadow:0 0 0 2px rgba(16,22,43,0.35);}
 
   /* ---------- terminal card ---------- */
   .terminal{
@@ -104,7 +107,7 @@
     border:1px solid var(--border);
     border-radius:14px;
     overflow:hidden;
-    box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);
+    box-shadow:0 20px 50px -20px rgba(20,30,65,0.25);
   }
   .term-bar{
     display:flex;
@@ -118,7 +121,8 @@
   .term-title{
     margin-left:8px;
     font-family:'JetBrains Mono',monospace;
-    font-size:12.5px;
+    font-size:13.5px;
+    font-weight:600;
     color:var(--muted);
   }
   .term-body{padding:26px 26px 22px;}
@@ -126,15 +130,16 @@
   /* ---------- start screen ---------- */
   #start-screen .feature{
     display:flex;gap:10px;align-items:flex-start;
-    padding:10px 0;
+    padding:12px 0;
     border-top:1px solid var(--border-soft);
+    font-size:17px;
   }
   #start-screen .feature:first-of-type{border-top:none;}
   .feature b{color:var(--text);}
   .feature span.tag{
     font-family:'JetBrains Mono',monospace;
     font-size:11px;
-    color:#0a0f1e;
+    color:#ffffff;
     background:var(--blue);
     padding:2px 7px;
     border-radius:6px;
@@ -144,8 +149,8 @@
   }
   .btn{
     font-family:'Space Grotesk',sans-serif;
-    font-weight:600;
-    font-size:15px;
+    font-weight:700;
+    font-size:16px;
     border:none;
     border-radius:10px;
     padding:13px 22px;
@@ -153,35 +158,35 @@
     transition:transform .12s ease, box-shadow .12s ease, opacity .12s;
   }
   .btn:active{transform:translateY(1px);}
-  .btn-primary{background:linear-gradient(135deg,var(--blue),#3d7cc9);color:#fff;box-shadow:0 8px 20px -8px rgba(90,161,227,0.6);}
-  .btn-primary:hover{box-shadow:0 10px 24px -6px rgba(90,161,227,0.75);}
-  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-primary{background:linear-gradient(135deg,var(--blue),#1e57a3);color:#fff;box-shadow:0 8px 20px -8px rgba(43,111,201,0.55);}
+  .btn-primary:hover{box-shadow:0 10px 24px -6px rgba(43,111,201,0.7);}
+  .btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);}
   .btn-ghost:hover{color:var(--text);border-color:var(--muted-2);}
   .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;}
-  .btn-yellow{background:linear-gradient(135deg,var(--yellow),#e0ad1f);color:#0a0f1e;box-shadow:0 8px 20px -8px rgba(255,212,59,0.5);}
+  .btn-yellow{background:linear-gradient(135deg,#e0a635,var(--yellow));color:#241a00;box-shadow:0 8px 20px -8px rgba(184,134,11,0.45);}
 
   /* ---------- quiz header row ---------- */
   .quiz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
-  .qcount{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
-  .score{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);}
-  .progress-track{height:6px;background:var(--border-soft);border-radius:999px;overflow:hidden;margin-bottom:22px;}
+  .qcount{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--text);}
+  .score{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--green);}
+  .progress-track{height:7px;background:var(--border-soft);border-radius:999px;overflow:hidden;margin-bottom:22px;}
   .progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .35s ease;}
 
   .type-badge{
     display:inline-block;
     font-family:'JetBrains Mono',monospace;
-    font-size:11px;
+    font-size:12.5px;
     letter-spacing:.05em;
     text-transform:uppercase;
-    padding:3px 9px;
+    padding:4px 10px;
     border-radius:6px;
     margin-bottom:14px;
-    font-weight:600;
+    font-weight:700;
   }
-  .type-badge.evaluate{background:rgba(90,161,227,0.15);color:var(--blue);border:1px solid rgba(90,161,227,0.4);}
-  .type-badge.complete{background:rgba(255,212,59,0.15);color:var(--yellow);border:1px solid rgba(255,212,59,0.4);}
+  .type-badge.evaluate{background:rgba(43,111,201,0.12);color:var(--blue);border:1.5px solid rgba(43,111,201,0.4);}
+  .type-badge.complete{background:rgba(184,134,11,0.12);color:var(--yellow);border:1.5px solid rgba(184,134,11,0.4);}
 
-  .prompt-label{color:var(--muted);font-size:13px;margin-bottom:10px;}
+  .prompt-label{color:var(--text);font-size:15.5px;font-weight:600;margin-bottom:10px;}
 
   /* ---------- expression display ---------- */
   .expr-row{
@@ -190,7 +195,8 @@
     align-items:center;
     gap:6px;
     font-family:'JetBrains Mono',monospace;
-    font-size:clamp(18px,3.6vw,24px);
+    font-size:clamp(20px,3.8vw,27px);
+    font-weight:700;
     background:var(--panel-2);
     border:1px solid var(--border-soft);
     border-radius:12px;
@@ -198,9 +204,9 @@
     margin-bottom:22px;
     min-height:78px;
   }
-  .token-literal{color:var(--text);white-space:pre;}
+  .token-literal{color:var(--text);white-space:pre;font-weight:700;}
   .token-literal.kw{color:var(--yellow);}
-  .expr-eq{color:var(--muted);margin:0 4px;}
+  .expr-eq{color:var(--muted);margin:0 4px;font-weight:700;}
 
   /* ---------- drop zones ---------- */
   .dropzone{
@@ -208,19 +214,19 @@
     align-items:center;
     justify-content:center;
     min-width:52px;
-    height:40px;
+    height:42px;
     padding:0 10px;
-    border:2px dashed var(--border);
+    border:2.5px dashed var(--muted-2);
     border-radius:9px;
-    background:rgba(255,255,255,0.02);
+    background:rgba(20,30,65,0.03);
     transition:border-color .15s, background .15s;
     vertical-align:middle;
   }
-  .dropzone.hover{border-color:var(--yellow);background:rgba(255,212,59,0.08);}
+  .dropzone.hover{border-color:var(--yellow);background:rgba(184,134,11,0.1);}
   .dropzone.filled{border-style:solid;border-color:var(--border-soft);}
-  .dropzone.correct{border-color:var(--green);background:rgba(61,220,151,0.1);}
-  .dropzone.incorrect{border-color:var(--red);background:rgba(255,107,107,0.1);animation:shake .35s;}
-  .dropzone.answer-slot{min-width:90px;height:46px;}
+  .dropzone.correct{border-color:var(--green);background:rgba(21,138,95,0.12);}
+  .dropzone.incorrect{border-color:var(--red);background:rgba(209,59,59,0.12);animation:shake .35s;}
+  .dropzone.answer-slot{min-width:90px;height:48px;}
   @keyframes shake{
     0%,100%{transform:translateX(0);}
     25%{transform:translateX(-5px);}
@@ -228,7 +234,7 @@
   }
 
   /* ---------- pool / tray ---------- */
-  .pool-label{color:var(--muted);font-size:13px;margin:0 0 10px;}
+  .pool-label{color:var(--text);font-size:15.5px;font-weight:600;margin:0 0 10px;}
   .pool{
     display:flex;
     flex-wrap:wrap;
@@ -246,26 +252,27 @@
     user-select:none;
     cursor:grab;
     font-family:'JetBrains Mono',monospace;
-    font-weight:600;
-    font-size:15px;
-    padding:9px 16px;
+    font-weight:700;
+    font-size:17px;
+    padding:10px 17px;
     border-radius:9px;
-    color:#0a0f1e;
-    background:var(--muted);
-    box-shadow:0 4px 10px -3px rgba(0,0,0,0.5);
+    color:#ffffff;
+    background:var(--muted-2);
+    box-shadow:0 4px 10px -3px rgba(20,30,65,0.35);
     transition:box-shadow .12s, transform .08s;
     white-space:nowrap;
   }
-  .tile:hover{box-shadow:0 6px 16px -3px rgba(0,0,0,0.6);}
-  .tile.dragging{cursor:grabbing;opacity:.85;box-shadow:0 14px 30px -8px rgba(0,0,0,0.7);}
-  .tile.value-tile{background:#cfd8ee;color:#101830;}
+  .tile:hover{box-shadow:0 6px 16px -3px rgba(20,30,65,0.45);}
+  .tile.dragging{cursor:grabbing;opacity:.85;box-shadow:0 14px 30px -8px rgba(20,30,65,0.5);}
+  .tile.value-tile{background:#1e3a6e;color:#ffffff;}
   .tile.selected{outline:3px solid var(--yellow);outline-offset:2px;transform:translateY(-2px);}
   .dropzone.armed{border-color:var(--yellow);}
 
   /* ---------- feedback / controls ---------- */
   .feedback{
     font-family:'Inter',sans-serif;
-    font-size:14.5px;
+    font-size:16px;
+    font-weight:600;
     padding:12px 14px;
     border-radius:10px;
     margin:18px 0 0;
@@ -273,21 +280,21 @@
     line-height:1.5;
   }
   .feedback.show{display:block;}
-  .feedback.good{background:rgba(61,220,151,0.1);color:var(--green);border:1px solid rgba(61,220,151,0.35);}
-  .feedback.bad{background:rgba(255,107,107,0.1);color:var(--red);border:1px solid rgba(255,107,107,0.35);}
+  .feedback.good{background:rgba(21,138,95,0.1);color:var(--green);border:1.5px solid rgba(21,138,95,0.35);}
+  .feedback.bad{background:rgba(209,59,59,0.1);color:var(--red);border:1.5px solid rgba(209,59,59,0.35);}
 
   .controls{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
 
   /* ---------- results ---------- */
   #result-screen{display:none;text-align:center;}
   .result-score{font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:700;margin:10px 0 4px;}
-  .result-msg{color:var(--muted);margin-bottom:24px;}
+  .result-msg{color:var(--text);font-weight:600;margin-bottom:24px;}
   .review{text-align:left;margin:0 0 26px;max-height:340px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:12px;}
   .review-item{padding:14px 16px;border-bottom:1px solid var(--border-soft);}
   .review-item:last-child{border-bottom:none;}
-  .review-expr{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);margin-bottom:4px;}
-  .review-note{font-size:13px;color:var(--muted);}
-  .review-title{font-size:13px;color:var(--muted);margin:26px 0 10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;}
+  .review-expr{font-family:'JetBrains Mono',monospace;font-size:15.5px;font-weight:700;color:var(--text);margin-bottom:4px;}
+  .review-note{font-size:14.5px;font-weight:500;color:var(--muted);}
+  .review-title{font-size:14px;font-weight:700;color:var(--muted);margin:26px 0 10px;text-align:left;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace;}
 
   #quiz-screen{display:none;}
 
@@ -296,7 +303,7 @@
   }
 
   footer.note{
-    text-align:center;color:var(--muted-2);font-size:12px;margin-top:22px;
+    text-align:center;color:var(--muted-2);font-size:13px;font-weight:600;margin-top:22px;
     font-family:'JetBrains Mono',monospace;
   }
 </style>
@@ -338,8 +345,8 @@
       <!-- QUIZ SCREEN -->
       <div id="quiz-screen">
         <div class="quiz-top">
-          <div class="qcount" id="qcount">Question 1 / 51</div>
-          <div class="score" id="score">Score: 0 / 51</div>
+          <div class="qcount" id="qcount">Question 1 / 75</div>
+          <div class="score" id="score">Score: 0 / 75</div>
         </div>
         <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
 
@@ -363,7 +370,7 @@
       <!-- RESULT SCREEN -->
       <div id="result-screen">
         <div class="pool-label">Session complete</div>
-        <div class="result-score" id="result-score">0 / 51</div>
+        <div class="result-score" id="result-score">0 / 75</div>
         <div class="result-msg" id="result-msg"></div>
         <div id="review-wrap"></div>
         <button class="btn btn-primary" id="restart-btn">Run again →</button>
@@ -382,7 +389,7 @@
 const TIERS = [
   {label:'if / else', color:'var(--t0)', ops:['if','else']},
   {label:'or / and / not', color:'var(--t1)', ops:['or','and','not']},
-  {label:'comparisons', color:'var(--t2)', ops:['==','!=','<','<=','>','>=']},
+  {label:'comparisons', color:'var(--t2)', ops:['==','!=','<','<=','>','>=','in']},
   {label:'|', color:'var(--t3)', ops:['|']},
   {label:'^', color:'var(--t4)', ops:['^']},
   {label:'&', color:'var(--t5)', ops:['&']},
@@ -463,6 +470,9 @@ const QUESTIONS = [
   ev('"Py" + "thon" * 2', "Pythonthon", ["Pythonthon","PythonPython","Pythonthonn","PyPythonthon"], "* before +: 'Py' + ('thon'*2)."),
   ev("1 << 2 + 1", "8", ["8","3","5","6"], "+ binds tighter than <<: 1 << (2+1)."),
   ev("8 >> 1 + 1", "2", ["2","4","3","16"], "+ binds tighter than >>: 8 >> (1+1)."),
+  ev("3 in [1, 2, 3]", "True", ["True","False"], "'in' sits at the same precedence tier as the comparison operators."),
+  ev("2 not in [1, 2, 3]", "False", ["False","True"], "2 is in the list, so 'not in' is False."),
+  ev("5 > 3 and 2 in [1, 2]", "True", ["True","False"], "Both sides are membership/comparison tests, evaluated before 'and'."),
 
   cp(["5","_","3"], ["+"], ["+","-","*","/"], "8", "5 + 3 = 8."),
   cp(["2","_","3","_","4"], ["+","*"], ["+","*","-","//","%"], "14", "2 + (3*4) = 14 — * runs first even though it's written second."),
@@ -513,7 +523,6 @@ let session = [];
 let current = 0;
 let score = 0;
 let scoredThisQuestion = false;
-let poolId = 0;
 let missed = [];
 let selectedTile = null;
 
@@ -559,8 +568,7 @@ function makeDropzone(extraClass, slot){
     if(!selectedTile) return;
     if(dz.firstElementChild && dz.firstElementChild !== selectedTile){
       const bumped = dz.firstElementChild;
-      const home = document.getElementById(bumped.dataset.poolId) || document.getElementById('pool');
-      home.appendChild(bumped);
+      document.getElementById('pool').appendChild(bumped);
     }
     dz.classList.remove('correct','incorrect');
     dz.appendChild(selectedTile);
@@ -575,6 +583,7 @@ function makeDropzone(extraClass, slot){
 function renderQuestion(){
   scoredThisQuestion = false;
   selectedTile = null;
+  cleanupOrphanedTiles();
   const q = session[current];
   document.getElementById('qcount').textContent = `Question ${current+1} / ${session.length}`;
   document.getElementById('score').textContent = `Score: ${score} / ${session.length}`;
@@ -668,10 +677,28 @@ function makeTile(value, isValueTile, uniq){
     tile.style.background = tier.color;
     tile.textContent = value;
   }
-  tile.dataset.poolId = document.getElementById('pool').id;
   if(uniq !== undefined) tile.dataset.uniq = uniq;
   attachDrag(tile);
   return tile;
+}
+
+function cleanupOrphanedTiles(){
+  // Safety net: if a previous drag never received a proper drop event
+  // (e.g. the pointer was released outside the page), the tile can be
+  // left floating as a direct child of <body>. Return it to a sane home
+  // before the next question renders so it doesn't carry over.
+  Array.from(document.body.children).forEach(el=>{
+    if(el.classList && el.classList.contains('tile')){
+      el.style.position = '';
+      el.style.left = '';
+      el.style.top = '';
+      el.style.width = '';
+      el.style.zIndex = '';
+      el.style.pointerEvents = '';
+      el.classList.remove('dragging');
+      el.remove();
+    }
+  });
 }
 
 function selectTile(tile){
@@ -694,6 +721,8 @@ function attachDrag(tile){
     const originalParent = tile.parentElement;
     const startX = e.clientX, startY = e.clientY;
     let moved = false;
+    let finished = false;
+    let lastX = e.clientX, lastY = e.clientY;
 
     // picking a tile back up clears any leftover right/wrong styling on its old slot
     if(originalParent.classList.contains('dropzone')){
@@ -708,11 +737,11 @@ function attachDrag(tile){
     tile.style.width = rect.width + 'px';
     tile.style.zIndex = 1000;
     tile.style.pointerEvents = 'none';
-    tile.setPointerCapture(e.pointerId);
 
     let lastHover = null;
 
     function onMove(ev){
+      lastX = ev.clientX; lastY = ev.clientY;
       if(Math.abs(ev.clientX-startX) > 6 || Math.abs(ev.clientY-startY) > 6) moved = true;
       tile.style.left = (ev.clientX - offsetX) + 'px';
       tile.style.top = (ev.clientY - offsetY) + 'px';
@@ -723,7 +752,15 @@ function attachDrag(tile){
       else lastHover = null;
     }
 
-    function cleanupVisualDrag(){
+    function finalize(clientX, clientY){
+      if(finished) return;
+      finished = true;
+
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+      document.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('blur', onBlur);
+
       tile.style.position = '';
       tile.style.left = '';
       tile.style.top = '';
@@ -732,14 +769,6 @@ function attachDrag(tile){
       tile.style.pointerEvents = '';
       tile.classList.remove('dragging');
       if(lastHover) lastHover.classList.remove('hover');
-    }
-
-    function onUp(ev){
-      tile.releasePointerCapture(ev.pointerId);
-      tile.removeEventListener('pointermove', onMove);
-      tile.removeEventListener('pointerup', onUp);
-      tile.removeEventListener('pointercancel', onUp);
-      cleanupVisualDrag();
 
       if(!moved){
         // a tap, not a drag: put the tile back and arm/disarm tap-to-place instead
@@ -748,7 +777,7 @@ function attachDrag(tile){
         return;
       }
 
-      const under = document.elementFromPoint(ev.clientX, ev.clientY);
+      const under = (typeof clientX === 'number') ? document.elementFromPoint(clientX, clientY) : null;
       const dz = under ? under.closest('.dropzone') : null;
       const poolTarget = under ? under.closest('.pool') : null;
 
@@ -758,21 +787,42 @@ function attachDrag(tile){
         dz.classList.remove('correct','incorrect');
         if(dz.firstElementChild && dz.firstElementChild !== tile){
           const bumped = dz.firstElementChild;
-          const home = document.getElementById(bumped.dataset.poolId) || originalParent;
+          const home = document.getElementById('pool') || originalParent;
           home.appendChild(bumped);
         }
         dz.appendChild(tile);
         dz.classList.add('filled');
       } else {
+        // Dropped somewhere that isn't a valid target (or the release
+        // happened off-screen and we have no coordinates) — always send
+        // it home instead of leaving it stranded.
         originalParent.appendChild(tile);
       }
       if(selectedTile === tile){ selectedTile = null; }
       updateCheckButton();
     }
 
-    tile.addEventListener('pointermove', onMove);
-    tile.addEventListener('pointerup', onUp);
-    tile.addEventListener('pointercancel', onUp);
+    function onUp(ev){
+      finalize(ev.clientX, ev.clientY);
+    }
+
+    function onBlur(){
+      // Safety net: if the window loses focus mid-drag (pointer released
+      // outside the page, alt-tab, etc.) and no pointerup ever arrives,
+      // finalize using the last known position so the tile never gets
+      // stuck floating on top of everything.
+      finalize(lastX, lastY);
+    }
+
+    // Listening on `document` (rather than relying on setPointerCapture on
+    // the tile itself) keeps the drag alive even though the tile gets
+    // reparented to <body> above — some sandboxed/iframe environments treat
+    // that reparenting as an implicit loss of pointer capture, which would
+    // otherwise abort the drag before it visibly starts.
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+    window.addEventListener('blur', onBlur);
   });
 }
 
