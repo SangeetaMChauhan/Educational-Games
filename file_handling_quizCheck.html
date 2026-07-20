@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>File Cabinet — Python Text File Handling Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#FBF3E3;
+    --bg-2:#F5E9D1;
+    --paper:#FFFFFF;
+    --ink:#1E2733;
+    --ink-soft:#4B5563;
+    --line:#E7DCC2;
+    --good:#1E9E5A;
+    --good-bg:#E3F8EC;
+    --bad:#E5484D;
+    --bad-bg:#FDEAEA;
+    --c-basics:#2F80ED;
+    --c-modes:#FF6B4A;
+    --c-methods:#16A38C;
+    --c-pointer:#7C5CFC;
+    --c-csv:#F0A020;
+    --c-pickle:#E5484D;
+    --c-os:#0EA5B7;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Poppins', sans-serif;
+    background:
+      radial-gradient(circle at 8% 12%, rgba(255,255,255,0.6), transparent 40%),
+      radial-gradient(circle at 92% 88%, rgba(255,255,255,0.5), transparent 45%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    color:var(--ink);
+    height:100vh;
+    width:100vw;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    padding:1.4vh 2vw;
+  }
+
+  /* ===== Header ===== */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 0.4vw 1.1vh 0.4vw;
+    flex-shrink:0;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:0.7vw;
+  }
+  .brand .icon{
+    width:3.4vh;height:3.4vh;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--ink);
+    border-radius:9px;
+    color:#FBF3E3;
+    font-size:1.9vh;
+  }
+  .brand h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:2.4vh;
+    letter-spacing:0.2px;
+  }
+  .brand p{
+    font-size:1.3vh;
+    color:var(--ink-soft);
+    font-weight:500;
+    letter-spacing:0.4px;
+    text-transform:uppercase;
+  }
+  .stat-row{display:flex; gap:0.8vw;}
+  .stat{
+    background:var(--paper);
+    border:2px solid var(--line);
+    border-radius:12px;
+    padding:0.8vh 1.1vw;
+    text-align:center;
+    min-width:6vw;
+  }
+  .stat .num{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:2.2vh; line-height:1;}
+  .stat .lab{font-size:1.05vh; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.6px; font-weight:600; margin-top:0.3vh;}
+  #scoreStat .num{color:var(--good);}
+  #wrongStat .num{color:var(--bad);}
+  #qnumStat .num{color:var(--c-basics);}
+
+  /* ===== Progress tabs (folder strip) ===== */
+  #tabStrip{
+    display:flex;
+    gap:3px;
+    flex-shrink:0;
+    margin-bottom:1.4vh;
+    padding:0 0.4vw;
+  }
+  .tabchip{
+    flex:1;
+    height:0.9vh;
+    border-radius:6px;
+    background:var(--line);
+    transition:background 0.25s ease, transform 0.2s ease;
+  }
+  .tabchip.answered-correct{background:var(--good);}
+  .tabchip.answered-wrong{background:var(--bad);}
+  .tabchip.current{transform:scaleY(1.6);}
+
+  /* ===== Main folder card ===== */
+  main{
+    flex:1;
+    display:flex;
+    align-items:stretch;
+    min-height:0;
+  }
+
+  #folder{
+    position:relative;
+    flex:1;
+    background:var(--paper);
+    border-radius:20px;
+    border:2px solid var(--line);
+    box-shadow:0 10px 0 -4px rgba(0,0,0,0.03), 0 18px 30px -14px rgba(60,40,10,0.18);
+    display:flex;
+    flex-direction:column;
+    padding:2.2vh 2.4vw;
+    min-height:0;
+  }
+
+  .tab-label{
+    position:absolute;
+    top:-2.4vh;
+    left:2.6vw;
+    padding:0.7vh 1.3vw;
+    border-radius:10px 10px 0 0;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.5vh;
+    color:#fff;
+    letter-spacing:0.4px;
+    text-transform:uppercase;
+    transition:background 0.3s ease;
+  }
+
+  #category-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:0.5vw;
+    align-self:flex-start;
+    font-family:'JetBrains Mono', monospace;
+    font-size:1.35vh;
+    font-weight:700;
+    color:var(--ink-soft);
+    background:var(--bg-1);
+    border:1.5px dashed var(--line);
+    padding:0.5vh 1vw;
+    border-radius:20px;
+    margin-bottom:1.6vh;
+  }
+  #category-pill .dot{width:1.1vh;height:1.1vh;border-radius:50%;}
+
+  #question{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:2.9vh;
+    line-height:1.35;
+    color:var(--ink);
+    flex-shrink:0;
+    max-height:22vh;
+    overflow:hidden;
+  }
+  #question code, .code-block{
+    font-family:'JetBrains Mono', monospace;
+    background:#F2ECDC;
+    padding:0.15vh 0.5vw;
+    border-radius:6px;
+    font-size:0.88em;
+    color:#7A4B12;
+    display:inline-block;
+  }
+  .code-block{
+    display:block;
+    white-space:pre;
+    padding:1.1vh 1.3vw;
+    margin-top:1.2vh;
+    font-size:2.05vh;
+    line-height:1.5;
+    overflow-x:auto;
+  }
+
+  #options{
+    flex:1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    gap:1vh 1vw;
+    margin-top:1.6vh;
+    min-height:0;
+    max-height:20vh;
+  }
+
+  .opt{
+    display:flex;
+    align-items:center;
+    gap:0.7vw;
+    text-align:left;
+    background:var(--bg-1);
+    border:2.5px solid var(--line);
+    border-radius:12px;
+    padding:0.6vh 1vw;
+    font-family:'Poppins', sans-serif;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    transition:transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    min-width:0;
+    min-height:0;
+  }
+  .opt:hover:not(.locked){
+    transform:translateY(-2px);
+    border-color:var(--c-basics);
+    background:#fff;
+  }
+  .opt .tag{
+    flex-shrink:0;
+    width:3.6vh;height:3.6vh;
+    border-radius:8px;
+    background:#fff;
+    border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:2vh;
+    color:var(--ink-soft);
+  }
+  .opt .otext{
+    font-family:'JetBrains Mono', monospace;
+    font-size:2.6vh;
+    font-weight:700;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    line-height:1.1;
+  }
+  .opt.correct{background:var(--good-bg); border-color:var(--good);}
+  .opt.correct .tag{background:var(--good); border-color:var(--good); color:#fff;}
+  .opt.wrong{background:var(--bad-bg); border-color:var(--bad);}
+  .opt.wrong .tag{background:var(--bad); border-color:var(--bad); color:#fff;}
+  .opt.locked{cursor:default;}
+  .opt.dim{opacity:0.45;}
+
+  #feedback-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:1.6vh;
+    flex-shrink:0;
+    min-height:5vh;
+  }
+  #feedback{
+    font-weight:600;
+    font-size:1.7vh;
+    color:var(--ink-soft);
+  }
+  #feedback.good{color:var(--good);}
+  #feedback.bad{color:var(--bad);}
+
+  #nextBtn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:1.9vh;
+    background:var(--ink);
+    color:#FBF3E3;
+    border:none;
+    padding:1.1vh 2.2vw;
+    border-radius:12px;
+    cursor:pointer;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s ease, transform 0.12s ease;
+  }
+  #nextBtn.show{opacity:1; pointer-events:auto;}
+  #nextBtn:hover{transform:translateY(-2px);}
+
+  /* ===== Result screen ===== */
+  #resultScreen{
+    display:none;
+    flex:1;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:var(--paper);
+    border-radius:20px;
+    border:2px solid var(--line);
+    box-shadow:0 18px 30px -14px rgba(60,40,10,0.18);
+    padding:2vh;
+  }
+  #resultScreen .big{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:4.2vh;
+  }
+  #resultScreen .sub{
+    font-size:2vh;
+    color:var(--ink-soft);
+    margin-top:1vh;
+    font-weight:500;
+  }
+  #resultScreen .icon{font-size:6vh; margin-bottom:1vh;}
+  #restartBtn{
+    margin-top:2.6vh;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:2vh;
+    background:var(--c-basics);
+    color:#fff;
+    border:none;
+    padding:1.3vh 2.6vw;
+    border-radius:14px;
+    cursor:pointer;
+    transition:transform 0.12s ease;
+  }
+  #restartBtn:hover{transform:translateY(-2px);}
+
+  @media (max-width:760px){
+    #options{grid-template-columns:1fr; grid-template-rows:repeat(4,1fr);}
+    #question{font-size:2.2vh;}
+    .stat-row{gap:0.5vw;}
+  }
+
+  .opt:focus-visible, #nextBtn:focus-visible, #restartBtn:focus-visible{
+    outline:3px solid var(--c-basics);
+    outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="icon">🗂</div>
+    <div>
+      <h1>File Cabinet</h1>
+      <p>Python Text File Handling · CBSE XII CS</p>
+    </div>
+  </div>
+  <div class="stat-row">
+    <div class="stat" id="qnumStat"><div class="num" id="qnumVal">1/32</div><div class="lab">Question</div></div>
+    <div class="stat" id="scoreStat"><div class="num" id="scoreVal">0</div><div class="lab">Correct</div></div>
+    <div class="stat" id="wrongStat"><div class="num" id="wrongVal">0</div><div class="lab">Wrong</div></div>
+  </div>
+</header>
+
+<div id="tabStrip"></div>
+
+<main>
+  <div id="folder">
+    <div class="tab-label" id="tabLabel">Q01</div>
+    <div id="category-pill"><span class="dot" id="catDot"></span><span id="catName">BASICS</span></div>
+    <div id="question">Loading question…</div>
+    <div id="options"></div>
+    <div id="feedback-row">
+      <div id="feedback"></div>
+      <button id="nextBtn">Next File →</button>
+    </div>
+  </div>
+
+  <div id="resultScreen">
+    <div class="icon" id="resultIcon">🏆</div>
+    <div class="big" id="resultScoreText">0 / 32</div>
+    <div class="sub" id="resultMsg">Nice work!</div>
+    <button id="restartBtn">Shuffle &amp; Retry</button>
+  </div>
+</main>
+
+<script>
+const CATEGORIES = {
+  basics:  {label:"BASICS",  color:"var(--c-basics)"},
+  modes:   {label:"MODES",   color:"var(--c-modes)"},
+  methods: {label:"METHODS", color:"var(--c-methods)"},
+  pointer: {label:"POINTER", color:"var(--c-pointer)"},
+  csv:     {label:"CSV",     color:"var(--c-csv)"},
+  pickle:  {label:"PICKLE",  color:"var(--c-pickle)"},
+  os:      {label:"OS MODULE",color:"var(--c-os)"}
+};
+
+const QUESTIONS = [
+  {cat:"basics", q:"Which built-in function is used to open a file in Python?", opts:["open()","file()","read()","access()"], a:0},
+  {cat:"modes", q:"Which mode opens a text file for reading only, and raises an error if the file does not exist?", opts:["w","a","r","x"], a:2},
+  {cat:"modes", q:"If no mode is specified in <code>open()</code>, what is the default mode?", opts:["'w' (write)","'r' (read, text)","'a' (append)","'rb' (read binary)"], a:1},
+  {cat:"modes", q:"Which mode creates a new file, or completely overwrites an existing file's content?", opts:["a","r+","w","x only"], a:2},
+  {cat:"modes", q:"Which mode adds new data at the end of a file without erasing existing content?", opts:["a","w","r","w+"], a:0},
+  {cat:"methods", q:"Which method reads the entire content of a file as a single string?", opts:["readline()","readall()","read()","get()"], a:2},
+  {cat:"methods", q:"Which method reads only ONE line from a file at a time?", opts:["read()","readline()","readlines()","line()"], a:1},
+  {cat:"methods", q:"Which method returns all lines of a file as a list of strings?", opts:["read()","readline()","readlines()","lines()"], a:2},
+  {cat:"basics", q:"For a 3-line text file, what does <code>f.readlines()</code> return?", opts:["A string of 3 lines","A tuple of 3 lines","A list containing 3 line-strings","An integer 3"], a:2},
+  {cat:"methods", q:"Which method is used to write a single string into a text file?", opts:["write()","writeline()","print()","save()"], a:0},
+  {cat:"methods", q:"Which method writes a list of strings to a file in one call?", opts:["write()","writeall()","writelines()","dump()"], a:2},
+  {cat:"basics", q:"What does <code>f.readlines()</code> return for a completely empty file?", opts:["None","An empty list []","An error","'0'"], a:1},
+  {cat:"basics", q:"Which statement ensures a file is automatically closed, even if an exception occurs inside the block?", opts:["try — except","with ... as","auto ... close","finally block only"], a:1},
+  {cat:"methods", q:"Which method is used to explicitly close an open file object?", opts:["end()","close()","exit()","stop()"], a:1},
+  {cat:"basics", q:"What does the attribute <code>f.closed</code> return?", opts:["The file's size","True or False, whether the file is closed","The file name","The current line number"], a:1},
+  {cat:"pointer", q:"What does <code>f.tell()</code> return?", opts:["The total number of lines","The current position of the file pointer","The file's name","The last character read"], a:1},
+  {cat:"pointer", q:"What does <code>f.seek(0)</code> do?", opts:["Deletes the file","Closes the file","Moves the file pointer to the beginning","Moves the pointer to the end"], a:2},
+  {cat:"pointer", q:"In <code>f.seek(offset, whence)</code>, what does <code>whence = 0</code> mean?", opts:["Relative to current position","Relative to end of file","Relative to beginning of file","Relative to next line"], a:2},
+  {cat:"pointer", q:"In <code>f.seek(offset, whence)</code>, what does <code>whence = 1</code> mean?", opts:["From beginning of file","From current position of pointer","From end of file","Not a valid value"], a:1},
+  {cat:"pointer", q:"In <code>f.seek(offset, whence)</code>, what does <code>whence = 2</code> mean?", opts:["From beginning of file","From current position","From end of file","From line 2"], a:2},
+  {cat:"modes", q:"Which mode allows BOTH reading and writing, but raises an error if the file does not already exist?", opts:["r+","w+","a+","x+"], a:0},
+  {cat:"modes", q:"Which mode allows both reading and writing, creates the file if absent, and TRUNCATES existing content?", opts:["r+","w+","a","rb"], a:1},
+  {cat:"basics", q:"Trying to open a non-existent file in <code>'r'</code> mode raises which exception?", opts:["ValueError","FileNotFoundError","IOError only in Python 2","TypeError"], a:1},
+  {cat:"modes", q:"Which mode should be used to open an image or other non-text file for reading?", opts:["r","rb","rt","ra"], a:1},
+  {cat:"basics", q:"If a file is opened in <code>'w'</code> mode and it already contains data, what happens to that data?", opts:["It is preserved and appended to","It is erased/truncated immediately","It becomes read-only","Nothing, 'w' behaves like 'a'"], a:1},
+  {cat:"basics", q:"Which special character usually marks the end of each line when reading a text file?", opts:["\\t","\\0","\\n","\\r\\r"], a:2},
+  {cat:"modes", q:"Which mode allows both appending new data AND reading from a file?", opts:["a+","r+","w+","ar"], a:0},
+  {cat:"csv", q:"Which standard Python module is used to read and write CSV (Comma Separated Values) files?", opts:["json","csv","os","pickle"], a:1},
+  {cat:"csv", q:"Which function creates a writer object to write rows into a CSV file?", opts:["csv.reader()","csv.writer()","csv.DictReader()","csv.create()"], a:1},
+  {cat:"csv", q:"Which csv writer method writes a single row (a list) into the CSV file?", opts:["writerow()","writerows()","write()","addrow()"], a:0},
+  {cat:"csv", q:"Which csv writer method writes multiple rows (a list of lists) in one call?", opts:["writerow()","writeall()","writerows()","writemany()"], a:2},
+  {cat:"csv", q:"Which csv class reads each CSV row directly as a dictionary?", opts:["csv.reader","csv.DictReader","csv.DictWriter","csv.MapReader"], a:1},
+  {cat:"csv", q:"By default, which character separates values in a standard CSV file?", opts:["Semicolon ( ; )","Comma ( , )","Tab ( \\t )","Pipe ( | )"], a:1},
+  {cat:"pickle", q:"Which module lets you serialize (store) Python objects such as lists or dictionaries directly into a binary file?", opts:["csv","pickle","struct","marshal only"], a:1},
+  {cat:"pickle", q:"Which pickle function is used to WRITE a Python object to an already-open binary file?", opts:["pickle.dump()","pickle.write()","pickle.save()","pickle.store()"], a:0},
+  {cat:"pickle", q:"Which pickle function is used to READ back a Python object from a binary file?", opts:["pickle.read()","pickle.open()","pickle.load()","pickle.get()"], a:2},
+  {cat:"pickle", q:"In which mode must a file be opened before using <code>pickle.dump()</code> to write into it?", opts:["Text write mode 'w'","Binary write mode 'wb'","Append mode 'a'","Read mode 'r'"], a:1},
+  {cat:"os", q:"Which function of the <code>os</code> module is used to permanently delete a file?", opts:["os.delete()","os.remove()","os.erase()","os.unlink_file()"], a:1},
+  {cat:"os", q:"Which function of the <code>os</code> module is used to rename an existing file?", opts:["os.rename()","os.move()","os.changename()","os.relabel()"], a:0},
+  {cat:"basics", q:"What is the correct syntax to open <code>'data.txt'</code> for reading using the <code>with</code> statement?", opts:["<code>with open('data.txt','r') as f:</code>","<code>with f = open('data.txt','r'):</code>","<code>open with 'data.txt' as f:</code>","<code>using open('data.txt') as f:</code>"], a:0},
+];
+
+let order = [];
+let current = 0;
+let score = 0;
+let wrong = 0;
+let answered = false;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildTabStrip(){
+  const strip = document.getElementById('tabStrip');
+  strip.innerHTML = '';
+  order.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'tabchip';
+    d.id = 'chip-' + i;
+    strip.appendChild(d);
+  });
+}
+
+function startQuiz(){
+  order = shuffle(QUESTIONS.map((q,i)=>i));
+  current = 0;
+  score = 0;
+  wrong = 0;
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('folder').style.display = 'flex';
+  buildTabStrip();
+  updateStats();
+  loadQuestion();
+}
+
+function updateStats(){
+  document.getElementById('qnumVal').textContent = (current+1) + '/' + order.length;
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('wrongVal').textContent = wrong;
+}
+
+function loadQuestion(){
+  answered = false;
+  const qIndex = order[current];
+  const item = QUESTIONS[qIndex];
+  const cat = CATEGORIES[item.cat];
+
+  document.getElementById('tabLabel').textContent = 'Q' + String(current+1).padStart(2,'0');
+  document.getElementById('tabLabel').style.background = cat.color;
+  document.getElementById('catDot').style.background = cat.color;
+  document.getElementById('catName').textContent = cat.label;
+  document.getElementById('category-pill').style.borderColor = cat.color;
+
+  document.getElementById('question').innerHTML = item.q;
+
+  // shuffle options but remember correct answer text
+  const letters = ['A','B','C','D'];
+  const optWithFlag = item.opts.map((text, idx) => ({text, correct: idx === item.a}));
+  const shuffledOpts = shuffle(optWithFlag);
+
+  const optsDiv = document.getElementById('options');
+  optsDiv.innerHTML = '';
+  shuffledOpts.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="tag">${letters[idx]}</span><span class="otext">${opt.text}</span>`;
+    btn.dataset.correct = opt.correct;
+    btn.addEventListener('click', () => selectOption(btn, opt.correct));
+    optsDiv.appendChild(btn);
+  });
+
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = '';
+  document.getElementById('nextBtn').classList.remove('show');
+
+  // mark current tab
+  document.querySelectorAll('.tabchip').forEach(c => c.classList.remove('current'));
+  const chip = document.getElementById('chip-' + current);
+  if(chip) chip.classList.add('current');
+
+  updateStats();
+}
+
+function selectOption(btn, isCorrect){
+  if(answered) return;
+  answered = true;
+
+  const allOpts = document.querySelectorAll('.opt');
+  allOpts.forEach(o => {
+    o.classList.add('locked');
+    if(o.dataset.correct === 'true'){
+      o.classList.add('correct');
+    } else if(o === btn){
+      o.classList.add('wrong');
+    } else {
+      o.classList.add('dim');
+    }
+  });
+
+  const fb = document.getElementById('feedback');
+  const chip = document.getElementById('chip-' + current);
+
+  if(isCorrect){
+    score++;
+    fb.textContent = '✔ Correct! Filed accurately.';
+    fb.className = 'good';
+    if(chip) chip.classList.add('answered-correct');
+  } else {
+    wrong++;
+    fb.textContent = '✘ Not quite — check the highlighted answer.';
+    fb.className = 'bad';
+    if(chip) chip.classList.add('answered-wrong');
+  }
+
+  updateStats();
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function nextQuestion(){
+  if(!answered) return;
+  current++;
+  if(current >= order.length){
+    showResult();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showResult(){
+  document.getElementById('folder').style.display = 'none';
+  const res = document.getElementById('resultScreen');
+  res.style.display = 'flex';
+  const total = order.length;
+  document.getElementById('resultScoreText').textContent = score + ' / ' + total;
+
+  let icon = '🏆', msg = 'Outstanding! You know your file handling.';
+  const pct = score/total;
+  if(pct < 0.5){ icon='📂'; msg='Keep practicing modes, methods & pointers.'; }
+  else if(pct < 0.75){ icon='📁'; msg='Good effort — revise a few weak spots.'; }
+  else if(pct < 1){ icon='🗄️'; msg='Great job! Almost a perfect archive.'; }
+
+  document.getElementById('resultIcon').textContent = icon;
+  document.getElementById('resultMsg').textContent = msg + '  (' + wrong + ' incorrect)';
+}
+
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+document.getElementById('restartBtn').addEventListener('click', startQuiz);
+
+document.addEventListener('keydown', (e) => {
+  if(['1','2','3','4'].includes(e.key)){
+    const opts = document.querySelectorAll('.opt');
+    const idx = parseInt(e.key,10)-1;
+    if(opts[idx] && !answered) opts[idx].click();
+  } else if(e.key === 'Enter'){
+    nextQuestion();
+  }
+});
+
+startQuiz();
+</script>
+</body>
+</html>
