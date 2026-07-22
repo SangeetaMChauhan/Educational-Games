@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Key Vault — Master MySQL Keys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBF6EC;
+    --bg-alt:#F3ECDA;
+    --panel:#FFFFFF;
+    --ink:#232323;
+    --ink-soft:#6b6353;
+    --navy:#16213E;
+    --border:#E7DFC9;
+
+    --gold:#B4880A;
+    --gold-bg:#FCF2D2;
+    --teal:#0B8378;
+    --teal-bg:#DFF3F1;
+    --plum:#8A3F9E;
+    --plum-bg:#F3E4F7;
+    --orange:#D2611F;
+    --orange-bg:#FCE7D6;
+    --sky:#1E6FA8;
+    --sky-bg:#DDEEFA;
+    --rose:#B23B6D;
+    --rose-bg:#FBE1EC;
+    --green:#2E7A50;
+    --green-bg:#DFF2E6;
+
+    --good:#1F8A4C;
+    --bad:#C23B3B;
+    --shadow: 0 6px 20px rgba(22,33,62,0.08);
+    --shadow-lg: 0 14px 40px rgba(22,33,62,0.14);
+    --radius: 18px;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(1200px 500px at 10% -10%, #FFFDF6 0%, transparent 60%),
+      radial-gradient(1000px 600px at 110% 10%, #FFF7E8 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk', 'Inter', sans-serif;
+    color:var(--navy);
+    letter-spacing:-0.01em;
+  }
+  code, .mono{ font-family:'JetBrains Mono', monospace; }
+  button{ font-family:inherit; }
+  ::selection{ background:var(--gold-bg); }
+
+  /* ---------- Layout shell ---------- */
+  .wrap{ max-width:1080px; margin:0 auto; padding:20px 16px 64px; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap;
+    padding:14px 18px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    margin-bottom:18px;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand svg{ width:40px; height:40px; flex-shrink:0; }
+  .brand-text h1{ font-size:1.35rem; margin:0; line-height:1.1; }
+  .brand-text p{ margin:2px 0 0; font-size:0.85rem; color:var(--ink-soft); font-weight:500; }
+
+  .stats{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .stat-chip{
+    display:flex; align-items:center; gap:6px;
+    background:var(--bg-alt); border:1px solid var(--border);
+    border-radius:999px; padding:7px 13px;
+    font-weight:700; font-size:0.85rem; color:var(--navy);
+    white-space:nowrap;
+  }
+  .stat-chip .ico{ font-size:1rem; }
+
+  /* Keyring signature element */
+  .keyring{
+    display:flex; gap:8px; align-items:center; justify-content:center;
+    padding:10px 14px; margin-bottom:18px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:var(--radius); box-shadow:var(--shadow);
+  }
+  .keyring .ring-label{ font-size:0.78rem; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; margin-right:6px; }
+  .keyring .mini-key{
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:#EFEAD9; border:2px solid var(--border);
+    opacity:0.45; transition: all .35s ease; transform:scale(0.9);
+  }
+  .keyring .mini-key svg{ width:16px; height:16px; }
+  .keyring .mini-key.unlocked{ opacity:1; transform:scale(1) rotate(-8deg); box-shadow:0 3px 10px rgba(0,0,0,0.12); }
+
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .tab-btn{
+    flex:1 1 auto; min-width:130px;
+    padding:12px 14px; border-radius:14px; border:2px solid var(--border);
+    background:var(--panel); cursor:pointer; font-weight:700; font-size:0.92rem;
+    color:var(--ink-soft); transition:all .2s ease; text-align:center;
+  }
+  .tab-btn:hover{ border-color:var(--navy); color:var(--navy); }
+  .tab-btn.active{
+    background:var(--navy); color:#fff; border-color:var(--navy);
+    box-shadow:var(--shadow);
+  }
+
+  .panel{ display:none; animation: fadein .35s ease; }
+  .panel.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .section-head{ margin-bottom:16px; }
+  .section-head h2{ font-size:1.5rem; margin:0 0 4px; }
+  .section-head p{ margin:0; color:var(--ink-soft); font-size:0.95rem; }
+
+  /* ---------- Learn: flip cards ---------- */
+  .card-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr));
+    gap:16px;
+  }
+  .flip-card{ perspective:1200px; height:380px; cursor:pointer; }
+  @media (max-width:480px){ .flip-card{ height:400px; } }
+  .flip-inner{
+    position:relative; width:100%; height:100%; transition:transform .6s cubic-bezier(.4,.2,.2,1);
+    transform-style:preserve-3d;
+  }
+  .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+  .flip-face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:16px; padding:18px; border:2px solid var(--border);
+    display:flex; flex-direction:column; box-shadow:var(--shadow);
+  }
+  .flip-front{ background:var(--panel); justify-content:space-between; }
+  .flip-back{
+    transform:rotateY(180deg); display:flex; flex-direction:column;
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  }
+  .key-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 11px; border-radius:999px; font-weight:800; font-size:0.78rem;
+    text-transform:uppercase; letter-spacing:0.04em; width:fit-content;
+  }
+  .flip-front h3{ font-size:1.15rem; margin:10px 0 6px; }
+  .flip-front .short{ color:var(--ink-soft); font-size:0.9rem; margin:0; }
+  .flip-hint{ font-size:0.75rem; color:var(--ink-soft); font-weight:600; opacity:0.7; }
+  .flip-back h4{ margin:0 0 8px; font-size:1rem; color:var(--navy); font-family:'Space Grotesk'; flex-shrink:0; }
+  .flip-back p{ margin:0 0 10px; font-size:0.88rem; color:var(--ink); flex-shrink:0; }
+  .flip-back pre{
+    margin:0; padding:12px; border-radius:10px; background:var(--navy); color:#E9F1FF;
+    font-size:0.78rem; overflow-x:auto; white-space:pre-wrap; line-height:1.5;
+    flex-shrink:0;
+  }
+
+  /* ---------- Match game ---------- */
+  .match-board{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:640px){ .match-board{ grid-template-columns:1fr; } }
+  .match-col h4{ font-size:0.8rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); margin:0 0 8px; }
+  .match-item{
+    padding:13px 14px; border-radius:12px; border:2px solid var(--border);
+    background:var(--panel); margin-bottom:10px; cursor:pointer; font-weight:600;
+    font-size:0.92rem; transition:all .15s ease; box-shadow:var(--shadow);
+  }
+  .match-item:hover{ transform:translateY(-2px); }
+  .match-item.selected{ border-color:var(--navy); box-shadow:0 0 0 3px rgba(22,33,62,0.15); }
+  .match-item.matched{ cursor:default; pointer-events:none; font-weight:700; }
+  .match-item.matched .match-check{ float:right; }
+  .match-item.wrong{ animation:shake .4s ease; border-color:var(--bad); }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+  .match-progress{ margin-top:16px; text-align:center; font-weight:700; color:var(--ink-soft); }
+
+  /* ---------- Quiz ---------- */
+  .quiz-topline{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+  .lives{ font-size:1.15rem; letter-spacing:3px; }
+  .progress-track{ height:8px; background:var(--bg-alt); border-radius:99px; overflow:hidden; margin-bottom:20px; border:1px solid var(--border); }
+  .progress-fill{ height:100%; background:linear-gradient(90deg,var(--gold),var(--orange)); transition:width .4s ease; }
+  .quiz-card{
+    background:var(--panel); border:2px solid var(--border); border-radius:var(--radius);
+    padding:22px; box-shadow:var(--shadow-lg);
+  }
+  .quiz-lock{ text-align:center; font-size:2.4rem; margin-bottom:4px; transition:transform .35s ease; }
+  .quiz-q{ font-size:1.15rem; font-weight:700; color:var(--navy); margin:6px 0 18px; text-align:center; }
+  .quiz-opts{ display:grid; gap:10px; }
+  .opt-btn{
+    text-align:left; padding:13px 16px; border-radius:12px; border:2px solid var(--border);
+    background:var(--bg); cursor:pointer; font-weight:600; font-size:0.95rem; color:var(--ink);
+    transition:all .15s ease;
+  }
+  .opt-btn:hover:not(:disabled){ border-color:var(--navy); background:#fff; transform:translateX(3px); }
+  .opt-btn:disabled{ cursor:default; }
+  .opt-btn.correct{ background:var(--green-bg); border-color:var(--good); color:#155c33; }
+  .opt-btn.incorrect{ background:var(--rose-bg); border-color:var(--bad); color:#8a2222; }
+  .quiz-feedback{ min-height:24px; text-align:center; font-weight:700; margin-top:14px; font-size:0.92rem; }
+  .quiz-actions{ display:flex; justify-content:center; margin-top:14px; }
+  .btn{
+    padding:11px 22px; border-radius:12px; border:none; background:var(--navy); color:#fff;
+    font-weight:700; font-size:0.92rem; cursor:pointer; transition:all .15s ease; box-shadow:var(--shadow);
+  }
+  .btn:hover{ transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+  .btn.secondary{ background:var(--panel); color:var(--navy); border:2px solid var(--navy); }
+  .quiz-end{ text-align:center; padding:20px 10px; }
+  .quiz-end .big{ font-size:2.6rem; margin-bottom:6px; }
+  .quiz-end h3{ margin:0 0 6px; font-size:1.3rem; }
+  .quiz-end p{ color:var(--ink-soft); margin:0 0 18px; }
+
+  /* ---------- Table builder ---------- */
+  .scenario-nav{ display:flex; gap:8px; margin-bottom:14px; }
+  .scenario-dot{
+    width:34px; height:34px; border-radius:50%; border:2px solid var(--border);
+    background:var(--panel); font-weight:700; cursor:pointer; color:var(--ink-soft);
+  }
+  .scenario-dot.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .scenario-dot.done{ background:var(--green-bg); border-color:var(--good); color:#155c33; }
+  .build-card{ background:var(--panel); border:2px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-lg); }
+  .build-card h3{ margin:0 0 4px; font-size:1.15rem; }
+  .build-goal{ color:var(--ink-soft); font-size:0.92rem; margin:0 0 16px; }
+  .table-mock{ border:2px solid var(--navy); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  .table-mock-head{ display:flex; background:var(--navy); }
+  .col-chip{
+    flex:1; min-height:48px; padding:12px 8px; text-align:center; cursor:pointer; color:#dfe6ff;
+    font-weight:700; font-size:0.82rem; border:none; border-right:1px solid rgba(255,255,255,0.15);
+    background:transparent; font-family:inherit; transition:all .15s ease; user-select:none;
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent; position:relative;
+  }
+  .col-chip:last-child{ border-right:none; }
+  .col-chip:hover{ background:#22315c; }
+  .col-chip:active{ background:#2c3f75; }
+  .col-chip.picked{ background:var(--gold); color:#3a2c00; box-shadow:inset 0 0 0 3px #fff3d1; }
+  .col-chip.picked::before{ content:"✓ "; }
+  .table-mock-row{ display:flex; background:#fff; }
+  .table-mock-row .cell{ flex:1; padding:10px 8px; text-align:center; font-size:0.8rem; color:var(--ink-soft); font-family:'JetBrains Mono'; border-right:1px solid var(--border); }
+  .table-mock-row .cell:last-child{ border-right:none; }
+  .build-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
+  .build-feedback{ margin-top:14px; padding:12px 14px; border-radius:12px; font-size:0.9rem; font-weight:600; display:none; }
+  .build-feedback.show{ display:block; }
+  .build-feedback.good{ background:var(--green-bg); color:#155c33; }
+  .build-feedback.bad{ background:var(--rose-bg); color:#8a2222; }
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:0.8rem; margin-top:30px; }
+
+  @media (max-width:520px){
+    .brand-text h1{ font-size:1.1rem; }
+    .quiz-q{ font-size:1.02rem; }
+    .col-chip{ font-size:0.72rem; padding:10px 4px; }
+  }
+
+  .visually-hidden{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  button:focus-visible, .tab-btn:focus-visible, .match-item:focus-visible, .col-chip:focus-visible{
+    outline:3px solid var(--gold); outline-offset:2px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="17" cy="24" r="11" stroke="#B4880A" stroke-width="3.5"/>
+        <circle cx="17" cy="24" r="3.5" fill="#B4880A"/>
+        <rect x="26" y="21.5" width="19" height="5" rx="1.5" fill="#B4880A"/>
+        <rect x="35" y="26" width="4" height="6" fill="#B4880A"/>
+        <rect x="41" y="26" width="4" height="8" fill="#B4880A"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Key Vault</h1>
+        <p>Learn MySQL Keys by playing</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-chip"><span class="ico">⭐</span><span id="scoreDisplay">0</span> XP</div>
+      <div class="stat-chip"><span class="ico">🔥</span><span id="streakDisplay">0</span> streak</div>
+    </div>
+  </div>
+
+  <div class="keyring" id="keyring" aria-label="Concepts unlocked so far">
+    <span class="ring-label">Key ring</span>
+    <!-- mini keys injected by JS -->
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="learn" role="tab">🗝️ Learn</button>
+    <button class="tab-btn" data-tab="match" role="tab">🧩 Match</button>
+    <button class="tab-btn" data-tab="quiz" role="tab">🔐 Quiz Vault</button>
+    <button class="tab-btn" data-tab="build" role="tab">🏗️ Table Builder</button>
+  </div>
+
+  <!-- LEARN -->
+  <section class="panel active" id="panel-learn">
+    <div class="section-head">
+      <h2>Meet the keys</h2>
+      <p>Tap a card to flip it and reveal the definition plus a live SQL example.</p>
+    </div>
+    <div class="card-grid" id="cardGrid"></div>
+  </section>
+
+  <!-- MATCH -->
+  <section class="panel" id="panel-match">
+    <div class="section-head">
+      <h2>Match the key to its clue</h2>
+      <p>Tap a key term, then tap the clue that describes it. Works great with mouse or finger.</p>
+    </div>
+    <div class="match-board">
+      <div class="match-col" id="matchTerms"><h4>Key terms</h4></div>
+      <div class="match-col" id="matchDefs"><h4>Clues</h4></div>
+    </div>
+    <p class="match-progress" id="matchProgress">0 / 7 matched</p>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="panel-quiz">
+    <div class="section-head">
+      <h2>Quiz Vault</h2>
+      <p>Answer to crack each lock. Three wrong answers and the vault seals — try again!</p>
+    </div>
+    <div class="quiz-topline">
+      <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+      <div style="font-weight:700; color:var(--ink-soft); font-size:0.85rem;" id="quizPos">Question 1 / 10</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="quizProgressFill" style="width:0%"></div></div>
+    <div class="quiz-card" id="quizCard"></div>
+  </section>
+
+  <!-- BUILD -->
+  <section class="panel" id="panel-build">
+    <div class="section-head">
+      <h2>Table Builder Challenge</h2>
+      <p>Apply what you've learned to real table designs. Click the column(s) the scenario asks for.</p>
+    </div>
+    <div class="scenario-nav" id="scenarioNav"></div>
+    <div class="build-card" id="buildCard"></div>
+  </section>
+
+  <footer>Key Vault · Built to help you master MySQL Primary, Foreign, Unique, Composite, Candidate, Super &amp; Alternate keys.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ Shared data ============ */
+  const KEYS = [
+    { id:'pk', name:'Primary Key', color:'gold', short:'Uniquely IDs each row — no NULLs allowed.',
+      detail:'A PRIMARY KEY uniquely identifies every row in a table. It can never contain NULL, and a table may have only one — though it can span multiple columns as a composite key.',
+      example:'CREATE TABLE Students (\n  student_id INT PRIMARY KEY,\n  name VARCHAR(50)\n);' },
+    { id:'fk', name:'Foreign Key', color:'teal', short:'Links one table to another.',
+      detail:'A FOREIGN KEY is a column that references the PRIMARY KEY of another table. It enforces referential integrity — you can\'t insert a value that doesn\'t exist in the parent table.',
+      example:'CREATE TABLE Orders (\n  order_id INT PRIMARY KEY,\n  student_id INT,\n  FOREIGN KEY (student_id)\n    REFERENCES Students(student_id)\n);' },
+    { id:'uk', name:'Unique Key', color:'plum', short:'No duplicates, but one NULL is OK.',
+      detail:'A UNIQUE key makes sure every value in a column is different from the rest. Unlike a primary key it may hold one NULL, and a table can have several unique keys.',
+      example:'CREATE TABLE Users (\n  user_id INT PRIMARY KEY,\n  email VARCHAR(100) UNIQUE\n);' },
+    { id:'ck', name:'Composite Key', color:'orange', short:'A primary key built from 2+ columns.',
+      detail:'A COMPOSITE KEY combines two or more columns to form the primary key, used when no single column is unique enough on its own.',
+      example:'CREATE TABLE Enrollments (\n  student_id INT,\n  course_id INT,\n  PRIMARY KEY (student_id, course_id)\n);' },
+    { id:'cand', name:'Candidate Key', color:'sky', short:'Qualified to be primary key.',
+      detail:'A CANDIDATE KEY is any column (or column set) that satisfies uniqueness and minimality — it COULD be chosen as the primary key, whether or not it actually is.',
+      example:'-- In Students, both student_id\n-- and email qualify as candidate\n-- keys. Only one becomes PRIMARY KEY.' },
+    { id:'super', name:'Super Key', color:'rose', short:'Any set that uniquely IDs a row.',
+      detail:'A SUPER KEY is any set of columns that can uniquely identify a row — even with extra, unnecessary columns tacked on. Every candidate key is a super key, but not every super key is minimal enough to be a candidate key.',
+      example:'-- (student_id) is a super key\n-- (student_id, name) is also a\n-- super key — just not minimal.' },
+    { id:'alt', name:'Alternate Key', color:'green', short:'The candidate key not chosen.',
+      detail:'An ALTERNATE KEY is a candidate key that was NOT picked as the primary key. It still uniquely identifies rows and is often enforced with a UNIQUE constraint.',
+      example:'-- If student_id becomes PRIMARY KEY,\n-- email becomes an ALTERNATE KEY\n-- (usually marked UNIQUE).' }
+  ];
+
+  const COLOR_VARS = {
+    gold:['--gold','--gold-bg'], teal:['--teal','--teal-bg'], plum:['--plum','--plum-bg'],
+    orange:['--orange','--orange-bg'], sky:['--sky','--sky-bg'], rose:['--rose','--rose-bg'], green:['--green','--green-bg']
+  };
+
+  const QUIZ = [
+    { q:'Which key uniquely identifies each row in a table and can never contain NULL?', opts:['Foreign Key','Primary Key','Unique Key','Super Key'], a:1 },
+    { q:'Which key creates a link between two tables?', opts:['Composite Key','Alternate Key','Foreign Key','Candidate Key'], a:2 },
+    { q:'Which key forbids duplicates but still allows exactly one NULL value?', opts:['Unique Key','Primary Key','Composite Key','Super Key'], a:0 },
+    { q:'What do we call a primary key that is built from two or more columns together?', opts:['Alternate Key','Composite Key','Candidate Key','Foreign Key'], a:1 },
+    { q:'Which term describes ANY column set that COULD have been chosen as the primary key?', opts:['Super Key','Foreign Key','Candidate Key','Unique Key'], a:2 },
+    { q:'A candidate key that was NOT chosen as the primary key is called a(n):', opts:['Alternate Key','Composite Key','Super Key','Foreign Key'], a:0 },
+    { q:'Which is the broadest term — any column set that uniquely IDs a row, even with extra unneeded columns?', opts:['Candidate Key','Primary Key','Super Key','Unique Key'], a:2 },
+    { q:'In `FOREIGN KEY (dept_id) REFERENCES Departments(dept_id)`, what is happening?', opts:['dept_id is being made unique','dept_id must match a value in Departments\' primary key','A new table is created','dept_id becomes auto-incrementing'], a:1 },
+    { q:'Which SQL keyword enforces "no duplicate values" on a non-primary column?', opts:['INDEX','UNIQUE','DEFAULT','CHECK'], a:1 },
+    { q:'Can a single MySQL table have more than one PRIMARY KEY?', opts:['Yes, up to three','No — only one (though it can span multiple columns)','Yes, unlimited','Only in InnoDB tables'], a:1 }
+  ];
+
+  const SCENARIOS = [
+    {
+      title:'Students table',
+      goal:'Click the ONE column that should be the PRIMARY KEY.',
+      cols:['student_id','roll_no','full_name','email'],
+      sample:['101','CS-22-014','Aditi Sharma','aditi@mail.com'],
+      correct:['student_id'],
+      multi:false,
+      explain:'student_id is the natural, stable identifier. roll_no and email are great candidate keys too — great alternate keys — but only one column becomes the actual PRIMARY KEY.'
+    },
+    {
+      title:'Enrollments table (a student can join many courses, a course has many students)',
+      goal:'Click ALL column headings needed to form a COMPOSITE PRIMARY KEY.',
+      cols:['student_id','course_id','enroll_date'],
+      sample:['101','MYSQL-201','2026-07-01'],
+      correct:['student_id','course_id'],
+      multi:true,
+      explain:'Neither student_id nor course_id is unique alone (a student has many courses, a course has many students). Together, the pair (student_id, course_id) IS unique — that\'s a composite key.'
+    },
+    {
+      title:'Orders table (links to a separate Customers table)',
+      goal:'Click the column that should be the FOREIGN KEY referencing Customers.',
+      cols:['order_id','customer_id','product_name','order_date'],
+      sample:['5001','C-882','Wireless Mouse','2026-07-15'],
+      correct:['customer_id'],
+      multi:false,
+      explain:'customer_id points back to the primary key of the Customers table, so MySQL can enforce that every order belongs to a real, existing customer.'
+    }
+  ];
+
+  /* ============ Global state ============ */
+  const state = { score:0, streak:0, unlocked:new Set() };
+
+  function addScore(n){
+    state.score += n;
+    document.getElementById('scoreDisplay').textContent = state.score;
+  }
+  function bumpStreak(hit){
+    state.streak = hit ? state.streak + 1 : 0;
+    document.getElementById('streakDisplay').textContent = state.streak;
+  }
+  function unlockKey(id){
+    if(state.unlocked.has(id)) return;
+    state.unlocked.add(id);
+    const el = document.querySelector('.mini-key[data-id="'+id+'"]');
+    if(el) el.classList.add('unlocked');
+  }
+
+  function colorVars(color){
+    const v = COLOR_VARS[color];
+    return { main:`var(${v[0]})`, bg:`var(${v[1]})` };
+  }
+
+  function keySvg(){
+    return '<svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="12" r="4.2" stroke="currentColor" stroke-width="2"/><path d="M11.5 12H20M16 12V15M19 12V14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  }
+
+  /* ============ Keyring ============ */
+  function buildKeyring(){
+    const ring = document.getElementById('keyring');
+    KEYS.forEach(k=>{
+      const c = colorVars(k.color);
+      const d = document.createElement('div');
+      d.className = 'mini-key';
+      d.dataset.id = k.id;
+      d.title = k.name;
+      d.style.color = c.main;
+      d.innerHTML = keySvg();
+      ring.appendChild(d);
+    });
+  }
+
+  /* ============ Tabs ============ */
+  function initTabs(){
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        btns.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+        document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+      });
+    });
+  }
+
+  /* ============ Learn cards ============ */
+  function buildCards(){
+    const grid = document.getElementById('cardGrid');
+    KEYS.forEach(k=>{
+      const c = colorVars(k.color);
+      const card = document.createElement('div');
+      card.className = 'flip-card';
+      card.innerHTML = `
+        <div class="flip-inner">
+          <div class="flip-face flip-front">
+            <div>
+              <span class="key-badge" style="background:${c.bg}; color:${c.main};">${k.name}</span>
+              <h3>${k.name}</h3>
+              <p class="short">${k.short}</p>
+            </div>
+            <span class="flip-hint">Tap to flip →</span>
+          </div>
+          <div class="flip-face flip-back" style="background:${c.bg};">
+            <h4>${k.name}</h4>
+            <p>${k.detail}</p>
+            <pre>${k.example}</pre>
+          </div>
+        </div>`;
+      card.addEventListener('click', ()=>{
+        const wasFlipped = card.classList.contains('flipped');
+        card.classList.toggle('flipped');
+        if(!wasFlipped){ unlockKey(k.id); addScore(2); }
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  /* ============ Match game ============ */
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function buildMatch(){
+    const termsCol = document.getElementById('matchTerms');
+    const defsCol = document.getElementById('matchDefs');
+    const terms = shuffle(KEYS);
+    const defs = shuffle(KEYS);
+    let selectedTerm = null, selectedDef = null, matchedCount = 0;
+
+    terms.forEach(k=>{
+      const el = document.createElement('div');
+      el.className = 'match-item';
+      el.dataset.id = k.id;
+      el.tabIndex = 0;
+      el.textContent = k.name;
+      el.addEventListener('click', ()=> pickTerm(el, k.id));
+      termsCol.appendChild(el);
+    });
+    defs.forEach(k=>{
+      const el = document.createElement('div');
+      el.className = 'match-item';
+      el.dataset.id = k.id;
+      el.tabIndex = 0;
+      el.textContent = k.short;
+      el.addEventListener('click', ()=> pickDef(el, k.id));
+      defsCol.appendChild(el);
+    });
+
+    function pickTerm(el, id){
+      if(el.classList.contains('matched')) return;
+      if(selectedTerm) selectedTerm.el.classList.remove('selected');
+      selectedTerm = { el, id };
+      el.classList.add('selected');
+      tryMatch();
+    }
+    function pickDef(el, id){
+      if(el.classList.contains('matched')) return;
+      if(selectedDef) selectedDef.el.classList.remove('selected');
+      selectedDef = { el, id };
+      el.classList.add('selected');
+      tryMatch();
+    }
+    function tryMatch(){
+      if(!selectedTerm || !selectedDef) return;
+      if(selectedTerm.id === selectedDef.id){
+        const keyDef = KEYS.find(k=>k.id===selectedTerm.id);
+        const c = colorVars(keyDef.color);
+        [selectedTerm.el, selectedDef.el].forEach(el=>{
+          el.classList.remove('selected');
+          el.classList.add('matched');
+          el.style.background = c.bg;
+          el.style.borderColor = c.main;
+          el.style.color = c.main;
+          el.innerHTML = el.textContent + ' <span class="match-check">✓</span>';
+        });
+        matchedCount++;
+        addScore(5); bumpStreak(true);
+        unlockKey(selectedTerm.id);
+        document.getElementById('matchProgress').textContent = matchedCount + ' / ' + KEYS.length + ' matched';
+        selectedTerm = null; selectedDef = null;
+        if(matchedCount === KEYS.length){
+          document.getElementById('matchProgress').textContent = 'All matched! Vault fully mapped. 🔓';
+        }
+      } else {
+        selectedTerm.el.classList.add('wrong');
+        selectedDef.el.classList.add('wrong');
+        bumpStreak(false);
+        setTimeout(()=>{
+          selectedTerm.el.classList.remove('wrong','selected');
+          selectedDef.el.classList.remove('wrong','selected');
+          selectedTerm = null; selectedDef = null;
+        }, 420);
+      }
+    }
+  }
+
+  /* ============ Quiz ============ */
+  const quizState = { i:0, lives:3, order:[], done:false };
+
+  function startQuiz(){
+    quizState.i = 0; quizState.lives = 3; quizState.done = false;
+    quizState.order = shuffle(QUIZ.map((_,idx)=>idx));
+    renderLives();
+    renderQuizQuestion();
+  }
+  function renderLives(){
+    document.getElementById('livesDisplay').textContent = '❤️'.repeat(quizState.lives) + '🖤'.repeat(3-quizState.lives);
+  }
+  function renderQuizQuestion(){
+    const card = document.getElementById('quizCard');
+    if(quizState.i >= QUIZ.length || quizState.lives <= 0){
+      endQuiz();
+      return;
+    }
+    const qIdx = quizState.order[quizState.i];
+    const item = QUIZ[qIdx];
+    document.getElementById('quizPos').textContent = 'Question ' + (quizState.i+1) + ' / ' + QUIZ.length;
+    document.getElementById('quizProgressFill').style.width = ((quizState.i)/QUIZ.length*100) + '%';
+
+    const optOrder = shuffle(item.opts.map((o,idx)=>idx));
+    card.innerHTML = `
+      <div class="quiz-lock" id="quizLockIcon">🔒</div>
+      <p class="quiz-q">${item.q}</p>
+      <div class="quiz-opts" id="quizOpts"></div>
+      <p class="quiz-feedback" id="quizFeedback"></p>
+      <div class="quiz-actions" id="quizActions"></div>
+    `;
+    const optsWrap = document.getElementById('quizOpts');
+    optOrder.forEach(oi=>{
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = item.opts[oi];
+      btn.addEventListener('click', ()=> answerQuiz(oi, item, btn));
+      optsWrap.appendChild(btn);
+    });
+  }
+  function answerQuiz(chosenIdx, item, btn){
+    const opts = document.querySelectorAll('#quizOpts .opt-btn');
+    opts.forEach(b=> b.disabled = true);
+    const correct = chosenIdx === item.a;
+    const feedback = document.getElementById('quizFeedback');
+    const lock = document.getElementById('quizLockIcon');
+    opts.forEach(b=>{
+      if(b.textContent === item.opts[item.a]) b.classList.add('correct');
+    });
+    if(correct){
+      btn.classList.add('correct');
+      feedback.textContent = '✅ Correct — the lock clicks open!';
+      feedback.style.color = 'var(--good)';
+      lock.textContent = '🔓';
+      lock.style.transform = 'rotate(-8deg) scale(1.15)';
+      addScore(10); bumpStreak(true);
+    } else {
+      btn.classList.add('incorrect');
+      feedback.textContent = '❌ Not quite — one heart lost.';
+      feedback.style.color = 'var(--bad)';
+      quizState.lives -= 1;
+      renderLives();
+      bumpStreak(false);
+    }
+    const actions = document.getElementById('quizActions');
+    const next = document.createElement('button');
+    next.className = 'btn';
+    next.textContent = (quizState.i+1 >= QUIZ.length || quizState.lives<=0) ? 'See results' : 'Next question →';
+    next.addEventListener('click', ()=>{
+      quizState.i += 1;
+      renderQuizQuestion();
+    });
+    actions.appendChild(next);
+  }
+  function endQuiz(){
+    const card = document.getElementById('quizCard');
+    document.getElementById('quizProgressFill').style.width = '100%';
+    const passed = quizState.lives > 0;
+    card.innerHTML = `
+      <div class="quiz-end">
+        <div class="big">${passed ? '🏆' : '🔒'}</div>
+        <h3>${passed ? 'Vault cracked!' : 'Vault sealed — try again'}</h3>
+        <p>${passed ? 'You answered every question before running out of hearts.' : 'You ran out of hearts. Review the Learn tab and give it another go.'}</p>
+        <p style="font-weight:700; color:var(--navy);">Score this session: ${state.score} XP</p>
+        <button class="btn secondary" id="restartQuiz">Restart Quiz</button>
+      </div>
+    `;
+    document.getElementById('restartQuiz').addEventListener('click', startQuiz);
+  }
+
+  /* ============ Table builder ============ */
+  const buildState = { idx:0, picked:new Set(), doneScenarios:new Set() };
+
+  function buildScenarioNav(){
+    const nav = document.getElementById('scenarioNav');
+    nav.innerHTML = '';
+    SCENARIOS.forEach((s,i)=>{
+      const dot = document.createElement('button');
+      dot.className = 'scenario-dot';
+      dot.textContent = i+1;
+      dot.addEventListener('click', ()=>{ buildState.idx = i; buildState.picked.clear(); renderScenario(); });
+      nav.appendChild(dot);
+    });
+    renderScenarioNavState();
+  }
+  function renderScenarioNavState(){
+    document.querySelectorAll('.scenario-dot').forEach((d,i)=>{
+      d.classList.toggle('active', i===buildState.idx);
+      d.classList.toggle('done', buildState.doneScenarios.has(i));
+    });
+  }
+
+  function renderScenario(){
+    renderScenarioNavState();
+    const s = SCENARIOS[buildState.idx];
+    const card = document.getElementById('buildCard');
+    card.innerHTML = `
+      <h3>${s.title}</h3>
+      <p class="build-goal">${s.goal}</p>
+      <div class="table-mock">
+        <div class="table-mock-head" id="colHead"></div>
+        <div class="table-mock-row" id="colRow"></div>
+      </div>
+      <div class="build-actions">
+        <button class="btn" id="checkBtn">Check answer</button>
+        <button class="btn secondary" id="clearBtn">Clear selection</button>
+      </div>
+      <div class="build-feedback" id="buildFeedback"></div>
+    `;
+    const head = document.getElementById('colHead');
+    const row = document.getElementById('colRow');
+    s.cols.forEach((c,i)=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'col-chip';
+      chip.textContent = c;
+      chip.setAttribute('aria-pressed','false');
+      chip.addEventListener('click', ()=>{
+        if(!s.multi) buildState.picked.clear();
+        if(buildState.picked.has(c)) buildState.picked.delete(c); else buildState.picked.add(c);
+        renderPicked();
+      });
+      head.appendChild(chip);
+
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = s.sample[i];
+      row.appendChild(cell);
+    });
+    renderPicked();
+    document.getElementById('checkBtn').addEventListener('click', ()=> checkScenario(s));
+    document.getElementById('clearBtn').addEventListener('click', ()=>{ buildState.picked.clear(); renderPicked(); });
+  }
+  function renderPicked(){
+    document.querySelectorAll('#colHead .col-chip').forEach(chip=>{
+      const isPicked = buildState.picked.has(chip.textContent);
+      chip.classList.toggle('picked', isPicked);
+      chip.setAttribute('aria-pressed', isPicked ? 'true' : 'false');
+    });
+  }
+  function checkScenario(s){
+    const chosen = Array.from(buildState.picked).sort();
+    const correct = s.correct.slice().sort();
+    const isRight = chosen.length === correct.length && chosen.every((v,i)=>v===correct[i]);
+    const fb = document.getElementById('buildFeedback');
+    fb.className = 'build-feedback show ' + (isRight ? 'good' : 'bad');
+    fb.textContent = (isRight ? '✅ Correct! ' : '❌ Not quite. Correct answer: ' + correct.join(', ') + '. ') + s.explain;
+    if(isRight){
+      addScore(15); bumpStreak(true);
+      buildState.doneScenarios.add(buildState.idx);
+      renderScenarioNavState();
+    } else {
+      bumpStreak(false);
+    }
+  }
+
+  /* ============ Init ============ */
+  buildKeyring();
+  initTabs();
+  buildCards();
+  buildMatch();
+  startQuiz();
+  buildScenarioNav();
+  renderScenario();
+
+})();
+</script>
+</body>
+</html>
