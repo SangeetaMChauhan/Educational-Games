@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireless Communication Media - Learning Game</title>
+<style>
+  :root{
+    --bg:#F7F6F2;
+    --card:#FFFFFF;
+    --border:#DAD8D0;
+    --border-strong:#B4B2A9;
+    --text-primary:#2C2C2A;
+    --text-secondary:#5F5E5A;
+    --accent-bg:#E6F1FB;
+    --accent-border:#378ADD;
+    --accent-text:#0C447C;
+    --success-bg:#EAF3DE;
+    --success-border:#639922;
+    --success-text:#27500A;
+    --danger-bg:#FCEBEB;
+    --danger-border:#E24B4A;
+    --danger-text:#791F1F;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:24px 16px 60px;
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:24px;font-weight:600;margin:0 0 4px;}
+  .subtitle{font-size:15px;color:var(--text-secondary);margin:0 0 24px;}
+  .wm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+  .wm-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px 12px;
+    cursor:pointer;
+    text-align:center;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .wm-card:hover{border-color:var(--border-strong);}
+  .wm-card.active{border:2px solid var(--accent-border);background:var(--accent-bg);}
+  .wm-icon{font-size:28px;display:block;margin-bottom:6px;}
+  .wm-name{font-size:15px;font-weight:600;}
+  #wm-detail{margin-bottom:32px;}
+  .detail-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+  }
+  .detail-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:14px;
+    margin-top:14px;
+    font-size:14px;
+  }
+  .detail-grid .label{color:var(--text-secondary);font-size:13px;display:block;margin-bottom:2px;}
+  @keyframes wm-ping{0%{r:14;opacity:.9}100%{r:120;opacity:0}}
+  @keyframes wm-dash{to{stroke-dashoffset:-24}}
+  .wm-wave{animation:wm-ping 2s ease-out infinite;}
+  .wm-wave2{animation-delay:.6s;}
+  .wm-wave3{animation-delay:1.2s;}
+  .wm-beam{stroke-dasharray:6 6;animation:wm-dash 1.2s linear infinite;}
+  .caption{font-size:12px;fill:var(--text-secondary);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Wireless communication media</h1>
+  <p class="subtitle">Explore radio waves, microwaves, infrared, and satellite communication, then test yourself with a Class XII level quiz.</p>
+
+  <div class="wm-grid" id="wm-grid"></div>
+  <div id="wm-detail"></div>
+</div>
+
+<script>
+const media = [
+  {id:'radio',icon:'&#128225;',name:'Radio waves',freq:'3 kHz &ndash; 300 MHz',range:'Long range, can bend around obstacles',los:'No line-of-sight needed',uses:'AM/FM radio, walkie-talkies, some IoT',
+   svg:`<svg width="100%" viewBox="0 0 400 160"><circle cx="60" cy="80" r="10" fill="#378ADD"/><circle class="wm-wave" cx="60" cy="80" r="14" fill="none" stroke="#378ADD" stroke-width="2"/><circle class="wm-wave wm-wave2" cx="60" cy="80" r="14" fill="none" stroke="#378ADD" stroke-width="2"/><circle class="wm-wave wm-wave3" cx="60" cy="80" r="14" fill="none" stroke="#378ADD" stroke-width="2"/><rect x="320" y="40" width="14" height="80" rx="3" fill="#888780"/><text x="20" y="140" class="caption">Signal spreads in all directions, even around buildings</text></svg>`},
+  {id:'micro',icon:'&#128246;',name:'Microwaves',freq:'300 MHz &ndash; 300 GHz',range:'Medium-long range, straight path',los:'Needs clear line-of-sight',uses:'Wi-Fi, mobile networks, radar, microwave ovens',
+   svg:`<svg width="100%" viewBox="0 0 400 160"><circle cx="40" cy="80" r="10" fill="#378ADD"/><line class="wm-beam" x1="55" y1="80" x2="345" y2="80" stroke="#378ADD" stroke-width="3"/><rect x="350" y="55" width="14" height="50" rx="3" fill="#888780"/><text x="20" y="140" class="caption">Travels in a tight, straight beam between towers</text></svg>`},
+  {id:'infrared',icon:'&#128225;',name:'Infrared',freq:'300 GHz &ndash; 400 THz',range:'Very short range, in-room only',los:'Strict line-of-sight, blocked by walls',uses:'TV remotes, short-range device links',
+   svg:`<svg width="100%" viewBox="0 0 400 160"><rect x="30" y="60" width="40" height="20" rx="4" fill="#888780"/><line class="wm-beam" x1="75" y1="70" x2="255" y2="70" stroke="#D85A30" stroke-width="3"/><rect x="260" y="40" width="30" height="60" rx="4" fill="#888780"/><text x="30" y="140" class="caption">Works only across a small, unobstructed room</text></svg>`},
+  {id:'satellite',icon:'&#128752;',name:'Satellite',freq:'1 GHz &ndash; 40 GHz (microwave band)',range:'Global range via space relay',los:'Needs sky view, no ground obstacles',uses:'GPS, satellite TV, remote internet',
+   svg:`<svg width="100%" viewBox="0 0 400 160">
+        <!-- signal beams -->
+        <line class="wm-beam" x1="200" y1="42" x2="70" y2="108" stroke="#378ADD" stroke-width="2"/>
+        <line class="wm-beam" x1="200" y1="42" x2="330" y2="108" stroke="#378ADD" stroke-width="2"/>
+        <!-- satellite body -->
+        <g transform="translate(200,32)">
+          <!-- left solar panel -->
+          <rect x="-58" y="-11" width="34" height="22" rx="2" fill="#2E6DA4"/>
+          <line x1="-58" y1="-4" x2="-24" y2="-4" stroke="#0C447C" stroke-width="1"/>
+          <line x1="-58" y1="3" x2="-24" y2="3" stroke="#0C447C" stroke-width="1"/>
+          <line x1="-46" y1="-11" x2="-46" y2="11" stroke="#0C447C" stroke-width="1"/>
+          <line x1="-34" y1="-11" x2="-34" y2="11" stroke="#0C447C" stroke-width="1"/>
+          <rect x="-24" y="-2" width="7" height="4" fill="#888780"/>
+          <!-- right solar panel -->
+          <rect x="24" y="-11" width="34" height="22" rx="2" fill="#2E6DA4"/>
+          <line x1="24" y1="-4" x2="58" y2="-4" stroke="#0C447C" stroke-width="1"/>
+          <line x1="24" y1="3" x2="58" y2="3" stroke="#0C447C" stroke-width="1"/>
+          <line x1="34" y1="-11" x2="34" y2="11" stroke="#0C447C" stroke-width="1"/>
+          <line x1="46" y1="-11" x2="46" y2="11" stroke="#0C447C" stroke-width="1"/>
+          <rect x="17" y="-2" width="7" height="4" fill="#888780"/>
+          <!-- main body -->
+          <rect x="-17" y="-14" width="34" height="28" rx="4" fill="#B4B2A9"/>
+          <rect x="-17" y="-14" width="34" height="9" rx="3" fill="#D8D6CE"/>
+          <!-- dish antenna -->
+          <path d="M 0 -14 C -10 -22 10 -22 0 -30" fill="none" stroke="#5F5E5A" stroke-width="1.5"/>
+          <ellipse cx="0" cy="-30" rx="9" ry="4" fill="#E6E4DC" stroke="#5F5E5A" stroke-width="1"/>
+          <!-- small antenna stub -->
+          <line x1="0" y1="14" x2="0" y2="22" stroke="#5F5E5A" stroke-width="1.5"/>
+        </g>
+        <!-- ground stations -->
+        <circle cx="70" cy="118" r="9" fill="#888780"/>
+        <rect x="66" y="108" width="8" height="14" fill="#5F5E5A"/>
+        <circle cx="330" cy="118" r="9" fill="#888780"/>
+        <rect x="326" y="108" width="8" height="14" fill="#5F5E5A"/>
+        <text x="55" y="145" class="caption">Ground stations relay signals through orbit</text>
+      </svg>`}
+];
+
+const grid = document.getElementById('wm-grid');
+const detail = document.getElementById('wm-detail');
+
+function showDetail(m){
+  Array.from(grid.children).forEach(c=>c.classList.toggle('active', c.dataset.id===m.id));
+  detail.innerHTML = `
+    <div class="detail-card">
+      ${m.svg}
+      <div class="detail-grid">
+        <div><span class="label">Frequency</span>${m.freq}</div>
+        <div><span class="label">Range</span>${m.range}</div>
+        <div><span class="label">Line of sight</span>${m.los}</div>
+        <div><span class="label">Common uses</span>${m.uses}</div>
+      </div>
+    </div>`;
+}
+
+media.forEach(m=>{
+  const c = document.createElement('div');
+  c.className = 'wm-card';
+  c.dataset.id = m.id;
+  c.innerHTML = `<span class="wm-icon">${m.icon}</span><span class="wm-name">${m.name}</span>`;
+  c.onclick = ()=>showDetail(m);
+  grid.appendChild(c);
+});
+showDetail(media[0]);
+</script>
+</body>
+</html>
