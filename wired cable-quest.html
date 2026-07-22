@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cable Quest — Wired Media Explorer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root{
+    --bg: #F3F7F9;
+    --bg-grid: #E4EDF1;
+    --panel: #FFFFFF;
+    --ink: #16232C;
+    --ink-soft: #4E626D;
+    --line: #D7E2E6;
+
+    --copper: #B5652F;
+    --copper-soft: #F3E3D6;
+    --coax: #2D6FB8;
+    --coax-soft: #DCEAF9;
+    --fiber: #12967F;
+    --fiber-soft: #D7F3EC;
+
+    --good: #1F8A57;
+    --bad: #C64545;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/100% 42px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/42px 100%,
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    min-height:100vh;
+    padding:28px 18px 60px;
+  }
+
+  .wrap{max-width:920px; margin:0 auto;}
+
+  /* ---------- HEADER / SIGNATURE SIGNAL LINE ---------- */
+  header{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:26px 28px 22px;
+    margin-bottom:22px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 6px 20px rgba(20,40,50,0.05);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--fiber);
+    font-weight:500;
+    margin-bottom:8px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:clamp(28px,4.5vw,38px);
+    font-weight:700;
+    letter-spacing:-0.01em;
+    color:var(--ink);
+  }
+  .sub{
+    color:var(--ink-soft);
+    font-size:15.5px;
+    margin-top:8px;
+    max-width:56ch;
+  }
+
+  .signal-track{
+    position:relative;
+    height:34px;
+    margin-top:20px;
+    border-radius:999px;
+    background:repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 16px);
+    display:flex; align-items:center;
+  }
+  .signal-track::before{
+    content:"";
+    position:absolute; left:0; top:50%; width:100%; height:2px;
+    background:var(--line); transform:translateY(-50%);
+  }
+  .pulse{
+    position:absolute; top:50%; width:14px; height:14px; border-radius:50%;
+    background:var(--fiber);
+    box-shadow:0 0 0 6px var(--fiber-soft);
+    transform:translate(-50%,-50%);
+    animation: travel 3.2s linear infinite;
+  }
+  .pulse.p2{ background:var(--coax); box-shadow:0 0 0 6px var(--coax-soft); animation-delay:1.05s;}
+  .pulse.p3{ background:var(--copper); box-shadow:0 0 0 6px var(--copper-soft); animation-delay:2.1s;}
+  @keyframes travel{
+    0%{ left:0%; }
+    100%{ left:100%; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pulse{ animation: none; left: 12%; }
+    .pulse.p2{ left:48%; }
+    .pulse.p3{ left:84%; }
+  }
+
+  /* ---------- STAT BAR ---------- */
+  .statbar{
+    display:flex; gap:10px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .stat{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:10px 16px; flex:1; min-width:130px;
+  }
+  .stat .k{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em;}
+  .stat .v{font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; margin-top:2px;}
+
+  /* ---------- NAV TABS ---------- */
+  .tabs{
+    display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .tab-btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600; font-size:15px;
+    padding:11px 18px;
+    border-radius:11px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:.15s ease;
+  }
+  .tab-btn:hover{ border-color:var(--fiber); color:var(--ink); }
+  .tab-btn.active{
+    background:var(--ink); color:#fff; border-color:var(--ink);
+  }
+  .tab-btn:focus-visible{ outline:3px solid var(--fiber); outline-offset:2px; }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:26px;
+    box-shadow:0 6px 20px rgba(20,40,50,0.04);
+    display:none;
+  }
+  .panel.active{display:block; animation:fadeIn .25s ease;}
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .panel h2{
+    font-family:'Space Grotesk', sans-serif; font-size:22px; margin-bottom:6px;
+  }
+  .panel .desc{ color:var(--ink-soft); font-size:14.5px; margin-bottom:20px; }
+
+  /* ---------- FLASHCARDS (LEARN) ---------- */
+  .card-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px;
+  }
+  .flip-card{ perspective:1200px; height:210px; cursor:pointer;}
+  .flip-inner{
+    position:relative; width:100%; height:100%; transition:transform .5s;
+    transform-style:preserve-3d;
+  }
+  .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+  .flip-face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:14px; padding:18px; border:1.5px solid var(--line);
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .flip-front{ background:var(--panel); }
+  .flip-back{ transform:rotateY(180deg); }
+  .tag{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.08em; font-weight:500; display:inline-block;
+    padding:4px 9px; border-radius:999px; width:fit-content;
+  }
+  .flip-front h3{ font-family:'Space Grotesk',sans-serif; font-size:19px; margin-top:10px;}
+  .flip-front .hint{ font-size:12.5px; color:var(--ink-soft); }
+  .flip-back p{ font-size:13.6px; color:var(--ink); }
+  .flip-back .stats-mini{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); margin-top:8px; line-height:1.6;}
+  .cable-art{ width:100%; height:52px; display:block; }
+  .flip-front{ padding-top:14px; }
+  .flip-front .art-wrap{ height:52px; display:flex; align-items:center; }
+
+  .type-twisted .tag, .type-twisted .flip-back{ background:var(--copper-soft); color:#5A3417; }
+  .type-twisted .flip-front{ border-color:var(--copper); }
+  .type-coax .tag, .type-coax .flip-back{ background:var(--coax-soft); color:#183F63; }
+  .type-coax .flip-front{ border-color:var(--coax); }
+  .type-fiber .tag, .type-fiber .flip-back{ background:var(--fiber-soft); color:#0A5445; }
+  .type-fiber .flip-front{ border-color:var(--fiber); }
+
+  /* ---------- QUIZ ---------- */
+  .q-progress{
+    height:8px; background:var(--line); border-radius:999px; overflow:hidden; margin-bottom:20px;
+  }
+  .q-progress-fill{ height:100%; background:var(--fiber); width:0%; transition:width .3s ease; }
+
+  .question-box{
+    background:var(--bg); border:1px solid var(--line); border-radius:14px;
+    padding:20px; margin-bottom:16px;
+  }
+  .question-box .qn{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft); margin-bottom:8px;}
+  .question-box .qtext{ font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600;}
+
+  .opt-list{ display:flex; flex-direction:column; gap:10px; }
+  .opt-btn{
+    text-align:left; padding:13px 16px; border-radius:11px; border:1.5px solid var(--line);
+    background:#fff; font-size:15px; font-family:'Inter',sans-serif; cursor:pointer; transition:.12s;
+  }
+  .opt-btn:hover{ border-color:var(--coax); background:var(--coax-soft); }
+  .opt-btn.correct{ border-color:var(--good); background:#E6F6EC; color:#144D30; font-weight:600;}
+  .opt-btn.wrong{ border-color:var(--bad); background:#FBEAEA; color:#7A2323; font-weight:600;}
+  .opt-btn:disabled{ cursor:default; }
+  .opt-btn:focus-visible{ outline:3px solid var(--fiber); outline-offset:1px; }
+
+  .feedback{ margin-top:14px; font-size:14px; padding:12px 14px; border-radius:10px; display:none;}
+  .feedback.show{ display:block; }
+  .feedback.ok{ background:#E6F6EC; color:#144D30; }
+  .feedback.no{ background:#FBEAEA; color:#7A2323; }
+
+  .quiz-actions{ margin-top:18px; display:flex; justify-content:flex-end; }
+
+  .btn{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14.5px;
+    padding:11px 20px; border-radius:10px; border:none; cursor:pointer;
+    background:var(--ink); color:#fff; transition:.15s;
+  }
+  .btn:hover{ background:#2A3D48; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:focus-visible{ outline:3px solid var(--fiber); outline-offset:2px; }
+
+  .quiz-done{ text-align:center; padding:20px 0; }
+  .quiz-done .score-big{ font-family:'Space Grotesk',sans-serif; font-size:44px; font-weight:700; color:var(--fiber); }
+
+  /* ---------- MATCH GAME ---------- */
+  .match-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:620px){ .match-wrap{ grid-template-columns:1fr; } }
+  .match-col h4{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--ink-soft); margin-bottom:10px;
+  }
+  .match-item{
+    padding:13px 14px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
+    margin-bottom:10px; cursor:pointer; font-size:14.5px; transition:.12s;
+  }
+  .match-item .mini-art{ height:26px; margin-bottom:6px; pointer-events:none; }
+  .match-item .mini-art svg{ height:26px; width:100%; }
+  .match-item:hover{ border-color:var(--fiber); }
+  .match-item.selected{ border-color:var(--ink); background:var(--bg-grid); font-weight:600; }
+  .match-item.done{ opacity:.45; cursor:default; border-style:dashed; }
+  .match-item.correct-flash{ border-color:var(--good); background:#E6F6EC; }
+  .match-item.wrong-flash{ border-color:var(--bad); background:#FBEAEA; }
+
+  .match-status{ text-align:center; margin-top:16px; font-size:14px; color:var(--ink-soft); }
+
+  footer{ text-align:center; color:var(--ink-soft); font-size:12.5px; margin-top:30px; font-family:'IBM Plex Mono',monospace; }
+
+  .badge-row{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .badge{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; padding:6px 11px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .badge.earned{ border-color:var(--fiber); color:var(--fiber); background:var(--fiber-soft); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">// Networking Fundamentals</div>
+    <h1>Cable Quest: Wired Media Explorer</h1>
+    <p class="sub">Learn how data physically travels through twisted pair, coaxial, and fiber optic cables — then prove it in the quiz and matching challenge.</p>
+    <div class="signal-track" aria-hidden="true">
+      <div class="pulse p1"></div>
+      <div class="pulse p2"></div>
+      <div class="pulse p3"></div>
+    </div>
+  </header>
+
+  <div class="statbar">
+    <div class="stat"><div class="k">Score</div><div class="v" id="statScore">0</div></div>
+    <div class="stat"><div class="k">Cards Studied</div><div class="v" id="statCards">0 / 6</div></div>
+    <div class="stat"><div class="k">Quiz Best</div><div class="v" id="statQuiz">—</div></div>
+    <div class="stat"><div class="k">Matches Solved</div><div class="v" id="statMatch">0 / 6</div></div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="learn" role="tab" aria-selected="true">📚 Learn</button>
+    <button class="tab-btn" data-tab="quiz" role="tab" aria-selected="false">🧠 Quiz Arena</button>
+    <button class="tab-btn" data-tab="match" role="tab" aria-selected="false">🔗 Match the Cable</button>
+  </nav>
+
+  <!-- LEARN PANEL -->
+  <section class="panel active" id="panel-learn">
+    <h2>Meet the three wired media</h2>
+    <p class="desc">Tap a card to flip it and reveal the key facts. Study all six to unlock the "Cable Scholar" badge.</p>
+    <div class="card-grid" id="cardGrid"></div>
+  </section>
+
+  <!-- QUIZ PANEL -->
+  <section class="panel" id="panel-quiz">
+    <h2>Quiz Arena</h2>
+    <p class="desc">10 questions on twisted pair, coaxial, and fiber optic cables. Pick the best answer for each.</p>
+    <div class="q-progress"><div class="q-progress-fill" id="qProgressFill"></div></div>
+    <div id="quizArea"></div>
+  </section>
+
+  <!-- MATCH PANEL -->
+  <section class="panel" id="panel-match">
+    <h2>Match the Cable</h2>
+    <p class="desc">Select a cable on the left, then its correct real-world use on the right. Match all six pairs.</p>
+    <div class="match-wrap">
+      <div class="match-col">
+        <h4>Cable Type</h4>
+        <div id="matchLeft"></div>
+      </div>
+      <div class="match-col">
+        <h4>Real-World Use</h4>
+        <div id="matchRight"></div>
+      </div>
+    </div>
+    <div class="match-status" id="matchStatus">0 of 6 matched</div>
+    <div style="text-align:center; margin-top:14px;">
+      <button class="btn" id="matchReset">Shuffle & Restart</button>
+    </div>
+  </section>
+
+  <div class="badge-row" id="badgeRow"></div>
+
+  <footer>SIGNAL PATH — copper (electrical) · coax (shielded electrical) · fiber (light) — three ways to move data down a wire</footer>
+</div>
+
+<script>
+/* ===================== CABLE ART (SVG) — one distinct illustration per cable ===================== */
+const cableArt = {
+  // Unshielded Twisted Pair — just two twisted copper strands, bare
+  utp: `
+    <svg class="cable-art" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 26 Q 26 4, 48 26 T 92 26 T 136 26 T 180 26 T 216 26" fill="none" stroke="#B5652F" stroke-width="5" stroke-linecap="round"/>
+      <path d="M4 26 Q 26 48, 48 26 T 92 26 T 136 26 T 180 26 T 216 26" fill="none" stroke="#E0956B" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="10" cy="26" r="3.2" fill="#8C4A20"/>
+      <circle cx="210" cy="26" r="3.2" fill="#8C4A20"/>
+    </svg>`,
+  // Shielded Twisted Pair — same twisted pair, but wrapped in a visible dashed foil shield jacket
+  stp: `
+    <svg class="cable-art" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="6" width="212" height="40" rx="20" fill="none" stroke="#8C4A20" stroke-width="2.5" stroke-dasharray="4 4"/>
+      <path d="M14 26 Q 32 10, 50 26 T 86 26 T 122 26 T 158 26 T 194 26" fill="none" stroke="#B5652F" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M14 26 Q 32 42, 50 26 T 86 26 T 122 26 T 158 26 T 194 26" fill="none" stroke="#E0956B" stroke-width="4.5" stroke-linecap="round"/>
+      <text x="110" y="51" text-anchor="middle" font-size="8" font-family="IBM Plex Mono, monospace" fill="#8C4A20">FOIL SHIELD</text>
+    </svg>`,
+  // Coaxial — cutaway layers: jacket, braided shield, insulation, centre conductor
+  coax: `
+    <svg class="cable-art" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="10" width="208" height="24" rx="12" fill="#DCEAF9" stroke="#2D6FB8" stroke-width="2"/>
+      <rect x="16" y="15" width="188" height="14" rx="7" fill="#B9D6F2" stroke="#7EB0E0" stroke-width="1" stroke-dasharray="2 2"/>
+      <line x1="24" y1="22" x2="196" y2="22" stroke="#2D6FB8" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="14" cy="22" r="5" fill="#183F63"/>
+      <circle cx="206" cy="22" r="5" fill="#183F63"/>
+    </svg>`,
+  // RG-6 — thicker jacket / broadband-grade look, distinguishable from generic coax
+  rg6: `
+    <svg class="cable-art" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="6" width="208" height="32" rx="16" fill="#DCEAF9" stroke="#2D6FB8" stroke-width="2"/>
+      <rect x="14" y="11" width="192" height="22" rx="11" fill="#B9D6F2"/>
+      <rect x="22" y="16" width="176" height="12" rx="6" fill="#8FBFE8"/>
+      <line x1="30" y1="22" x2="190" y2="22" stroke="#183F63" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="18" cy="22" r="5.5" fill="#132F4C"/>
+      <circle cx="202" cy="22" r="5.5" fill="#132F4C"/>
+    </svg>`,
+  // Single-Mode Fiber — thin core, ONE straight uninterrupted beam of light
+  smf: `
+    <svg class="cable-art" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+      <line x1="6" y1="26" x2="214" y2="26" stroke="#BFEAE0" stroke-width="8" stroke-linecap="round"/>
+      <line x1="14" y1="26" x2="206" y2="26" stroke="#12967F" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="30" cy="26" r="3" fill="#0A5445"><animate attributeName="cx" values="16;204;16" dur="2.4s" repeatCount="indefinite"/></circle>
+      <circle cx="12" cy="26" r="5" fill="#0A5445"/>
+      <circle cx="208" cy="26" r="5" fill="#0A5445"/>
+      <text x="110" y="46" text-anchor="middle" font-size="8" font-family="IBM Plex Mono, monospace" fill="#0A5445">ONE STRAIGHT LIGHT PATH</text>
+    </svg>`,
+  // Multi-Mode Fiber — wider core, light zig-zagging / bouncing along multiple paths
+  mmf: `
+    <svg class="cable-art" viewBox="0 0 220 52" xmlns="http://www.w3.org/2000/svg">
+      <line x1="6" y1="20" x2="214" y2="20" stroke="#BFEAE0" stroke-width="16" stroke-linecap="round"/>
+      <polyline points="14,14 50,26 86,14 122,26 158,14 194,26 206,20" fill="none" stroke="#12967F" stroke-width="2"/>
+      <polyline points="14,26 50,14 86,26 122,14 158,26 194,14 206,20" fill="none" stroke="#0A5445" stroke-width="2"/>
+      <circle cx="14" cy="20" r="5" fill="#0A5445"/>
+      <circle cx="208" cy="20" r="5" fill="#0A5445"/>
+      <text x="110" y="46" text-anchor="middle" font-size="8" font-family="IBM Plex Mono, monospace" fill="#0A5445">MULTIPLE BOUNCING PATHS</text>
+    </svg>`
+};
+
+/* ===================== DATA ===================== */
+const cables = [
+  {
+    id:'utp', type:'twisted', name:'Twisted Pair (UTP)',
+    tag:'Copper · Unshielded',
+    fact:'Two insulated copper wires twisted together to cancel electromagnetic interference (EMI). The standard for office and home Ethernet.',
+    stats:['Speed: up to 10 Gbps (Cat6a)','Range: ~100 m per segment','Cost: Low','Weakness: Sensitive to EMI']
+  },
+  {
+    id:'stp', type:'twisted', name:'Twisted Pair (STP)',
+    tag:'Copper · Shielded',
+    fact:'Same twisted-pair design as UTP, but wrapped in a metal foil or braid shield for extra protection from noise in industrial settings.',
+    stats:['Speed: similar to UTP','Range: ~100 m per segment','Cost: Medium','Strength: Better EMI resistance']
+  },
+  {
+    id:'coax', type:'coax', name:'Coaxial Cable',
+    tag:'Copper · Shielded core',
+    fact:'A copper core wrapped in insulation, a metal shield, and an outer jacket — layers sit "coaxially" around one another. Once ran early Ethernet, now the backbone of cable TV and cable internet.',
+    stats:['Speed: up to 1+ Gbps (DOCSIS)','Range: several hundred metres','Cost: Medium','Strength: Strong EMI shielding']
+  },
+  {
+    id:'rg6', type:'coax', name:'RG-6 Coax',
+    tag:'Copper · Broadband grade',
+    fact:'A common coaxial variant used for cable television and cable modem connections, offering low signal loss over longer indoor/outdoor runs.',
+    stats:['Speed: high for broadband','Range: long residential runs','Cost: Medium','Use: CATV & cable internet']
+  },
+  {
+    id:'smf', type:'fiber', name:'Single-Mode Fiber',
+    tag:'Glass · Light signal',
+    fact:'A very thin glass core that carries one straight beam of light, allowing signals to travel extremely long distances with minimal loss.',
+    stats:['Speed: 100+ Gbps','Range: tens of km without a repeater','Cost: High','Use: Long-haul & submarine links']
+  },
+  {
+    id:'mmf', type:'fiber', name:'Multi-Mode Fiber',
+    tag:'Glass · Light signal',
+    fact:'A wider glass core that lets light travel in multiple paths ("modes"). Cheaper than single-mode but loses strength over long distances.',
+    stats:['Speed: very high, short range','Range: up to ~2 km','Cost: Medium-High','Use: Data centres, campus networks']
+  }
+];
+
+const quizQuestions = [
+  { q:"Which wired medium uses light instead of electricity to carry data?", opts:["Twisted Pair","Coaxial Cable","Fiber Optic Cable","Speaker Wire"], a:2, exp:"Fiber optic cables send data as pulses of light through a glass or plastic core." },
+  { q:"What is the main purpose of twisting the two wires in twisted-pair cable?", opts:["To make it look neat","To reduce electromagnetic interference","To increase the cable's weight","To increase resistance"], a:1, exp:"Twisting the wires causes interference picked up by each wire to cancel out." },
+  { q:"Which cable type is completely immune to electromagnetic interference (EMI)?", opts:["UTP","STP","Coaxial","Fiber Optic"], a:3, exp:"Since fiber carries light, not electrical signals, it is unaffected by EMI." },
+  { q:"Coaxial cable gets its name because its layers:", opts:["Are made of the same material","Share the same central axis","Come in coastal colours","Carry data in cosine waves"], a:1, exp:"'Co-axial' means the core, insulation, shield, and jacket all share one central axis." },
+  { q:"Which cable is most associated with cable TV and cable internet (DOCSIS)?", opts:["Twisted Pair","Coaxial Cable","Fiber Optic","None of these"], a:1, exp:"Coaxial cable, especially RG-6, is the standard medium for cable television and cable internet." },
+  { q:"Which is generally the MOST expensive wired medium to install?", opts:["UTP","Coaxial Cable","Fiber Optic Cable","They all cost the same"], a:2, exp:"Fiber's materials and specialised installation/splicing equipment make it the priciest option." },
+  { q:"A standard Cat6 UTP Ethernet cable is typically limited to a run length of about:", opts:["10 metres","100 metres","1 kilometre","10 kilometres"], a:1, exp:"Ethernet over UTP is generally limited to about 100 metres per segment before signal loss." },
+  { q:"Which fiber type uses a single straight beam of light for very long-distance links?", opts:["Multi-Mode Fiber","Single-Mode Fiber","Shielded Fiber","Hybrid Fiber"], a:1, exp:"Single-mode fiber's narrow core allows one light path, ideal for long-haul transmission." },
+  { q:"STP cable differs from UTP mainly by adding:", opts:["A glass core","A metal shielding layer","A wireless antenna","A thicker copper core"], a:1, exp:"STP wraps the twisted pairs in a metal foil or braid for extra interference protection." },
+  { q:"Which wired medium offers the highest bandwidth and speed overall?", opts:["Twisted Pair","Coaxial Cable","Fiber Optic Cable","All are equal"], a:2, exp:"Fiber optic cable supports the greatest bandwidth and highest achievable speeds of the three." }
+];
+
+const matchPairs = [
+  { cable:'Twisted Pair (UTP)', use:'Everyday office & home Ethernet network', type:'utp' },
+  { cable:'Twisted Pair (STP)', use:'Factory floors with heavy electrical noise', type:'stp' },
+  { cable:'Coaxial Cable', use:'Cable television signal delivery', type:'coax' },
+  { cable:'RG-6 Coax', use:'Home cable internet (broadband) connection', type:'rg6' },
+  { cable:'Single-Mode Fiber', use:'Undersea cable linking two continents', type:'smf' },
+  { cable:'Multi-Mode Fiber', use:'Connecting servers inside one data centre', type:'mmf' }
+];
+
+/* ===================== STATE ===================== */
+let state = {
+  score:0,
+  cardsFlipped:new Set(),
+  quizBest:null,
+  matchSolved:0
+};
+
+function refreshStats(){
+  document.getElementById('statScore').textContent = state.score;
+  document.getElementById('statCards').textContent = `${state.cardsFlipped.size} / 6`;
+  document.getElementById('statQuiz').textContent = state.quizBest===null ? '—' : `${state.quizBest} / 10`;
+  document.getElementById('statMatch').textContent = `${state.matchSolved} / 6`;
+  renderBadges();
+}
+
+function renderBadges(){
+  const badges = [
+    { id:'scholar', label:'🎓 Cable Scholar', earned: state.cardsFlipped.size>=6 },
+    { id:'ace', label:'🏆 Quiz Ace (8+)', earned: state.quizBest!==null && state.quizBest>=8 },
+    { id:'matcher', label:'🔗 Perfect Matcher', earned: state.matchSolved>=6 }
+  ];
+  const row = document.getElementById('badgeRow');
+  row.innerHTML = badges.map(b=>`<span class="badge ${b.earned?'earned':''}">${b.label}</span>`).join('');
+}
+
+/* ===================== TABS ===================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>{b.classList.remove('active'); b.setAttribute('aria-selected','false');});
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ===================== LEARN / FLASHCARDS ===================== */
+function buildCards(){
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = cables.map(c=>`
+    <div class="flip-card type-${c.type}" data-id="${c.id}" tabindex="0" role="button" aria-label="Flip card: ${c.name}">
+      <div class="flip-inner">
+        <div class="flip-face flip-front">
+          <span class="tag">${c.tag}</span>
+          <div class="art-wrap">${cableArt[c.id]}</div>
+          <div>
+            <h3>${c.name}</h3>
+            <div class="hint">Tap to reveal facts →</div>
+          </div>
+        </div>
+        <div class="flip-face flip-back">
+          <span class="tag">${c.tag}</span>
+          <p>${c.fact}</p>
+          <div class="stats-mini">${c.stats.join('<br>')}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.flip-card').forEach(card=>{
+    const flip = ()=>{
+      card.classList.toggle('flipped');
+      const id = card.dataset.id;
+      if(card.classList.contains('flipped') && !state.cardsFlipped.has(id)){
+        state.cardsFlipped.add(id);
+        state.score += 5;
+        refreshStats();
+      }
+    };
+    card.addEventListener('click', flip);
+    card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); flip(); } });
+  });
+}
+
+/* ===================== QUIZ ===================== */
+let quizState = { idx:0, correct:0, answered:false };
+
+function startQuiz(){
+  quizState = { idx:0, correct:0, answered:false };
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const area = document.getElementById('quizArea');
+  const total = quizQuestions.length;
+  document.getElementById('qProgressFill').style.width = `${(quizState.idx/total)*100}%`;
+
+  if(quizState.idx >= total){
+    area.innerHTML = `
+      <div class="quiz-done">
+        <div class="score-big">${quizState.correct} / ${total}</div>
+        <p style="color:var(--ink-soft); margin-top:6px;">Correct answers</p>
+        <div style="margin-top:18px;"><button class="btn" id="retryQuiz">Try Again</button></div>
+      </div>`;
+    document.getElementById('qProgressFill').style.width = '100%';
+    if(state.quizBest===null || quizState.correct>state.quizBest){ state.quizBest = quizState.correct; }
+    state.score += quizState.correct*10;
+    refreshStats();
+    document.getElementById('retryQuiz').addEventListener('click', startQuiz);
+    return;
+  }
+
+  const q = quizQuestions[quizState.idx];
+  quizState.answered = false;
+  area.innerHTML = `
+    <div class="question-box">
+      <div class="qn">Question ${quizState.idx+1} of ${total}</div>
+      <div class="qtext">${q.q}</div>
+    </div>
+    <div class="opt-list">
+      ${q.opts.map((o,i)=>`<button class="opt-btn" data-i="${i}">${o}</button>`).join('')}
+    </div>
+    <div class="feedback" id="qFeedback"></div>
+    <div class="quiz-actions"><button class="btn" id="nextBtn" disabled>Next</button></div>
+  `;
+
+  area.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(quizState.answered) return;
+      quizState.answered = true;
+      const chosen = parseInt(btn.dataset.i);
+      const fb = document.getElementById('qFeedback');
+      area.querySelectorAll('.opt-btn').forEach(b=>{
+        b.disabled = true;
+        if(parseInt(b.dataset.i)===q.a) b.classList.add('correct');
+      });
+      if(chosen===q.a){
+        quizState.correct++;
+        fb.textContent = `Correct! ${q.exp}`;
+        fb.className = 'feedback show ok';
+      } else {
+        btn.classList.add('wrong');
+        fb.textContent = `Not quite. ${q.exp}`;
+        fb.className = 'feedback show no';
+      }
+      document.getElementById('nextBtn').disabled = false;
+    });
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    quizState.idx++;
+    renderQuestion();
+  });
+}
+
+/* ===================== MATCH GAME ===================== */
+let matchState = { leftSel:null, solvedIds:new Set() };
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function buildMatch(){
+  matchState = { leftSel:null, solvedIds:new Set() };
+  state.matchSolved = 0;
+  const leftOrder = matchPairs.map((p,i)=>i);
+  const rightOrder = shuffle(matchPairs.map((p,i)=>i));
+
+  const leftEl = document.getElementById('matchLeft');
+  const rightEl = document.getElementById('matchRight');
+
+  leftEl.innerHTML = leftOrder.map(i=>`<div class="match-item" data-id="${i}" data-side="left"><div class="mini-art">${cableArt[matchPairs[i].type]}</div>${matchPairs[i].cable}</div>`).join('');
+  rightEl.innerHTML = rightOrder.map(i=>`<div class="match-item" data-id="${i}" data-side="right">${matchPairs[i].use}</div>`).join('');
+
+  document.getElementById('matchStatus').textContent = '0 of 6 matched';
+  attachMatchHandlers();
+  refreshStats();
+}
+
+function attachMatchHandlers(){
+  document.querySelectorAll('.match-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      if(item.classList.contains('done')) return;
+      const side = item.dataset.side;
+      const id = item.dataset.id;
+
+      if(side==='left'){
+        document.querySelectorAll('.match-item[data-side="left"]').forEach(el=>el.classList.remove('selected'));
+        item.classList.add('selected');
+        matchState.leftSel = id;
+      } else {
+        if(matchState.leftSel===null) return;
+        const correct = matchState.leftSel === id;
+        const leftItem = document.querySelector(`.match-item[data-side="left"][data-id="${matchState.leftSel}"]`);
+        if(correct){
+          item.classList.add('correct-flash');
+          leftItem.classList.add('correct-flash');
+          setTimeout(()=>{
+            item.classList.add('done'); leftItem.classList.add('done');
+            item.classList.remove('correct-flash','selected'); leftItem.classList.remove('correct-flash','selected');
+          }, 450);
+          matchState.solvedIds.add(id);
+          state.matchSolved++;
+          state.score += 8;
+          document.getElementById('matchStatus').textContent = `${state.matchSolved} of 6 matched`;
+          refreshStats();
+        } else {
+          item.classList.add('wrong-flash');
+          leftItem.classList.add('wrong-flash');
+          setTimeout(()=>{ item.classList.remove('wrong-flash'); leftItem.classList.remove('wrong-flash'); }, 500);
+        }
+        matchState.leftSel = null;
+      }
+    });
+  });
+}
+
+document.getElementById('matchReset').addEventListener('click', buildMatch);
+
+/* ===================== INIT ===================== */
+buildCards();
+startQuiz();
+buildMatch();
+refreshStats();
+</script>
+</body>
+</html>
