@@ -274,6 +274,10 @@
     .use-chip{font-size:12px;}
     h1{font-size:24px;}
   }
+
+  @media(pointer:coarse){
+    .chip,.use-chip{cursor:pointer;}
+  }
 </style>
 </head>
 <body>
@@ -313,7 +317,7 @@
           <div class="zone-items" id="zone-utility"></div>
         </div>
       </div>
-      <div class="score-strip">Placed: <b><span id="s1-placed">0</span>/10</b> &nbsp; Correct: <b><span id="s1-correct">0</span></b></div>
+      <div class="score-strip">Placed: <b><span id="s1-placed">0</span>/<span id="s1-total">10</span></b> &nbsp; Correct: <b><span id="s1-correct">0</span></b></div>
       <div class="feedback" id="s1-feedback"></div>
       <div class="toolbar">
         <button class="btn btn-check" onclick="checkStage(1)">Check Answers</button>
@@ -329,7 +333,7 @@
       <p class="game-hint">Drag (or tap, then tap a row) the correct use-description onto each software name.</p>
       <div class="uses-pool" id="uses-pool"></div>
       <div id="match-rows"></div>
-      <div class="score-strip">Matched: <b><span id="s2-placed">0</span>/6</b> &nbsp; Correct: <b><span id="s2-correct">0</span></b></div>
+      <div class="score-strip">Matched: <b><span id="s2-placed">0</span>/<span id="s2-total">6</span></b> &nbsp; Correct: <b><span id="s2-correct">0</span></b></div>
       <div class="feedback" id="s2-feedback"></div>
       <div class="toolbar">
         <button class="btn btn-check" onclick="checkStage(2)">Check Answers</button>
@@ -356,7 +360,7 @@
           <div class="zone-items" id="zone-proprietary"></div>
         </div>
       </div>
-      <div class="score-strip">Placed: <b><span id="s3-placed">0</span>/8</b> &nbsp; Correct: <b><span id="s3-correct">0</span></b></div>
+      <div class="score-strip">Placed: <b><span id="s3-placed">0</span>/<span id="s3-total">8</span></b> &nbsp; Correct: <b><span id="s3-correct">0</span></b></div>
       <div class="feedback" id="s3-feedback"></div>
       <div class="toolbar">
         <button class="btn btn-check" onclick="checkStage(3)">Check Answers</button>
@@ -383,12 +387,17 @@ const stage1Data = [
   {name:'Photoshop', cat:'application'},
   {name:'Google Chrome', cat:'application'},
   {name:'Tally', cat:'application'},
+  {name:'MS PowerPoint', cat:'application'},
+  {name:'Spotify', cat:'application'},
   {name:'Windows OS', cat:'system'},
   {name:'Linux', cat:'system'},
   {name:'Device Driver', cat:'system'},
+  {name:'macOS', cat:'system'},
+  {name:'BIOS', cat:'system'},
   {name:'Antivirus', cat:'utility'},
   {name:'WinRAR', cat:'utility'},
   {name:'Disk Cleanup', cat:'utility'},
+  {name:'Disk Defragmenter', cat:'utility'},
 ];
 
 const stage2Data = [
@@ -398,6 +407,8 @@ const stage2Data = [
   {name:'Windows OS', use:'Manage computer hardware and run other programs'},
   {name:'Antivirus', use:'Detect and remove viruses and malware'},
   {name:'VLC Media Player', use:'Play audio and video files'},
+  {name:'MS PowerPoint', use:'Design and present slideshows'},
+  {name:'WinRAR', use:'Compress and extract archive files'},
 ];
 
 const stage3Data = [
@@ -405,14 +416,23 @@ const stage3Data = [
   {name:'Ubuntu', cat:'open'},
   {name:'VLC Media Player', cat:'open'},
   {name:'LibreOffice', cat:'open'},
+  {name:'Mozilla Firefox', cat:'open'},
+  {name:'GIMP', cat:'open'},
   {name:'MS Word', cat:'proprietary'},
   {name:'Windows OS', cat:'proprietary'},
   {name:'Photoshop', cat:'proprietary'},
   {name:'Tally', cat:'proprietary'},
+  {name:'macOS', cat:'proprietary'},
 ];
 
 /* ---------- Helpers ---------- */
 function shuffle(arr){return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(v=>v[1]);}
+
+// On touch devices, native HTML5 drag can hijack the tap gesture and stop
+// click-to-select from firing. Detect coarse-pointer/touch devices and
+// disable native draggable there so tap-to-place is always reliable;
+// mouse/trackpad users keep full drag-and-drop.
+const isTouchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window);
 
 let selectedChip = null; // for tap-to-place fallback
 
@@ -420,7 +440,7 @@ function makeChip(text, id, extraClass){
   const el = document.createElement('div');
   el.className = 'chip ' + (extraClass||'');
   el.textContent = text;
-  el.draggable = true;
+  el.draggable = !isTouchDevice;
   el.dataset.id = id;
   el.addEventListener('dragstart', e=>{
     e.dataTransfer.setData('text/plain', id);
@@ -505,7 +525,7 @@ function buildStage2(){
     const chip = document.createElement('div');
     chip.className = 'use-chip';
     chip.textContent = d.use;
-    chip.draggable = true;
+    chip.draggable = !isTouchDevice;
     chip.dataset.id = 'use-'+i;
     chip.addEventListener('dragstart', e=>e.dataTransfer.setData('text/plain','use-'+i));
     chip.addEventListener('click', ()=>{
@@ -673,6 +693,9 @@ function resetStage(n){
 }
 
 /* ---------- Init ---------- */
+document.getElementById('s1-total').textContent = stage1Data.length;
+document.getElementById('s2-total').textContent = stage2Data.length;
+document.getElementById('s3-total').textContent = stage3Data.length;
 buildStage1();
 buildStage2();
 buildStage3();
