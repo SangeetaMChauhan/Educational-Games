@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Loop Quest — Learn Python Looping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F3F6FB;
+    --bg-soft: #E9EEF7;
+    --card: #FFFFFF;
+    --ink: #1C2333;
+    --ink-soft: #545C74;
+    --ink-faint: #8A91A6;
+    --indigo: #5B5FEF;
+    --indigo-dark: #4245C4;
+    --teal: #0EA88D;
+    --teal-bg: #E3FAF4;
+    --coral: #FF5D5D;
+    --coral-bg: #FFEBEB;
+    --amber: #FFC93C;
+    --track-line: #D7DEEA;
+    --shadow: 0 12px 30px -12px rgba(28,35,51,0.18);
+    --radius: 20px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(91,95,239,0.07), transparent 40%),
+      radial-gradient(circle at 92% 85%, rgba(14,168,141,0.08), transparent 40%);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  h1,h2,h3, .display{ font-family:'Baloo 2', 'Inter', sans-serif; }
+  code, .mono{ font-family:'JetBrains Mono', monospace; }
+
+  button{ font-family:inherit; cursor:pointer; }
+  button:focus-visible, a:focus-visible{
+    outline: 3px solid var(--indigo);
+    outline-offset: 2px;
+  }
+
+  #app{
+    max-width: 980px;
+    margin:0 auto;
+    padding: 20px 16px 60px;
+    min-height:100vh;
+  }
+
+  /* ---------- TOP BAR (game screen) ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex; align-items:center; gap:8px;
+    font-size:1.15rem; font-weight:700; color:var(--indigo-dark);
+  }
+  .brand .snake{ font-size:1.4rem; }
+  .stats{
+    display:flex; align-items:center; gap:14px;
+    background:var(--card);
+    border-radius: 999px;
+    padding: 8px 16px;
+    box-shadow: var(--shadow);
+    font-weight:600;
+    font-size:0.95rem;
+  }
+  .stat{ display:flex; align-items:center; gap:5px; white-space:nowrap; }
+  .hearts .heart{ transition: transform .25s ease; display:inline-block; }
+  .hearts .heart.lost{ opacity:0.25; transform: scale(0.8); }
+  .streak-flame{ color:var(--coral); }
+  .score-num{ color:var(--indigo-dark); }
+
+  /* ---------- SCREENS ---------- */
+  .screen{ display:none; }
+  .screen.active{ display:block; animation: fadeIn .4s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- START SCREEN ---------- */
+  #screen-start{
+    text-align:center;
+    padding-top: 6vh;
+  }
+  .hero-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    background: var(--teal-bg);
+    color: var(--teal);
+    font-weight:700;
+    font-size:0.85rem;
+    letter-spacing:0.04em;
+    padding:6px 14px;
+    border-radius:999px;
+    margin-bottom:18px;
+  }
+  .hero-title{
+    font-size: clamp(2.1rem, 7vw, 3.4rem);
+    font-weight:800;
+    line-height:1.05;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  .hero-title span{ color: var(--indigo); }
+  .hero-sub{
+    color: var(--ink-soft);
+    font-size: clamp(1rem, 2.6vw, 1.15rem);
+    max-width: 520px;
+    margin: 0 auto 34px;
+    line-height:1.55;
+  }
+  .loop-preview{
+    width: min(220px, 50vw);
+    margin: 0 auto 30px;
+    display:block;
+  }
+  .btn-primary{
+    background: var(--indigo);
+    color:#fff;
+    border:none;
+    font-weight:700;
+    font-size: 1.1rem;
+    padding: 16px 38px;
+    border-radius: 999px;
+    box-shadow: 0 10px 24px -8px rgba(91,95,239,0.55);
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .btn-primary:hover{ transform: translateY(-2px); background:var(--indigo-dark); }
+  .btn-primary:active{ transform: translateY(0px) scale(0.98); }
+
+  .concept-chips{
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    max-width:560px; margin: 30px auto 0;
+  }
+  .chip-preview{
+    background:var(--card);
+    border:1px solid var(--track-line);
+    color:var(--ink-soft);
+    font-size:0.8rem;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:999px;
+  }
+
+  /* ---------- GAME SCREEN ---------- */
+  .track-wrap{
+    position:relative;
+    width:min(320px, 78vw);
+    aspect-ratio:1/1;
+    margin: 0 auto 22px;
+  }
+  .track-ring{
+    position:absolute; inset:0;
+    border-radius:50%;
+    border: 3px dashed var(--track-line);
+  }
+  .track-center{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+  }
+  .track-center .big-num{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size: clamp(1.8rem, 6vw, 2.4rem);
+    color:var(--indigo-dark);
+    line-height:1;
+  }
+  .track-center .of{
+    font-size:0.8rem;
+    color:var(--ink-faint);
+    font-weight:600;
+    letter-spacing:0.05em;
+  }
+  .track-node{
+    position:absolute;
+    width: 22px; height:22px;
+    border-radius:50%;
+    background:#fff;
+    border:3px solid var(--track-line);
+    transform:translate(-50%,-50%);
+    transition: border-color .3s ease, background .3s ease;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.6rem;
+    font-weight:700;
+    color:var(--ink-faint);
+  }
+  .track-node.done{
+    background:var(--teal);
+    border-color:var(--teal);
+    color:#fff;
+  }
+  .track-node.current{
+    border-color:var(--indigo);
+    box-shadow: 0 0 0 6px rgba(91,95,239,0.16);
+  }
+  .track-token{
+    position:absolute;
+    width:30px; height:30px;
+    transform:translate(-50%,-50%);
+    transition: left .5s cubic-bezier(.4,1.4,.4,1), top .5s cubic-bezier(.4,1.4,.4,1);
+    font-size:1.5rem;
+    display:flex; align-items:center; justify-content:center;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25));
+  }
+
+  .question-progress{
+    text-align:center;
+    color:var(--ink-faint);
+    font-weight:600;
+    font-size:0.85rem;
+    letter-spacing:0.04em;
+    margin-bottom: 6px;
+  }
+
+  .card{
+    background:var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+
+  .badges-row{
+    display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;
+  }
+  .badge{
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:5px 11px;
+    border-radius:999px;
+    text-transform:uppercase;
+  }
+  .badge.concept{ background:var(--bg-soft); color:var(--indigo-dark); }
+  .badge.diff-easy{ background:#E3FAF4; color:var(--teal); }
+  .badge.diff-medium{ background:#FFF6DE; color:#B9860A; }
+  .badge.diff-hard{ background:var(--coral-bg); color:var(--coral); }
+
+  .code-window{
+    background: #1C2333;
+    border-radius: 14px;
+    padding: 0 0 14px;
+    margin-bottom: 18px;
+    overflow:hidden;
+  }
+  .code-titlebar{
+    display:flex; align-items:center; gap:6px;
+    padding: 10px 14px;
+  }
+  .code-titlebar .dot{ width:10px; height:10px; border-radius:50%; }
+  .dot.red{ background:#FF5F57; }
+  .dot.yellow{ background:#FEBC2E; }
+  .dot.green{ background:#28C840; }
+  .code-titlebar .fname{
+    margin-left:8px;
+    color:#8A91A6;
+    font-size:0.75rem;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .code-body{
+    color:#E7EBF5;
+    font-family:'JetBrains Mono', monospace;
+    font-size: clamp(0.82rem, 2.4vw, 0.95rem);
+    line-height:1.65;
+    padding: 0 18px;
+    white-space:pre;
+    overflow-x:auto;
+  }
+  .kw{ color:#7C9CFF; font-weight:600; }
+  .fn{ color:#5FD6C4; }
+  .str{ color:#F2C879; }
+  .num{ color:#F2A0A0; }
+  .cm{ color:#6A7290; font-style:italic; }
+
+  .question-text{
+    font-size: clamp(1.02rem, 2.6vw, 1.2rem);
+    font-weight:700;
+    margin: 0 0 16px;
+    line-height:1.4;
+  }
+
+  .options{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+  }
+  @media (max-width: 560px){
+    .options{ grid-template-columns: 1fr; }
+  }
+  .option-btn{
+    text-align:left;
+    background: var(--bg);
+    border: 2px solid var(--track-line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: clamp(0.85rem, 2.4vw, 0.98rem);
+    font-weight:600;
+    font-family:'JetBrains Mono', monospace;
+    color:var(--ink);
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+    min-height:48px;
+  }
+  .option-btn:hover:not(:disabled){ border-color:var(--indigo); background:#fff; }
+  .option-btn:active:not(:disabled){ transform: scale(0.98); }
+  .option-btn:disabled{ cursor:default; }
+  .option-btn.correct{ background:var(--teal-bg); border-color:var(--teal); color:#0B6E5C; }
+  .option-btn.wrong{ background:var(--coral-bg); border-color:var(--coral); color:#B33; }
+  .option-btn.faded{ opacity:0.5; }
+
+  .explain-panel{
+    margin-top:16px;
+    padding:14px 16px;
+    border-radius:14px;
+    font-size:0.95rem;
+    line-height:1.55;
+    display:none;
+  }
+  .explain-panel.show{ display:block; animation: fadeIn .3s ease; }
+  .explain-panel.correct{ background:var(--teal-bg); color:#0B6E5C; }
+  .explain-panel.wrong{ background:var(--coral-bg); color:#8C2C2C; }
+  .explain-panel b{ display:block; margin-bottom:4px; font-size:1rem; }
+
+  .next-row{
+    display:flex; justify-content:flex-end; margin-top:18px;
+  }
+  .btn-next{
+    background: var(--indigo);
+    color:#fff;
+    border:none;
+    font-weight:700;
+    font-size:0.95rem;
+    padding: 12px 26px;
+    border-radius:999px;
+    display:none;
+    align-items:center; gap:6px;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .btn-next.show{ display:inline-flex; }
+  .btn-next:hover{ background:var(--indigo-dark); transform:translateY(-1px); }
+
+  .toast{
+    position:fixed;
+    left:50%; bottom:26px;
+    transform: translate(-50%, 20px);
+    background: var(--ink);
+    color:#fff;
+    padding:12px 20px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:0.9rem;
+    opacity:0;
+    transition: opacity .3s ease, transform .3s ease;
+    pointer-events:none;
+    z-index:50;
+    box-shadow: var(--shadow);
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  /* ---------- END SCREEN ---------- */
+  #screen-end{ text-align:center; padding-top:5vh; }
+  .medal{
+    font-size: 4.5rem;
+    margin-bottom: 6px;
+  }
+  .end-title{
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight:800;
+    margin: 0 0 8px;
+  }
+  .end-sub{ color:var(--ink-soft); margin-bottom:26px; font-size:1.05rem; }
+  .end-stats{
+    display:flex; justify-content:center; gap:14px; flex-wrap:wrap;
+    margin-bottom:32px;
+  }
+  .end-stat-card{
+    background:var(--card);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:16px 26px;
+    min-width:120px;
+  }
+  .end-stat-card .num{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size:1.8rem;
+    color:var(--indigo-dark);
+  }
+  .end-stat-card .lbl{
+    font-size:0.78rem;
+    color:var(--ink-faint);
+    font-weight:600;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .btn-row{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn-ghost{
+    background:transparent;
+    border:2px solid var(--track-line);
+    color:var(--ink-soft);
+    font-weight:700;
+    padding: 14px 26px;
+    border-radius:999px;
+  }
+  .btn-ghost:hover{ border-color:var(--indigo); color:var(--indigo); }
+
+  footer.credit{
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:0.8rem;
+    margin-top:40px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ START SCREEN ============ -->
+  <section id="screen-start" class="screen active">
+    <div class="hero-badge">🔁 PYTHON CONCEPT TRAINER</div>
+    <h1 class="hero-title">Loop <span>Quest</span></h1>
+    <p class="hero-sub">Travel around the loop track, answer 16 code challenges, and master <b>for</b> loops, <b>while</b> loops, <b>range()</b>, <b>break</b>, <b>continue</b>, and nested loops — one lap at a time.</p>
+
+    <svg class="loop-preview" viewBox="0 0 200 200" fill="none">
+      <circle cx="100" cy="100" r="80" stroke="#D7DEEA" stroke-width="4" stroke-dasharray="10 10"/>
+      <circle cx="100" cy="20" r="10" fill="#0EA88D"/>
+      <circle cx="164" cy="60" r="10" fill="#0EA88D"/>
+      <circle cx="164" cy="140" r="10" fill="#5B5FEF"/>
+      <circle cx="100" cy="180" r="10" fill="#D7DEEA"/>
+      <circle cx="36" cy="140" r="10" fill="#D7DEEA"/>
+      <circle cx="36" cy="60" r="10" fill="#D7DEEA"/>
+      <text x="100" y="107" text-anchor="middle" font-size="34">🐍</text>
+    </svg>
+
+    <button class="btn-primary" id="btn-start">Begin the Loop ▶</button>
+
+    <div class="concept-chips">
+      <span class="chip-preview">for &amp; range()</span>
+      <span class="chip-preview">while loops</span>
+      <span class="chip-preview">break / continue</span>
+      <span class="chip-preview">nested loops</span>
+      <span class="chip-preview">for-else</span>
+      <span class="chip-preview">enumerate()</span>
+    </div>
+  </section>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section id="screen-game" class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="snake">🐍</span> Loop Quest</div>
+      <div class="stats">
+        <div class="stat hearts" id="hearts-display"></div>
+        <div class="stat">🔥<span class="streak-flame" id="streak-num">0</span></div>
+        <div class="stat">⭐<span class="score-num" id="score-num">0</span></div>
+      </div>
+    </div>
+
+    <div class="track-wrap">
+      <div class="track-ring"></div>
+      <div id="track-nodes"></div>
+      <div class="track-token" id="track-token">🐍</div>
+      <div class="track-center">
+        <div class="big-num" id="q-current">1</div>
+        <div class="of" id="q-total">OF 16</div>
+      </div>
+    </div>
+
+    <div class="question-progress" id="progress-label">QUESTION 1 OF 16</div>
+
+    <div class="card">
+      <div class="badges-row">
+        <span class="badge concept" id="badge-concept">FOR LOOP</span>
+        <span class="badge diff-easy" id="badge-diff">EASY</span>
+      </div>
+
+      <div class="code-window">
+        <div class="code-titlebar">
+          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+          <span class="fname">loop.py</span>
+        </div>
+        <div class="code-body" id="code-body"></div>
+      </div>
+
+      <p class="question-text" id="question-text"></p>
+      <div class="options" id="options"></div>
+
+      <div class="explain-panel" id="explain-panel">
+        <b id="explain-title"></b>
+        <span id="explain-body"></span>
+      </div>
+
+      <div class="next-row">
+        <button class="btn-next" id="btn-next">Next Question →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ END SCREEN ============ -->
+  <section id="screen-end" class="screen">
+    <div class="medal" id="end-medal">🏆</div>
+    <h2 class="end-title" id="end-title">Quest Complete!</h2>
+    <p class="end-sub" id="end-sub">You've looped your way through Python's core looping concepts.</p>
+    <div class="end-stats">
+      <div class="end-stat-card"><div class="num" id="end-score">0</div><div class="lbl">Score</div></div>
+      <div class="end-stat-card"><div class="num" id="end-accuracy">0%</div><div class="lbl">Accuracy</div></div>
+      <div class="end-stat-card"><div class="num" id="end-best-streak">0</div><div class="lbl">Best Streak</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="btn-replay">Play Again ▶</button>
+    </div>
+  </section>
+
+  <footer class="credit">Works fully offline in your browser · Best on any laptop or phone</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+  // ---------------- QUESTION DATA ----------------
+  const K = t => `<span class="kw">${t}</span>`;
+  const F = t => `<span class="fn">${t}</span>`;
+  const S = t => `<span class="str">${t}</span>`;
+  const N = t => `<span class="num">${t}</span>`;
+
+  const questions = [
+    {
+      concept:"FOR LOOP + RANGE", difficulty:"easy",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('5')}):\n    ${F('print')}(i)`,
+      question:"What is the LAST number printed?",
+      options:["4","5","0","6"], correct:0,
+      explain:"range(5) counts 0, 1, 2, 3, 4 — it stops right BEFORE 5, so the last value is 4."
+    },
+    {
+      concept:"RANGE(START, STOP)", difficulty:"easy",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('2')}, ${N('6')}):\n    ${F('print')}(i)`,
+      question:"How many numbers get printed in total?",
+      options:["3","4","5","6"], correct:1,
+      explain:"range(2, 6) produces 2, 3, 4, 5 — that's 4 numbers. The stop value (6) is never included."
+    },
+    {
+      concept:"RANGE WITH STEP", difficulty:"medium",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('0')}, ${N('10')}, ${N('2')}):\n    ${F('print')}(i)`,
+      question:"What sequence gets printed?",
+      options:["0 2 4 6 8 10","2 4 6 8 10","0 2 4 6 8","0 5 10"], correct:2,
+      explain:"The third argument (2) is the step size. Starting at 0 and stepping by 2, we get 0, 2, 4, 6, 8 — stopping before 10."
+    },
+    {
+      concept:"RANGE NEGATIVE STEP", difficulty:"medium",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('5')}, ${N('0')}, -${N('1')}):\n    ${F('print')}(i)`,
+      question:"What gets printed?",
+      options:["5 4 3 2 1 0","1 2 3 4 5","5 4 3 2 1","0 1 2 3 4"], correct:2,
+      explain:"A negative step counts DOWN. Starting at 5, stepping by -1, we get 5, 4, 3, 2, 1 — stopping before 0."
+    },
+    {
+      concept:"WHILE LOOP", difficulty:"easy",
+      code:`count = ${N('0')}\n${K('while')} count < ${N('3')}:\n    ${F('print')}(count)\n    count += ${N('1')}`,
+      question:"What gets printed?",
+      options:["0 1 2 3","1 2 3","0 1 2","infinite loop"], correct:2,
+      explain:"The loop runs WHILE count is less than 3. It prints 0, 1, 2 — once count becomes 3, the condition is false and the loop stops."
+    },
+    {
+      concept:"WHILE LOOP COUNTDOWN", difficulty:"medium",
+      code:`n = ${N('3')}\n${K('while')} n > ${N('0')}:\n    ${F('print')}(n)\n    n -= ${N('1')}\n${F('print')}(${S('"Liftoff!"')})`,
+      question:"What is the LAST thing printed?",
+      options:["1","0","n","Liftoff!"], correct:3,
+      explain:`"Liftoff!" is outside the while loop, so it prints once the loop finishes counting down 3, 2, 1.`
+    },
+    {
+      concept:"DEBUG THE LOOP", difficulty:"hard",
+      code:`count = ${N('0')}\n${K('while')} count < ${N('5')}:\n    ${F('print')}(count)`,
+      question:"What actually happens when this code runs?",
+      options:["Prints 0 to 4, then stops","Prints 5 once, then stops","This is an infinite loop — count never changes","Python raises an error"], correct:2,
+      explain:"Inside the loop, 'count' is never updated, so the condition count < 5 stays true forever. This prints 0 endlessly — a classic infinite loop bug! Always make sure your while condition eventually changes."
+    },
+    {
+      concept:"BREAK", difficulty:"medium",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('10')}):\n    ${K('if')} i == ${N('4')}:\n        ${K('break')}\n    ${F('print')}(i)`,
+      question:"What gets printed?",
+      options:["0 1 2 3 4","0 1 2 3","0 1 2 3 4 5 6 7 8 9","Nothing"], correct:1,
+      explain:"break immediately exits the loop the moment i equals 4 — BEFORE that print runs. So we only see 0, 1, 2, 3."
+    },
+    {
+      concept:"CONTINUE", difficulty:"medium",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('5')}):\n    ${K('if')} i == ${N('2')}:\n        ${K('continue')}\n    ${F('print')}(i)`,
+      question:"What gets printed?",
+      options:["0 1 2 3 4","0 1 3 4","0 1","0 1 2"], correct:1,
+      explain:"continue skips the REST of that one iteration and jumps to the next. So i=2 is skipped (never printed), but the loop keeps going: 0, 1, 3, 4."
+    },
+    {
+      concept:"FOR-ELSE", difficulty:"hard",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('3')}):\n    ${F('print')}(i)\n${K('else')}:\n    ${F('print')}(${S('"done"')})`,
+      question:"What gets printed?",
+      options:['"0 1 2" then "done"','Just "0 1 2"','Just "done"','A syntax error'], correct:0,
+      explain:"A loop's else block runs automatically once the loop finishes normally (no break). So it prints 0, 1, 2, then done."
+    },
+    {
+      concept:"LOOP ELSE + BREAK", difficulty:"hard",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('3')}):\n    ${K('if')} i == ${N('1')}:\n        ${K('break')}\n${K('else')}:\n    ${F('print')}(${S('"done"')})`,
+      question:'Does "done" get printed?',
+      options:["Yes","No"], correct:1,
+      explain:"The else block only runs if the loop finishes WITHOUT hitting break. Since break fires when i == 1, the else is skipped entirely."
+    },
+    {
+      concept:"NESTED LOOPS", difficulty:"medium",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('2')}):\n    ${K('for')} j ${K('in')} ${F('range')}(${N('2')}):\n        ${F('print')}(i, j)`,
+      question:"How many lines get printed in total?",
+      options:["2","4","8","1"], correct:1,
+      explain:"The outer loop runs 2 times, and for EACH of those, the inner loop also runs 2 times — that's 2 × 2 = 4 lines printed."
+    },
+    {
+      concept:"NESTED LOOPS", difficulty:"medium",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('1')}, ${N('4')}):\n    ${K('for')} j ${K('in')} ${F('range')}(${N('1')}, ${N('3')}):\n        ${F('print')}(i * j, end=${S('" "')})`,
+      question:"How many numbers total get printed?",
+      options:["3","6","7","9"], correct:1,
+      explain:"The outer loop runs 3 times (1,2,3) and the inner loop runs 2 times (1,2) for each — that's 3 × 2 = 6 numbers printed."
+    },
+    {
+      concept:"ITERATING STRINGS", difficulty:"easy",
+      code:`word = ${S('"cat"')}\n${K('for')} ch ${K('in')} word:\n    ${F('print')}(ch)`,
+      question:"What gets printed?",
+      options:['"cat" once','c, a, t on three lines',"An error — strings can't loop",'3'], correct:1,
+      explain:"Strings are iterable in Python — looping over one visits each character in order, so it prints c, then a, then t."
+    },
+    {
+      concept:"ITERATING LISTS", difficulty:"easy",
+      code:`fruits = [${S('"apple"')}, ${S('"mango"')}]\n${K('for')} f ${K('in')} fruits:\n    ${F('print')}(f)`,
+      question:"What gets printed?",
+      options:["apple, then mango","The whole list at once","Just apple","An error"], correct:0,
+      explain:"Looping over a list visits each item one at a time, in order — so apple prints, then mango."
+    },
+    {
+      concept:"ENUMERATE()", difficulty:"medium",
+      code:`items = [${S('"a"')}, ${S('"b"')}]\n${K('for')} index, value ${K('in')} ${F('enumerate')}(items):\n    ${F('print')}(index, value)`,
+      question:"What's the FIRST line printed?",
+      options:['"0 a"','"1 a"','"a 0"','"0 b"'], correct:0,
+      explain:"enumerate() gives you both a position (starting at 0) and the value at each step, so the first pair printed is 0 a."
+    },
+    {
+      concept:"LIST COMPREHENSION", difficulty:"medium",
+      code:`squares = [x*x ${K('for')} x ${K('in')} ${F('range')}(${N('4')})]\n${F('print')}(squares)`,
+      question:"What does this print?",
+      options:["[0, 1, 4, 9]","[1, 4, 9, 16]","[0, 1, 2, 3]","Error — invalid syntax"], correct:0,
+      explain:"A list comprehension is a compact loop that builds a list. For x = 0,1,2,3 it computes x*x, giving [0, 1, 4, 9]."
+    },
+    {
+      concept:"ZIP()", difficulty:"medium",
+      code:`names = [${S('"Al"')}, ${S('"Bo"')}]\nages = [${N('30')}, ${N('25')}]\n${K('for')} n, a ${K('in')} ${F('zip')}(names, ages):\n    ${F('print')}(n, a)`,
+      question:"What is the FIRST line printed?",
+      options:['"Al 30"','"Bo 25"','"30 Al"','"Al Bo"'], correct:0,
+      explain:"zip() pairs up items from both lists by position. The first pair is the first name with the first age: Al 30."
+    },
+    {
+      concept:"BREAK IN NESTED LOOPS", difficulty:"hard",
+      code:`${K('for')} i ${K('in')} ${F('range')}(${N('2')}):\n    ${K('for')} j ${K('in')} ${F('range')}(${N('3')}):\n        ${K('if')} j == ${N('1')}:\n            ${K('break')}\n        ${F('print')}(i, j)`,
+      question:"How many lines get printed in total?",
+      options:["2","4","6","0"], correct:0,
+      explain:"break only exits the INNER loop. On each of the 2 outer passes, only j=0 prints before the inner loop breaks — so 2 lines total."
+    },
+    {
+      concept:"ACCUMULATOR PATTERN", difficulty:"easy",
+      code:`total = ${N('0')}\n${K('for')} n ${K('in')} [${N('1')}, ${N('2')}, ${N('3')}, ${N('4')}]:\n    total += n\n${F('print')}(total)`,
+      question:"What gets printed?",
+      options:["10","4","1 2 3 4","0"], correct:0,
+      explain:"This is the accumulator pattern: total starts at 0 and adds each number in turn: 0+1+2+3+4 = 10."
+    }
+  ];
+
+  // ---------------- STATE ----------------
+  let order = [];
+  let idx = 0;
+  let score = 0;
+  let streak = 0;
+  let bestStreak = 0;
+  let hearts = 3;
+  let correctCount = 0;
+  let answered = false;
+
+  // ---------------- DOM ----------------
+  const screenStart = document.getElementById('screen-start');
+  const screenGame = document.getElementById('screen-game');
+  const screenEnd = document.getElementById('screen-end');
+  const btnStart = document.getElementById('btn-start');
+  const btnNext = document.getElementById('btn-next');
+  const btnReplay = document.getElementById('btn-replay');
+  const trackNodes = document.getElementById('track-nodes');
+  const trackToken = document.getElementById('track-token');
+  const heartsDisplay = document.getElementById('hearts-display');
+  const streakNum = document.getElementById('streak-num');
+  const scoreNum = document.getElementById('score-num');
+  const qCurrent = document.getElementById('q-current');
+  const qTotal = document.getElementById('q-total');
+  const progressLabel = document.getElementById('progress-label');
+  const badgeConcept = document.getElementById('badge-concept');
+  const badgeDiff = document.getElementById('badge-diff');
+  const codeBody = document.getElementById('code-body');
+  const questionText = document.getElementById('question-text');
+  const optionsWrap = document.getElementById('options');
+  const explainPanel = document.getElementById('explain-panel');
+  const explainTitle = document.getElementById('explain-title');
+  const explainBody = document.getElementById('explain-body');
+  const toast = document.getElementById('toast');
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 2200);
+  }
+
+  function nodePos(i, total){
+    const angle = (-90 + i * (360/total)) * Math.PI/180;
+    const x = 50 + 42*Math.cos(angle);
+    const y = 50 + 42*Math.sin(angle);
+    return {x, y};
+  }
+
+  function buildTrack(){
+    trackNodes.innerHTML = '';
+    questions.forEach((q, i)=>{
+      const {x,y} = nodePos(i, questions.length);
+      const node = document.createElement('div');
+      node.className = 'track-node';
+      node.id = 'node-'+i;
+      node.style.left = x+'%';
+      node.style.top = y+'%';
+      trackNodes.appendChild(node);
+    });
+  }
+
+  function updateTrack(){
+    questions.forEach((q,i)=>{
+      const node = document.getElementById('node-'+i);
+      node.classList.toggle('done', i < idx);
+      node.classList.toggle('current', i === idx);
+    });
+    const {x,y} = nodePos(idx, questions.length);
+    trackToken.style.left = x+'%';
+    trackToken.style.top = y+'%';
+  }
+
+  function renderHearts(){
+    heartsDisplay.innerHTML = '';
+    for(let i=0;i<3;i++){
+      const span = document.createElement('span');
+      span.className = 'heart' + (i < hearts ? '' : ' lost');
+      span.textContent = '❤️';
+      heartsDisplay.appendChild(span);
+    }
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function renderQuestion(){
+    answered = false;
+    const q = questions[idx];
+    qCurrent.textContent = idx+1;
+    qTotal.textContent = 'OF ' + questions.length;
+    progressLabel.textContent = `QUESTION ${idx+1} OF ${questions.length}`;
+    badgeConcept.textContent = q.concept;
+    badgeDiff.textContent = q.difficulty.toUpperCase();
+    badgeDiff.className = 'badge diff-' + q.difficulty;
+    codeBody.innerHTML = q.code;
+    questionText.textContent = q.question;
+    explainPanel.classList.remove('show','correct','wrong');
+    btnNext.classList.remove('show');
+
+    const optObjs = q.options.map((text, i)=>({text, isCorrect: i === q.correct}));
+    const shuffled = shuffle(optObjs);
+
+    optionsWrap.innerHTML = '';
+    shuffled.forEach(opt=>{
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt.text;
+      btn.addEventListener('click', ()=> handleAnswer(btn, opt.isCorrect, q));
+      optionsWrap.appendChild(btn);
+    });
+
+    updateTrack();
+  }
+
+  function handleAnswer(btn, isCorrect, q){
+    if(answered) return;
+    answered = true;
+
+    const allBtns = optionsWrap.querySelectorAll('.option-btn');
+    allBtns.forEach(b=>{
+      b.disabled = true;
+      if(b !== btn) b.classList.add('faded');
+    });
+
+    if(isCorrect){
+      btn.classList.add('correct');
+      streak++;
+      bestStreak = Math.max(bestStreak, streak);
+      const bonus = 10 + streak*2;
+      score += bonus;
+      correctCount++;
+      explainPanel.classList.add('show','correct');
+      explainTitle.textContent = '✅ Correct! +' + bonus + ' points';
+      explainBody.textContent = q.explain;
+    } else {
+      btn.classList.add('wrong');
+      allBtns.forEach(b=>{
+        if(b.textContent === q.options[q.correct]) b.classList.add('correct');
+      });
+      streak = 0;
+      hearts--;
+      explainPanel.classList.add('show','wrong');
+      explainTitle.textContent = '❌ Not quite';
+      explainBody.textContent = q.explain;
+      renderHearts();
+      if(hearts <= 0){
+        showToast("Keep going — hearts refilled! 💪");
+        hearts = 3;
+        renderHearts();
+      }
+    }
+
+    streakNum.textContent = streak;
+    scoreNum.textContent = score;
+    btnNext.classList.add('show');
+  }
+
+  btnNext.addEventListener('click', ()=>{
+    idx++;
+    if(idx >= questions.length){
+      showEnd();
+    } else {
+      renderQuestion();
+    }
+  });
+
+  function showEnd(){
+    screenGame.classList.remove('active');
+    screenEnd.classList.add('active');
+    const total = questions.length;
+    const accuracy = Math.round((correctCount/total)*100);
+    document.getElementById('end-score').textContent = score;
+    document.getElementById('end-accuracy').textContent = accuracy + '%';
+    document.getElementById('end-best-streak').textContent = bestStreak;
+
+    let medal = '🎯', title = 'Nice Effort!', sub = "Loops take practice — run it back and lock them in.";
+    if(correctCount >= 14){ medal='🏆'; title='Loop Master!'; sub="You've mastered for, while, break, continue, and nested loops."; }
+    else if(correctCount >= 10){ medal='🥈'; title='Great Looping!'; sub="Solid grasp of Python loops — a bit more practice for full mastery."; }
+    else if(correctCount >= 6){ medal='🥉'; title='Getting There!'; sub="You're picking up the core loop concepts — keep going."; }
+
+    document.getElementById('end-medal').textContent = medal;
+    document.getElementById('end-title').textContent = title;
+    document.getElementById('end-sub').textContent = sub;
+  }
+
+  function startGame(){
+    idx = 0; score = 0; streak = 0; bestStreak = 0; hearts = 3; correctCount = 0;
+    renderHearts();
+    streakNum.textContent = 0;
+    scoreNum.textContent = 0;
+    screenStart.classList.remove('active');
+    screenEnd.classList.remove('active');
+    screenGame.classList.add('active');
+    buildTrack();
+    renderQuestion();
+  }
+
+  btnStart.addEventListener('click', startGame);
+  btnReplay.addEventListener('click', startGame);
+
+})();
+</script>
+</body>
+</html>
