@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage Sort — Primary vs Secondary Storage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #ffffff;
+    --panel: #f7f8fc;
+    --panel-edge: #e4e7f0;
+    --ink: #1c1f33;
+    --ink-dim: #767a92;
+    --primary: #2f5fe0;
+    --primary-soft: #eaf0ff;
+    --secondary: #e2691a;
+    --secondary-soft: #fff1e6;
+    --good: #1fa864;
+    --bad: #e0483f;
+    --radius: 16px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 800px 420px at 10% -8%, rgba(47,95,224,0.07), transparent 60%),
+      radial-gradient(ellipse 700px 420px at 100% 0%, rgba(226,105,26,0.06), transparent 55%),
+      var(--bg);
+    font-family:'Inter', sans-serif;
+    color:var(--ink);
+    padding:28px 20px 60px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    max-width:1100px;
+    margin:0 auto 26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand svg{width:50px; height:50px; flex-shrink:0;}
+  .brand h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:1.55rem;
+    margin:0;
+    letter-spacing:-0.3px;
+  }
+  .brand h1 span{color:var(--secondary);}
+  .brand p{margin:2px 0 0; color:var(--ink-dim); font-size:0.85rem;}
+
+  .scoreboard{display:flex; gap:10px;}
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:12px;
+    padding:8px 16px;
+    text-align:center;
+    min-width:78px;
+  }
+  .stat .num{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.25rem;}
+  .stat .lbl{font-size:0.65rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.08em;}
+  #scoreNum{color:var(--good);}
+  #wrongNum{color:var(--bad);}
+
+  /* ---------- Progress bar ---------- */
+  .progress-wrap{
+    max-width:1100px; margin:0 auto 26px;
+    background:var(--panel);
+    border:1px solid var(--panel-edge);
+    border-radius:999px;
+    height:10px;
+    overflow:hidden;
+  }
+  .progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--primary), var(--secondary));
+    transition:width 0.4s ease;
+  }
+
+  /* ---------- Tray of draggable feature cards ---------- */
+  .tray{
+    max-width:1100px;
+    margin:0 auto 30px;
+    background:var(--panel);
+    border:1.5px dashed var(--panel-edge);
+    border-radius:20px;
+    padding:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    min-height:90px;
+  }
+
+  .chip{
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:0.92rem;
+    background:#ffffff;
+    border:1px solid var(--panel-edge);
+    color:var(--ink);
+    padding:11px 16px;
+    border-radius:11px;
+    cursor:grab;
+    user-select:none;
+    box-shadow:0 2px 0 rgba(28,31,51,0.06), 0 1px 3px rgba(28,31,51,0.06);
+    transition:transform 0.15s ease, box-shadow 0.15s ease, outline 0.15s ease;
+    outline:2px solid transparent;
+    outline-offset:2px;
+    max-width:280px;
+  }
+  .chip:hover{transform:translateY(-2px); box-shadow:0 5px 10px rgba(28,31,51,0.1);}
+  .chip:active{cursor:grabbing;}
+  .chip.selected{outline:2px solid var(--secondary);}
+  .chip.dragging{opacity:0.35;}
+  .chip.wrong-shake{animation:shake 0.4s ease;}
+
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-6px);}
+    40%{transform:translateX(6px);}
+    60%{transform:translateX(-4px);}
+    80%{transform:translateX(4px);}
+  }
+
+  /* ---------- Bins ---------- */
+  .bins{
+    max-width:1100px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+  @media (max-width:640px){
+    .bins{grid-template-columns:1fr;}
+  }
+
+  .bin{
+    position:relative;
+    border-radius:var(--radius);
+    padding:22px 18px 26px;
+    background:var(--bin-soft);
+    border:2px solid var(--bin-edge);
+    min-height:220px;
+    display:flex;
+    flex-direction:column;
+    transition:transform 0.15s ease, border-color 0.15s ease;
+  }
+  .bin.dragover{
+    transform:scale(1.02);
+    border-color:var(--bin-accent);
+  }
+  .bin-head{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .bin .icon{
+    width:42px; height:42px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:10px;
+    background:#ffffff;
+    color:var(--bin-accent);
+    font-weight:800;
+    font-family:'JetBrains Mono',monospace;
+    font-size:1.1rem;
+    flex-shrink:0;
+  }
+  .bin h3{
+    margin:0;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:1.15rem;
+    color:var(--bin-accent);
+  }
+  .bin > p.desc{
+    margin:2px 0 14px;
+    color:var(--ink-dim);
+    font-size:0.82rem;
+    line-height:1.4;
+  }
+  .bin .dropzone{
+    flex:1;
+    display:flex;
+    flex-wrap:wrap;
+    align-content:flex-start;
+    gap:8px;
+  }
+  .bin .count{
+    margin-top:12px;
+    align-self:flex-start;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.7rem;
+    color:var(--bin-accent);
+    background:#ffffff;
+    border-radius:999px;
+    padding:3px 10px;
+  }
+  .bin[data-type="primary"]{--bin-soft:var(--primary-soft); --bin-edge:#c7d7fb; --bin-accent:var(--primary);}
+  .bin[data-type="secondary"]{--bin-soft:var(--secondary-soft); --bin-edge:#f6cba3; --bin-accent:var(--secondary);}
+
+  .placed-chip{
+    font-family:'Inter', sans-serif;
+    font-weight:500;
+    font-size:0.78rem;
+    background:#ffffff;
+    border:1px solid var(--bin-edge);
+    color:var(--bin-accent);
+    padding:6px 11px;
+    border-radius:8px;
+  }
+
+  .bin-flash-good{animation:flashGood 0.5s ease;}
+  .bin-flash-bad{animation:flashBad 0.5s ease;}
+  @keyframes flashGood{
+    0%{box-shadow:0 0 0 0 rgba(31,168,100,0.35);}
+    100%{box-shadow:0 0 0 16px rgba(31,168,100,0);}
+  }
+  @keyframes flashBad{
+    0%{box-shadow:0 0 0 0 rgba(224,72,63,0.35);}
+    100%{box-shadow:0 0 0 16px rgba(224,72,63,0);}
+  }
+
+  /* ---------- Banner ---------- */
+  .banner{
+    max-width:1100px;
+    margin:26px auto 0;
+    background:linear-gradient(90deg, var(--primary-soft), var(--secondary-soft));
+    border:1px solid var(--panel-edge);
+    border-radius:16px;
+    padding:18px 22px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .banner.show{display:flex;}
+  .banner strong{color:var(--secondary);}
+  .banner button{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    background:var(--primary);
+    color:#ffffff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .banner button:hover{background:#2650bf;}
+
+  .hint{
+    max-width:1100px;
+    margin:16px auto 0;
+    color:var(--ink-dim);
+    font-size:0.78rem;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 64 64" fill="none">
+      <rect x="6" y="14" width="24" height="36" rx="4" fill="#2F5FE0" opacity="0.15"/>
+      <rect x="6" y="14" width="24" height="36" rx="4" stroke="#2F5FE0" stroke-width="2.5"/>
+      <rect x="11" y="20" width="14" height="4" rx="1" fill="#2F5FE0"/>
+      <rect x="11" y="28" width="14" height="4" rx="1" fill="#2F5FE0"/>
+      <circle cx="46" cy="32" r="18" fill="#E2691A" opacity="0.13"/>
+      <circle cx="46" cy="32" r="18" stroke="#E2691A" stroke-width="2.5"/>
+      <circle cx="46" cy="32" r="5" fill="#E2691A"/>
+      <line x1="46" y1="32" x2="55" y2="26" stroke="#E2691A" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>storage<span>_sort()</span></h1>
+      <p>drag each feature into Primary or Secondary Storage</p>
+    </div>
+  </div>
+  <div class="scoreboard">
+    <div class="stat"><div class="num" id="scoreNum">0</div><div class="lbl">Correct</div></div>
+    <div class="stat"><div class="num" id="wrongNum">0</div><div class="lbl">Missed</div></div>
+    <div class="stat"><div class="num" id="leftNum">0</div><div class="lbl">Left</div></div>
+  </div>
+</header>
+
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+<section class="tray" id="tray"></section>
+
+<section class="bins" id="bins">
+  <div class="bin" data-type="primary">
+    <div class="bin-head">
+      <div class="icon">P</div>
+      <h3>Primary Storage</h3>
+    </div>
+    <p class="desc">Directly accessed by the CPU. Holds data and instructions currently in use.</p>
+    <div class="dropzone" id="zone-primary"></div>
+    <div class="count" id="count-primary">0 sorted</div>
+  </div>
+  <div class="bin" data-type="secondary">
+    <div class="bin-head">
+      <div class="icon">S</div>
+      <h3>Secondary Storage</h3>
+    </div>
+    <p class="desc">Auxiliary storage for long-term, large-scale data — not directly accessed by the CPU.</p>
+    <div class="dropzone" id="zone-secondary"></div>
+    <div class="count" id="count-secondary">0 sorted</div>
+  </div>
+</section>
+
+<p class="hint">Tip: on touch devices, tap a feature to select it, then tap the correct bin. Desktop: click and drag.</p>
+
+<div class="banner" id="winBanner">
+  <div>✅ <strong>All sorted!</strong> Every feature has found its correct storage category.</div>
+  <button id="resetBtn">Play again</button>
+</div>
+
+<script>
+const FEATURES = [
+  { text: 'Volatile — loses data when power is off', type: 'primary' },
+  { text: 'Non-volatile — retains data without power', type: 'secondary' },
+  { text: 'Directly accessed by the CPU', type: 'primary' },
+  { text: 'Also known as auxiliary storage', type: 'secondary' },
+  { text: 'Generally faster access speed', type: 'primary' },
+  { text: 'Generally slower access speed', type: 'secondary' },
+  { text: 'Smaller storage capacity', type: 'primary' },
+  { text: 'Much larger storage capacity', type: 'secondary' },
+  { text: 'Higher cost per GB', type: 'primary' },
+  { text: 'Lower cost per GB', type: 'secondary' },
+  { text: 'Temporary, working storage for active tasks', type: 'primary' },
+  { text: 'Used for permanent, long-term data storage', type: 'secondary' },
+  { text: 'Example: RAM (Random Access Memory)', type: 'primary' },
+  { text: 'Example: Hard Disk Drive (HDD)', type: 'secondary' },
+  { text: 'Example: ROM (Read Only Memory)', type: 'primary' },
+  { text: 'Example: Solid State Drive (SSD)', type: 'secondary' },
+  { text: 'Example: Cache memory', type: 'primary' },
+  { text: 'Example: USB flash drive', type: 'secondary' },
+  { text: 'Built into the motherboard, close to CPU', type: 'primary' },
+  { text: 'Portable and removable in most cases', type: 'secondary' },
+];
+
+let score = 0, wrong = 0, remaining = 0;
+let selectedChip = null;
+let draggedChip = null;
+
+const tray = document.getElementById('tray');
+const bins = document.querySelectorAll('.bin');
+const scoreNum = document.getElementById('scoreNum');
+const wrongNum = document.getElementById('wrongNum');
+const leftNum = document.getElementById('leftNum');
+const progressBar = document.getElementById('progressBar');
+const winBanner = document.getElementById('winBanner');
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildTray(){
+  tray.innerHTML = '';
+  document.getElementById('zone-primary').innerHTML = '';
+  document.getElementById('zone-secondary').innerHTML = '';
+  document.getElementById('count-primary').textContent = '0 sorted';
+  document.getElementById('count-secondary').textContent = '0 sorted';
+  winBanner.classList.remove('show');
+  score = 0; wrong = 0;
+  const items = shuffle(FEATURES);
+  remaining = items.length;
+  items.forEach(item => tray.appendChild(makeChip(item)));
+  updateStats();
+}
+
+function makeChip(item){
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.draggable = true;
+  chip.textContent = item.text;
+  chip.dataset.type = item.type;
+
+  chip.addEventListener('dragstart', e => {
+    draggedChip = chip;
+    chip.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', item.type);
+  });
+  chip.addEventListener('dragend', () => {
+    chip.classList.remove('dragging');
+    draggedChip = null;
+  });
+
+  chip.addEventListener('click', () => {
+    if(selectedChip === chip){
+      chip.classList.remove('selected');
+      selectedChip = null;
+      return;
+    }
+    document.querySelectorAll('.chip.selected').forEach(c => c.classList.remove('selected'));
+    selectedChip = chip;
+    chip.classList.add('selected');
+  });
+
+  return chip;
+}
+
+function updateStats(){
+  scoreNum.textContent = score;
+  wrongNum.textContent = wrong;
+  leftNum.textContent = remaining;
+  const total = FEATURES.length;
+  const done = total - remaining;
+  progressBar.style.width = (total ? (done/total*100) : 0) + '%';
+  if(remaining === 0){
+    winBanner.classList.add('show');
+  }
+}
+
+function handleDrop(bin, chip){
+  if(!chip) return;
+  const correct = chip.dataset.type === bin.dataset.type;
+  const countEl = document.getElementById('count-' + bin.dataset.type);
+
+  if(correct){
+    bin.classList.remove('bin-flash-bad');
+    void bin.offsetWidth;
+    bin.classList.add('bin-flash-good');
+
+    const zone = document.getElementById('zone-' + bin.dataset.type);
+    const placed = document.createElement('div');
+    placed.className = 'placed-chip';
+    placed.textContent = chip.textContent;
+    zone.appendChild(placed);
+
+    chip.remove();
+    score++;
+    remaining--;
+    const n = parseInt(countEl.textContent) || 0;
+    countEl.textContent = (n+1) + ' sorted';
+    updateStats();
+  } else {
+    bin.classList.remove('bin-flash-good');
+    void bin.offsetWidth;
+    bin.classList.add('bin-flash-bad');
+    chip.classList.add('wrong-shake');
+    wrong++;
+    setTimeout(() => chip.classList.remove('wrong-shake'), 400);
+    updateStats();
+  }
+  selectedChip = null;
+  chip.classList.remove('selected');
+}
+
+bins.forEach(bin => {
+  bin.addEventListener('dragover', e => {
+    e.preventDefault();
+    bin.classList.add('dragover');
+  });
+  bin.addEventListener('dragleave', () => bin.classList.remove('dragover'));
+  bin.addEventListener('drop', e => {
+    e.preventDefault();
+    bin.classList.remove('dragover');
+    handleDrop(bin, draggedChip);
+  });
+  bin.addEventListener('click', () => {
+    if(selectedChip) handleDrop(bin, selectedChip);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', buildTray);
+
+buildTray();
+</script>
+
+</body>
+</html>
