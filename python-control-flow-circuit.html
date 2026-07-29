@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Control Flow Circuit — Learn Python Control Statements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef5f0;
+    --bg-2:#e4eee7;
+    --surface:#ffffff;
+    --ink:#142019;
+    --ink-soft:#4a5a4f;
+    --ink-faint:#7c8c81;
+    --trace:#1f7a4d;
+    --trace-dark:#124a2e;
+    --trace-light:#bfe3cd;
+    --signal:#ffb020;
+    --danger:#c8402f;
+    --danger-bg:#fbe7e3;
+    --success-bg:#e2f4e8;
+    --border:#d3e2d8;
+    --radius:16px;
+    --shadow: 0 2px 4px rgba(20,32,25,.04), 0 12px 28px rgba(20,32,25,.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, var(--bg-2), transparent),
+      radial-gradient(1000px 500px at 110% 10%, var(--bg-2), transparent),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:20px 20px 0;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;letter-spacing:-.01em;margin:0;}
+  code, .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:18px 0 8px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:42px;height:42px;border-radius:10px;
+    background:var(--trace-dark);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow);
+    flex-shrink:0;
+  }
+  .brand-mark svg{width:24px;height:24px;}
+  .brand h1{font-size:1.35rem;color:var(--trace-dark);}
+  .brand p{margin:2px 0 0;font-size:.85rem;color:var(--ink-soft);}
+
+  .hud{display:flex;align-items:center;gap:14px;}
+  .stat{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:8px 14px;
+    display:flex;align-items:center;gap:8px;
+    box-shadow:var(--shadow);
+    font-size:.85rem;
+  }
+  .stat b{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--trace-dark);}
+  .xp-track{
+    width:150px;height:10px;border-radius:999px;background:var(--bg-2);
+    overflow:hidden;border:1px solid var(--border);
+  }
+  .xp-fill{
+    height:100%;background:linear-gradient(90deg, var(--trace), var(--signal));
+    width:0%;transition:width .5s cubic-bezier(.2,.8,.2,1);
+  }
+
+  /* ---------- LEVEL MAP (circuit board) ---------- */
+  .map-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px 18px 26px;
+    margin-top:18px;
+  }
+  .map-card > .map-title{
+    display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;
+    flex-wrap:wrap;gap:6px;
+  }
+  .map-title h2{font-size:1.05rem;color:var(--ink);}
+  .map-title span{font-size:.8rem;color:var(--ink-faint);}
+
+  .level-map{
+    display:flex;
+    gap:0;
+    overflow-x:auto;
+    padding:10px 4px 18px;
+    scrollbar-width:thin;
+    scrollbar-color:var(--trace-light) transparent;
+  }
+  .level-map::-webkit-scrollbar{height:6px;}
+  .level-map::-webkit-scrollbar-thumb{background:var(--trace-light);border-radius:99px;}
+
+  .node-wrap{display:flex;align-items:center;flex-shrink:0;}
+  .connector{
+    width:34px;height:4px;flex-shrink:0;
+    background:var(--border);
+    position:relative;
+  }
+  .connector.on{background:repeating-linear-gradient(90deg, var(--trace) 0 6px, transparent 6px 12px);
+    background-size:200% 100%;
+    animation:flow 1.2s linear infinite;
+  }
+  @keyframes flow{ to{background-position:-24px 0;} }
+
+  .chip{
+    width:84px;height:84px;flex-shrink:0;
+    background:var(--surface);
+    border:2px solid var(--border);
+    border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;
+    cursor:pointer;
+    position:relative;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .chip:hover{transform:translateY(-2px);}
+  .chip:focus-visible{outline:3px solid var(--signal);outline-offset:2px;}
+  .chip .pins{
+    position:absolute;left:10px;right:10px;height:5px;
+    background-image:repeating-linear-gradient(90deg, var(--ink-faint) 0 4px, transparent 4px 9px);
+    opacity:.35;
+  }
+  .chip .pins.top{top:-3px;} .chip .pins.bot{bottom:-3px;}
+  .chip .num{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-faint);}
+  .chip .ico{font-size:1.4rem;line-height:1;}
+  .chip .label{font-size:.68rem;text-align:center;color:var(--ink-soft);padding:0 4px;font-weight:600;}
+
+  .chip.locked{opacity:.45;cursor:not-allowed;}
+  .chip.locked:hover{transform:none;}
+  .chip.current{
+    border-color:var(--trace);
+    box-shadow:0 0 0 4px var(--trace-light);
+  }
+  .chip.done{border-color:var(--trace);background:var(--success-bg);}
+  .chip.done .ico{color:var(--trace-dark);}
+  .chip.active-select{border-color:var(--signal);box-shadow:0 0 0 4px #ffe6b3;}
+
+  /* ---------- CHALLENGE PANEL ---------- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    margin-top:18px;
+    padding:24px;
+    animation:rise .35s ease;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--trace-light);color:var(--trace-dark);
+    font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;
+    padding:5px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;
+  }
+  .panel h3{font-size:1.3rem;margin-top:10px;color:var(--ink);}
+  .concept{color:var(--ink-soft);font-size:.95rem;margin-top:6px;max-width:65ch;}
+
+  pre.code{
+    background:var(--ink);
+    color:#eaf6ee;
+    border-radius:12px;
+    padding:18px 20px;
+    margin:18px 0;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.92rem;
+    line-height:1.65;
+    overflow-x:auto;
+    box-shadow: inset 0 0 0 1px #0000;
+  }
+  pre.code .kw{color:#ffb020;}
+  pre.code .fn{color:#8fd6ff;}
+  pre.code .str{color:#b7f5c0;}
+  pre.code .cm{color:#7f9c8a;}
+
+  .question{font-weight:600;margin:14px 0 12px;font-size:1rem;}
+
+  .answer-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  input.text-answer{
+    flex:1 1 240px;
+    min-width:180px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.95rem;
+    padding:12px 14px;
+    border-radius:10px;
+    border:2px solid var(--border);
+    background:var(--bg);
+    color:var(--ink);
+  }
+  input.text-answer:focus{outline:none;border-color:var(--trace);}
+  textarea.text-answer{
+    width:100%;font-family:'JetBrains Mono',monospace;font-size:.95rem;
+    padding:12px 14px;border-radius:10px;border:2px solid var(--border);
+    background:var(--bg);color:var(--ink);min-height:84px;resize:vertical;
+  }
+  textarea.text-answer:focus{outline:none;border-color:var(--trace);}
+
+  .options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .opt-btn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.92rem;
+    padding:14px 12px;
+    border-radius:10px;
+    border:2px solid var(--border);
+    background:var(--bg);
+    color:var(--ink);
+    cursor:pointer;
+    min-height:48px;
+    text-align:left;
+    transition:border-color .12s ease, background .12s ease, transform .08s ease;
+  }
+  .opt-btn:hover{border-color:var(--trace);transform:translateY(-1px);}
+  .opt-btn.picked{border-color:var(--trace);background:var(--trace-light);}
+  .opt-btn:disabled{cursor:default;}
+
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:700;font-size:.95rem;
+    padding:13px 22px;border-radius:10px;border:none;cursor:pointer;
+    min-height:46px;
+    transition:transform .08s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--trace-dark);color:#fff;}
+  .btn-primary:hover{box-shadow:0 6px 16px rgba(18,74,46,.28);}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+  .btn-ghost{background:transparent;color:var(--trace-dark);border:2px solid var(--trace-dark);}
+  .btn-ghost:hover{background:var(--trace-light);}
+
+  .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+
+  .feedback{
+    margin-top:16px;padding:14px 16px;border-radius:12px;
+    font-size:.92rem;display:none;gap:10px;align-items:flex-start;
+  }
+  .feedback.show{display:flex;}
+  .feedback.correct{background:var(--success-bg);color:var(--trace-dark);}
+  .feedback.wrong{background:var(--danger-bg);color:var(--danger);}
+  .feedback .fico{font-size:1.2rem;line-height:1;}
+  .feedback .fbody b{display:block;margin-bottom:2px;}
+  .hint{margin-top:14px;font-size:.85rem;color:var(--ink-faint);}
+  .hint button{background:none;border:none;color:var(--trace-dark);font-weight:700;cursor:pointer;padding:0;font-size:.85rem;text-decoration:underline;}
+
+  .shake{animation:shake .35s ease;}
+  @keyframes shake{
+    10%,90%{transform:translateX(-2px);}
+    20%,80%{transform:translateX(3px);}
+    30%,50%,70%{transform:translateX(-5px);}
+    40%,60%{transform:translateX(5px);}
+  }
+
+  /* ---------- COMPLETE SCREEN ---------- */
+  .complete{
+    text-align:center;padding:40px 20px;
+  }
+  .complete .ico{font-size:3rem;}
+  .complete h2{font-size:1.6rem;color:var(--trace-dark);margin-top:8px;}
+  .complete p{color:var(--ink-soft);max-width:46ch;margin:8px auto 20px;}
+
+  footer{
+    text-align:center;color:var(--ink-faint);font-size:.8rem;padding:28px 20px 0;
+  }
+
+  @media (max-width:600px){
+    .wrap{padding:14px 14px 0;}
+    header{gap:10px;}
+    .hud{width:100%;justify-content:space-between;}
+    .xp-track{width:110px;}
+    .panel{padding:18px;}
+    .chip{width:74px;height:74px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h4l2-6 4 12 2-6h4" stroke="#eaf6ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h1>Control Flow Circuit</h1>
+        <p>Learn Python's if / for / while / break / continue by routing the signal</p>
+      </div>
+    </div>
+    <div class="hud">
+      <div class="stat">🔥 <b id="streakVal">0</b></div>
+      <div class="stat">
+        ⚡ <b id="xpVal">0</b>&nbsp;XP
+        <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="map-card">
+    <div class="map-title">
+      <h2>Signal path — 8 components</h2>
+      <span id="mapHint">Tap a chip to open its challenge</span>
+    </div>
+    <div class="level-map" id="levelMap"></div>
+  </div>
+
+  <div id="panelHost"></div>
+
+  <footer>Built as a self-contained page — no install, no account. Works on laptop and mobile.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const levels = [
+    {
+      id:0, key:"if", icon:"🔀", label:"if",
+      badge:"if statement",
+      title:"Route the signal — if",
+      concept:"An `if` block runs its indented lines only when the condition is True. Nothing special happens when it's False — the program just skips the block.",
+      code:
+`x = 7
+if x > 5:
+    print("Big")
+print("Done")`,
+      question:"What gets printed? (one value per line)",
+      type:"predict",
+      answer:"Big\nDone",
+      hint:"x > 5 is True, so the if-block runs. The last print is not indented, so it always runs."
+    },
+    {
+      id:1, key:"ifelse", icon:"⚖️", label:"if / else",
+      badge:"if / else",
+      title:"Two paths — if / else",
+      concept:"`else` gives the program a path to take when the `if` condition is False. Exactly one of the two blocks runs — never both.",
+      code:
+`age = 16
+if age >= 18:
+    print("Adult")
+else:
+    print("Minor")`,
+      question:"What gets printed?",
+      type:"predict",
+      answer:"Minor",
+      hint:"16 is not >= 18, so control flows into the else branch."
+    },
+    {
+      id:2, key:"elif", icon:"🪜", label:"elif ladder",
+      badge:"if / elif / else",
+      title:"The elif ladder",
+      concept:"Python checks each condition top to bottom and runs the first block whose condition is True. `elif` lets you chain several conditions instead of nesting `if`s.",
+      code:
+`score = 72
+if score >= 90:
+    print("A")
+elif score >= 75:
+    print("B")
+elif score >= 60:
+    print("C")
+else:
+    print("F")`,
+      question:"What gets printed?",
+      type:"predict",
+      answer:"C",
+      hint:"72 fails >= 90 and >= 75, but passes >= 60 — the third rung of the ladder fires."
+    },
+    {
+      id:3, key:"for", icon:"🔁", label:"for + range",
+      badge:"for loop",
+      title:"Loop a fixed number of times",
+      concept:"`range(1, 5)` produces 1, 2, 3, 4 — it stops before the second number. A `for` loop runs its block once per value.",
+      code:
+`total = 0
+for i in range(1, 5):
+    total += i
+print(total)`,
+      question:"What single number gets printed?",
+      type:"predict",
+      answer:"10",
+      hint:"total adds up 1 + 2 + 3 + 4."
+    },
+    {
+      id:4, key:"while", icon:"⏳", label:"while",
+      badge:"while loop",
+      title:"Loop until a condition fails",
+      concept:"A `while` loop keeps running as long as its condition stays True. Forgetting to change the variable inside the loop causes an infinite loop.",
+      code:
+`n = 3
+while n > 0:
+    print(n)
+    n -= 1`,
+      question:"What gets printed? (one value per line)",
+      type:"predict",
+      answer:"3\n2\n1",
+      hint:"n starts at 3 and counts down until n > 0 is False."
+    },
+    {
+      id:5, key:"break", icon:"⛔", label:"break",
+      badge:"break",
+      title:"Cut the wire — break",
+      concept:"`break` exits the loop immediately, skipping every remaining value — even the one that triggered it.",
+      code:
+`for i in range(1, 10):
+    if i == 4:
+        break
+    print(i)`,
+      question:"What gets printed? (one value per line)",
+      type:"predict",
+      answer:"1\n2\n3",
+      hint:"When i becomes 4, break fires before print(i) runs, and the loop stops for good."
+    },
+    {
+      id:6, key:"continue", icon:"↩️", label:"continue",
+      badge:"continue",
+      title:"Skip ahead — continue",
+      concept:"`continue` skips the rest of the current pass and jumps to the next value — the loop keeps going, unlike break.",
+      code:
+`for i in range(1, 6):
+    if i % 2 == 0:
+        continue
+    print(i)`,
+      question:"What gets printed? (one value per line)",
+      type:"predict",
+      answer:"1\n3\n5",
+      hint:"Even numbers trigger continue, so only odd i values reach print(i)."
+    },
+    {
+      id:7, key:"boss", icon:"🧠", label:"Final circuit",
+      badge:"nested loop + break",
+      title:"Boss component — complete the circuit",
+      concept:"This nested loop should print every (i, j) pair for i in 1..3, but for each i it must stop the INNER loop as soon as j reaches 2 — the outer loop should still continue to the next i.",
+      code:
+`for i in range(1, 4):
+    for j in range(1, 4):
+        if j == 2:
+            ____
+        print(i, j)`,
+      question:"Which keyword belongs on the blank line?",
+      type:"mcq",
+      options:["break","continue","pass","return"],
+      answer:"break",
+      hint:"You need the inner loop to stop for this i, but the outer loop must still move on — that's the job of break, not continue or return."
+    }
+  ];
+
+  const state = { xp:0, streak:0, completed:new Set(), currentPanel:null, hintOpen:false };
+  const totalXP = levels.length * 100;
+
+  const mapEl = document.getElementById('levelMap');
+  const panelHost = document.getElementById('panelHost');
+  const xpVal = document.getElementById('xpVal');
+  const xpFill = document.getElementById('xpFill');
+  const streakVal = document.getElementById('streakVal');
+
+  function isUnlocked(i){ return i === 0 || state.completed.has(i-1); }
+
+  function renderMap(){
+    mapEl.innerHTML = "";
+    levels.forEach((lvl, i)=>{
+      if(i>0){
+        const conn = document.createElement('div');
+        conn.className = 'connector' + (state.completed.has(i-1) ? ' on' : '');
+        mapEl.appendChild(conn);
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'node-wrap';
+      const chip = document.createElement('button');
+      const unlocked = isUnlocked(i);
+      const done = state.completed.has(i);
+      chip.className = 'chip' + (!unlocked ? ' locked' : '') + (done ? ' done' : '') + (state.currentPanel===i ? ' active-select' : '');
+      chip.disabled = !unlocked;
+      chip.innerHTML = `
+        <div class="pins top"></div>
+        <span class="num">0${i+1}</span>
+        <span class="ico">${done ? '✅' : (unlocked ? lvl.icon : '🔒')}</span>
+        <span class="label">${lvl.label}</span>
+        <div class="pins bot"></div>`;
+      chip.addEventListener('click', ()=> openLevel(i));
+      wrap.appendChild(chip);
+      mapEl.appendChild(wrap);
+    });
+  }
+
+  function updateHUD(){
+    xpVal.textContent = state.xp;
+    streakVal.textContent = state.streak;
+    xpFill.style.width = Math.min(100, (state.xp/totalXP)*100) + "%";
+  }
+
+  function highlight(code){
+    const kws = ['if','elif','else','for','while','break','continue','in','range','print','pass','return'];
+    return code
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/("(?:[^"\\]|\\.)*")/g, '<span class="str">$1</span>')
+      .replace(new RegExp('\\b('+kws.join('|')+')\\b','g'), '<span class="kw">$1</span>')
+      .replace(/\b(print|range)\b(?=\()/g, '<span class="fn">$1</span>');
+  }
+
+  function normalize(s){
+    return s.trim().split('\n').map(l=>l.trim()).filter(l=>l.length).join('\n');
+  }
+
+  function openLevel(i){
+    if(!isUnlocked(i)) return;
+    state.currentPanel = i;
+    state.hintOpen = false;
+    renderMap();
+    renderPanel(i);
+    panelHost.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+
+  function renderPanel(i){
+    const lvl = levels[i];
+    const isDone = state.completed.has(i);
+
+    let answerUI = '';
+    if(lvl.type === 'predict'){
+      const multiline = lvl.answer.includes('\n');
+      answerUI = multiline
+        ? `<textarea class="text-answer" id="ansInput" placeholder="Type each printed value on its own line…"></textarea>`
+        : `<div class="answer-row"><input class="text-answer" id="ansInput" placeholder="Type the printed value…"></div>`;
+    } else if(lvl.type === 'mcq'){
+      answerUI = `<div class="options" id="optsWrap">` +
+        lvl.options.map(o=>`<button class="opt-btn" data-val="${o}">${o}</button>`).join('') +
+        `</div>`;
+    }
+
+    panelHost.innerHTML = `
+      <div class="panel" id="panel">
+        <span class="badge">${lvl.badge}</span>
+        <h3>${lvl.title}</h3>
+        <p class="concept">${lvl.concept}</p>
+        <pre class="code">${highlight(lvl.code)}</pre>
+        <p class="question">${lvl.question}</p>
+        ${answerUI}
+        <div class="actions">
+          <button class="btn btn-primary" id="checkBtn">Check answer</button>
+          <button class="btn btn-ghost" id="nextBtn" style="display:none;">Next component →</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <div class="hint" id="hintBox">
+          <button id="hintBtn" type="button">Need a hint?</button>
+        </div>
+      </div>`;
+
+    const feedback = document.getElementById('feedback');
+    const checkBtn = document.getElementById('checkBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const hintBox = document.getElementById('hintBox');
+
+    hintBtn.addEventListener('click', ()=>{
+      hintBox.innerHTML = `💡 ${lvl.hint}`;
+    });
+
+    let selectedOpt = null;
+    if(lvl.type === 'mcq'){
+      document.querySelectorAll('.opt-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('picked'));
+          btn.classList.add('picked');
+          selectedOpt = btn.dataset.val;
+        });
+      });
+    }
+
+    function evaluate(){
+      let correct;
+      if(lvl.type === 'predict'){
+        const input = document.getElementById('ansInput').value;
+        correct = normalize(input) === normalize(lvl.answer);
+      } else {
+        correct = selectedOpt === lvl.answer;
+      }
+
+      if(correct){
+        feedback.className = 'feedback show correct';
+        feedback.innerHTML = `<span class="fico">✅</span><div class="fbody"><b>Correct — circuit closed.</b>Expected output: <code>${lvl.answer.replace(/\n/g,' / ')}</code></div>`;
+        checkBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-block';
+        document.querySelectorAll('.opt-btn').forEach(b=>b.disabled = true);
+        const inputEl = document.getElementById('ansInput');
+        if(inputEl) inputEl.disabled = true;
+
+        if(!isDone){
+          state.completed.add(i);
+          state.xp += 100;
+          state.streak += 1;
+          updateHUD();
+          renderMap();
+        }
+      } else {
+        feedback.className = 'feedback show wrong';
+        feedback.innerHTML = `<span class="fico">⚠️</span><div class="fbody"><b>Not quite — signal didn't reach the end.</b>Re-trace the code line by line and try again.</div>`;
+        document.getElementById('panel').classList.remove('shake');
+        void document.getElementById('panel').offsetWidth;
+        document.getElementById('panel').classList.add('shake');
+        state.streak = 0;
+        updateHUD();
+      }
+    }
+
+    checkBtn.addEventListener('click', evaluate);
+    nextBtn.addEventListener('click', ()=>{
+      if(i+1 < levels.length){
+        openLevel(i+1);
+      } else {
+        renderComplete();
+      }
+    });
+
+    if(isDone){
+      // Pre-fill as solved, allow review without forcing re-check
+      evaluate.__reviewed = true;
+    }
+  }
+
+  function renderComplete(){
+    state.currentPanel = null;
+    renderMap();
+    panelHost.innerHTML = `
+      <div class="panel complete">
+        <div class="ico">🏁</div>
+        <h2>Circuit complete</h2>
+        <p>You routed the signal through every control statement in Python — if/elif/else branching, for and while loops, and break/continue jumps. That's the full toolkit for directing how a program flows.</p>
+        <div class="actions" style="justify-content:center;">
+          <button class="btn btn-primary" id="restartBtn">Replay from the start</button>
+        </div>
+      </div>`;
+    document.getElementById('restartBtn').addEventListener('click', ()=>{
+      state.completed.clear();
+      state.xp = 0;
+      state.streak = 0;
+      updateHUD();
+      renderMap();
+      openLevel(0);
+    });
+  }
+
+  renderMap();
+  updateHUD();
+  openLevel(0);
+})();
+</script>
+</body>
+</html>
