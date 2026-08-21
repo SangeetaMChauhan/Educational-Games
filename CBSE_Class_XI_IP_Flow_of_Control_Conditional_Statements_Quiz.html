@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBSE Class XI IP - Conditional Statements Quiz</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eef2ff,#ecfeff,#fff7ed);color:#172033;min-height:100vh}
+.container{max-width:950px;margin:auto;padding:24px}
+.hero{background:linear-gradient(135deg,#7c3aed,#0891b2);color:#fff;padding:28px;border-radius:25px;box-shadow:0 12px 30px #0002}
+.hero h1{margin:0 0 8px;font-size:32px}.hero p{margin:0;opacity:.95}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.badge{background:#ffffff30;padding:9px 14px;border-radius:20px;font-weight:bold}
+.progress{height:12px;background:#ffffff35;border-radius:20px;margin-top:20px;overflow:hidden}.bar{height:100%;background:#fef08a;width:4%;transition:.3s}
+.card{background:#fff;margin-top:22px;padding:28px;border-radius:22px;box-shadow:0 8px 25px #0002}
+.q{font-size:21px;font-weight:700;line-height:1.5;margin-bottom:20px}
+.code{background:#111827;color:#e5e7eb;padding:16px;border-radius:12px;overflow:auto;margin:12px 0;font-family:Consolas,monospace;white-space:pre-wrap}
+.option{width:100%;padding:15px;margin:8px 0;border:2px solid #e5e7eb;background:#fff;border-radius:14px;text-align:left;font-size:16px;cursor:pointer;transition:.2s}
+.option:hover{border-color:#7c3aed;background:#f5f3ff}
+.correct{background:#dcfce7!important;border-color:#22c55e!important}.wrong{background:#fee2e2!important;border-color:#ef4444!important}
+.feedback{display:none;margin-top:16px;padding:15px;border-radius:12px;background:#ecfeff;border-left:5px solid #0891b2;line-height:1.5}
+.actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+button.nav{padding:12px 22px;border:0;border-radius:12px;background:#e5e7eb;font-weight:bold;font-size:16px;cursor:pointer}
+button.primary{background:#7c3aed;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+.result{text-align:center}.score{font-size:60px;font-weight:800;color:#7c3aed;margin:15px}
+.review{margin-top:15px;padding:15px;background:#f8fafc;border-radius:12px;text-align:left}
+@media(max-width:600px){.container{padding:14px}.hero h1{font-size:25px}.card{padding:20px}.q{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="hero">
+<h1>🐍 Flow of Control in Python</h1>
+<p>CBSE Class XI Informatics Practices (065) • Conditional Statements ONLY</p>
+<div class="badges">
+<span class="badge" id="count">Question 1 of 25</span>
+<span class="badge" id="score">Score: 0</span>
+</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+</div>
+
+<div class="card" id="card">
+<div class="q" id="question"></div>
+<div id="options"></div>
+<div class="feedback" id="feedback"></div>
+<div class="actions">
+<button class="nav" id="prev">← Previous</button>
+<button class="nav primary" id="next">Next →</button>
+</div>
+</div>
+</div>
+
+<script>
+const Q=[
+["Which conditional statement executes a block only when its condition is True?",["if","else","elif","while"],0],
+["Which keyword provides an alternative block when an if condition is False?",["elif","else","then","otherwise"],1],
+["Which keyword is used to test another condition after an if condition is False?",["else","elif","again","case"],1],
+["Which symbol must be placed at the end of a Python if condition?",[":",";","->","."],0],
+["What is the purpose of indentation in a Python conditional statement?",["It defines the block of statements","It declares a variable","It ends the program","It converts data"],0],
+["What will be printed?\n\nif 10 > 5:\n    print(\"Yes\")",["Yes","No","10","Nothing"],0],
+["What will be printed?\n\nx = 4\nif x > 5:\n    print(\"A\")\nelse:\n    print(\"B\")",["A","B","4","Nothing"],1],
+["What will be printed?\n\nn = 7\nif n % 2 == 0:\n    print(\"Even\")\nelse:\n    print(\"Odd\")",["Even","Odd","7","Error"],1],
+["What will be printed?\n\nn = -3\nif n > 0:\n    print(\"Positive\")\nelif n < 0:\n    print(\"Negative\")\nelse:\n    print(\"Zero\")",["Positive","Negative","Zero","Error"],1],
+["What will be printed?\n\nn = 0\nif n > 0:\n    print(\"Positive\")\nelif n < 0:\n    print(\"Negative\")\nelse:\n    print(\"Zero\")",["Positive","Negative","Zero","Nothing"],2],
+["Which form is correct Python syntax for if?",["if x > 5:","if (x > 5) then","if x > 5;","if x > 5 ->"],0],
+["Which form correctly represents an if-else statement?",["if condition: ... else: ...","if condition then ... otherwise ...","if condition; else condition","if condition: else condition:"],0],
+["Which form correctly represents an if-elif-else ladder?",["if ... elif ... else","if ... else if ... otherwise","if ... elseif ... then","if ... then ... elif"],0],
+["In an if-elif-else ladder, when a condition becomes True, what happens?",["Its block executes and the remaining ladder is skipped","All remaining blocks execute","Only else executes","The program always stops"],0],
+["When is the else block of an if-elif-else ladder executed?",["When all preceding conditions are False","When the first condition is True","Before checking conditions","Whenever an elif is present"],0],
+["What is the output?\n\nmarks = 82\nif marks >= 90:\n    print(\"A\")\nelif marks >= 80:\n    print(\"B\")\nelse:\n    print(\"C\")",["A","B","C","Nothing"],1],
+["What is the output?\n\nx = 15\nif x % 3 == 0 and x % 5 == 0:\n    print(\"Both\")\nelse:\n    print(\"No\")",["Both","No","15","Error"],0],
+["What is the output?\n\na = 12\nb = 20\nif a > b:\n    print(a)\nelse:\n    print(b)",["12","20","32","Nothing"],1],
+["Which condition correctly checks whether n is between 10 and 20 inclusive?",["n >= 10 and n <= 20","n > 10 or n < 20","n >= 10 or n <= 20","n == 10 and n == 20"],0],
+["Which condition correctly checks whether a number is divisible by 5?",["n % 5 == 0","n / 5 == 0","n // 5 == 0","n * 5 == 0"],0],
+["What will be printed?\n\nx = 3\nif x > 5:\n    print(\"A\")\nelif x > 2:\n    print(\"B\")\nelif x > 1:\n    print(\"C\")\nelse:\n    print(\"D\")",["A","B","C","D"],1],
+["What will be printed?\n\nx = 10\nif x > 5:\n    print(\"A\")\nif x > 8:\n    print(\"B\")",["A only","B only","A and B","Nothing"],2],
+["Which logical operator requires both conditions to be True?",["and","or","not","if"],0],
+["Which logical operator makes a condition True when at least one of its conditions is True?",["and","or","not","elif"],1],
+["Which logical operator reverses the truth value of a condition?",["and","or","not","else"],2]
+];
+
+let current=0,score=0,answered=false;
+const $=id=>document.getElementById(id);
+function render(){
+let q=Q[current];
+$("count").textContent=`Question ${current+1} of ${Q.length}`;
+$("score").textContent=`Score: ${score}`;
+$("bar").style.width=((current+1)/Q.length*100)+"%";
+$("question").textContent=q[0];
+$("options").innerHTML="";
+$("feedback").style.display="none";
+q[1].forEach((x,n)=>{
+let b=document.createElement("button");
+b.className="option";b.textContent=String.fromCharCode(65+n)+". "+x;
+b.onclick=()=>select(n);$("options").appendChild(b);
+});
+$("prev").disabled=current===0;
+$("next").textContent=current===Q.length-1?"Finish Quiz":"Next →";
+answered=false;
+}
+function select(n){
+if(answered)return;
+answered=true;
+let q=Q[current],bs=document.querySelectorAll(".option");
+bs.forEach((b,k)=>{
+if(k===q[2])b.classList.add("correct");
+if(k===n&&n!==q[2])b.classList.add("wrong");
+});
+if(n===q[2]){
+score++;
+$("feedback").textContent="✓ Correct! Your answer matches the required conditional-statement concept.";
+}else{
+$("feedback").textContent="Review this concept. The correct answer is: "+q[1][q[2]];
+}
+$("feedback").style.display="block";
+$("score").textContent=`Score: ${score}`;
+}
+$("prev").onclick=()=>{if(current>0){current--;render()}};
+$("next").onclick=()=>{
+if(current<Q.length-1){current++;render();return}
+let p=Math.round(score/Q.length*100);
+let msg=p>=90?"Outstanding! You have mastered conditional statements.":p>=70?"Very good! Revise a few output-based questions.":p>=50?"Good attempt! Practise if, if-else and if-elif-else programs.":"Keep practising! Focus on conditions, indentation and output tracing.";
+$("card").innerHTML=`<div class="result">
+<h2>🎉 Quiz Completed!</h2>
+<div class="score">${score} / ${Q.length}</div>
+<p><strong>${p}%</strong></p>
+<p>${msg}</p>
+<div class="review"><strong>Coverage:</strong><br>
+if statement • if-else • if-elif-else • indentation • conditions • relational operators • logical operators • output tracing • divisibility • positive/negative/zero • comparison • nested conditional reasoning
+</div><br>
+<button class="nav primary" onclick="location.reload()">Restart Quiz</button>
+</div>`;
+};
+render();
+</script>
+</body>
+</html>
