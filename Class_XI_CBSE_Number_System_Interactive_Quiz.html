@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class XI Number System Quiz</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eef2ff,#ecfeff,#fff7ed);min-height:100vh;color:#172033}
+.container{max-width:900px;margin:0 auto;padding:25px}
+.header{background:linear-gradient(135deg,#4f46e5,#0891b2);color:white;border-radius:24px;padding:28px;box-shadow:0 12px 30px rgba(0,0,0,.15)}
+.header h1{margin:0 0 8px;font-size:32px}
+.header p{margin:0;opacity:.95}
+.info{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.badge{background:rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:bold}
+.progress{height:12px;background:rgba(255,255,255,.25);border-radius:20px;margin-top:20px;overflow:hidden}
+.progress-bar{height:100%;width:5%;background:#fff59d;border-radius:20px;transition:.3s}
+.card{background:white;border-radius:22px;padding:28px;margin-top:22px;box-shadow:0 8px 25px rgba(0,0,0,.1)}
+.question{font-size:22px;font-weight:bold;line-height:1.5;margin-bottom:20px}
+.option{width:100%;padding:16px;margin:9px 0;border:2px solid #e5e7eb;background:#fff;border-radius:14px;text-align:left;font-size:17px;cursor:pointer;transition:.2s}
+.option:hover{border-color:#6366f1;background:#eef2ff;transform:translateX(3px)}
+.option.correct{background:#dcfce7;border-color:#22c55e}
+.option.wrong{background:#fee2e2;border-color:#ef4444}
+.feedback{display:none;margin-top:18px;padding:15px;border-radius:12px;background:#f0f9ff;border-left:5px solid #0891b2;line-height:1.5}
+.actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
+button.nav{padding:12px 22px;border:0;border-radius:12px;background:#e5e7eb;font-weight:bold;font-size:16px;cursor:pointer}
+button.primary{background:#4f46e5;color:white}
+button.nav:disabled{opacity:.45;cursor:not-allowed}
+.result{text-align:center;padding:20px}
+.score{font-size:60px;font-weight:800;color:#4f46e5;margin:15px}
+.result h2{font-size:30px}
+.topic{color:#64748b}
+@media(max-width:600px){.container{padding:14px}.header h1{font-size:25px}.card{padding:20px}.question{font-size:19px}.option{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>Number System — Class XI</h1>
+<p>CBSE Computer Science (083) • Interactive Quiz</p>
+<div class="info">
+<span class="badge" id="qCount">Question 1 of 20</span>
+<span class="badge" id="scorePill">Score: 0</span>
+</div>
+<div class="progress"><div id="progressBar" class="progress-bar"></div></div>
+</div>
+
+<div class="card" id="quizCard">
+<div id="question" class="question"></div>
+<div id="options"></div>
+<div id="feedback" class="feedback"></div>
+<div class="actions">
+<button id="prev" class="nav">← Previous</button>
+<button id="next" class="nav primary">Next →</button>
+</div>
+</div>
+</div>
+
+<script>
+const questions=[
+{q:"Which number system uses only the digits 0 and 1?",o:["Binary","Octal","Decimal","Hexadecimal"],a:0},
+{q:"What is the base (radix) of the octal number system?",o:["2","8","10","16"],a:1},
+{q:"Which digits are valid in the decimal number system?",o:["0–1","0–7","0–9","0–F"],a:2},
+{q:"Which set correctly represents the symbols used in hexadecimal?",o:["0–7","0–9 and A–F","0–1 and A–F","1–16"],a:1},
+{q:"What is the decimal value of binary 1010₂?",o:["8","9","10","12"],a:2},
+{q:"What is the binary equivalent of decimal 15?",o:["1010₂","1101₂","1110₂","1111₂"],a:3},
+{q:"What is the decimal equivalent of binary 11001₂?",o:["23","24","25","26"],a:2},
+{q:"What is the binary equivalent of decimal 8?",o:["1000₂","1001₂","1010₂","1100₂"],a:0},
+{q:"What is the decimal equivalent of octal 17₈?",o:["13","14","15","16"],a:2},
+{q:"What is the octal equivalent of decimal 10?",o:["10₈","11₈","12₈","13₈"],a:2},
+{q:"What is the decimal equivalent of hexadecimal A₁₆?",o:["8","9","10","11"],a:2},
+{q:"What is the decimal equivalent of hexadecimal F₁₆?",o:["13","14","15","16"],a:2},
+{q:"What is the hexadecimal equivalent of decimal 15?",o:["D₁₆","E₁₆","F₁₆","10₁₆"],a:2},
+{q:"What is the binary equivalent of octal 7₈?",o:["101₂","110₂","111₂","1000₂"],a:2},
+{q:"Which number system has base 16?",o:["Binary","Octal","Decimal","Hexadecimal"],a:3},
+{q:"What is the decimal equivalent of binary 10000₂?",o:["8","12","16","20"],a:2},
+{q:"What is the octal equivalent of decimal 64?",o:["70₈","80₈","100₈","110₈"],a:2},
+{q:"What is the hexadecimal equivalent of decimal 26?",o:["18₁₆","1A₁₆","1B₁₆","20₁₆"],a:1},
+{q:"Which statement about number-system bases is correct?",o:["Binary uses base 8","Octal uses base 10","Decimal uses base 10","Hexadecimal uses base 2"],a:2},
+{q:"What is the decimal equivalent of hexadecimal 10₁₆?",o:["8","10","16","20"],a:2}
+];
+
+let current=0,score=0,answered=Array(20).fill(false),chosen=Array(20).fill(null);
+const qEl=document.getElementById("question"),oEl=document.getElementById("options"),fEl=document.getElementById("feedback");
+const count=document.getElementById("qCount"),scoreEl=document.getElementById("scorePill"),bar=document.getElementById("progressBar");
+const prev=document.getElementById("prev"),next=document.getElementById("next"),card=document.getElementById("quizCard");
+
+function explanation(q, i){
+const x=q.o[i];
+const correct=q.o[q.a];
+if(i===q.a)return `Correct. ${x} is the correct answer.`;
+return `${x} is not correct for this question. The correct answer is ${correct}.`;
+}
+function render(){
+const x=questions[current];
+count.textContent=`Question ${current+1} of ${questions.length}`;
+scoreEl.textContent=`Score: ${score}`;
+bar.style.width=((current+1)/questions.length*100)+"%";
+qEl.textContent=x.q;oEl.innerHTML="";fEl.style.display="none";
+x.o.forEach((txt,i)=>{
+const b=document.createElement("button");
+b.className="option";b.textContent=String.fromCharCode(65+i)+". "+txt;
+b.addEventListener("click",()=>choose(i));oEl.appendChild(b);
+});
+if(answered[current])showAnswer();
+prev.disabled=current===0;
+next.textContent=current===19?"Finish Quiz":"Next →";
+}
+function choose(i){
+if(answered[current])return;
+answered[current]=true;chosen[current]=i;
+if(i===questions[current].a)score++;
+showAnswer();scoreEl.textContent=`Score: ${score}`;
+}
+function showAnswer(){
+const x=questions[current],bs=[...oEl.children];
+bs.forEach((b,i)=>{
+if(i===x.a)b.classList.add("correct");
+if(i===chosen[current]&&i!==x.a)b.classList.add("wrong");
+});
+fEl.style.display="block";
+fEl.textContent=explanation(x,chosen[current]);
+}
+function finish(){
+const percent=Math.round(score/20*100);
+let msg=percent>=90?"Excellent! You have mastered the Number System concepts.":percent>=70?"Very good! Revise a few conversions for perfection.":percent>=50?"Good attempt! Practise number-system conversions once more.":"Keep practising! Review the bases and conversion methods carefully.";
+card.innerHTML=`<div class="result">
+<h2>🎉 Quiz Completed!</h2>
+<div class="score">${score} / 20</div>
+<p><strong>${percent}%</strong></p>
+<p>${msg}</p>
+<p class="topic">CBSE Class XI Computer Science (083) • Number System</p>
+<button id="restart" class="nav primary">Restart Quiz</button>
+</div>`;
+document.getElementById("restart").addEventListener("click",()=>location.reload());
+}
+prev.addEventListener("click",()=>{if(current>0){current--;render()}});
+next.addEventListener("click",()=>{if(current===19)finish();else{current++;render()}});
+render();
+</script>
+</body>
+</html>

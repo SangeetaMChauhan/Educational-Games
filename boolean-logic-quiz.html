@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logic Lab · Boolean Algebra Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #090d12;
+    --bg-panel: #121924;
+    --bg-panel-2: #161f2c;
+    --trace: #223142;
+    --ink: #e7eef4;
+    --muted: #83a0b3;
+    --green: #47f7a6;
+    --green-dim: #1f7a56;
+    --cyan: #5fd4f4;
+    --amber: #ffb454;
+    --red: #ff6b6b;
+    --gap: 10px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(1100px 600px at 15% -10%, #0e2b26 0%, transparent 55%),
+      radial-gradient(900px 500px at 110% 10%, #12202f 0%, transparent 50%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Sora', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  /* faint circuit board backdrop */
+  body::before{
+    content:"";
+    position: fixed; inset:0;
+    background-image:
+      linear-gradient(var(--trace) 1px, transparent 1px),
+      linear-gradient(90deg, var(--trace) 1px, transparent 1px);
+    background-size: 46px 46px;
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap{
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Header ---------- */
+  header{ text-align:center; margin-bottom: 28px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.14em;
+    color: var(--green);
+    background: rgba(71,247,166,0.08);
+    border: 1px solid rgba(71,247,166,0.35);
+    padding: 6px 14px; border-radius: 999px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .chip .dot{
+    width:7px; height:7px; border-radius:50%;
+    background: var(--green);
+    box-shadow: 0 0 8px 2px rgba(71,247,166,0.7);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  h1{
+    font-family:'JetBrains Mono', monospace;
+    font-size: clamp(30px, 6vw, 44px);
+    font-weight: 800;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  h1 span{ color: var(--green); }
+  header p{
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ---------- Circuit progress trail ---------- */
+  .trail{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 4px;
+    margin: 26px 0 30px;
+    flex-wrap: wrap;
+  }
+  .led{
+    width: 22px; height: 4px;
+    background: var(--trace);
+    border-radius: 2px;
+    position: relative;
+    transition: background .35s ease;
+  }
+  .led::after{
+    content:"";
+    position:absolute; left:50%; top:50%;
+    width:8px; height:8px; border-radius:50%;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--trace);
+    transform: translate(-50%,-50%);
+    transition: all .35s ease;
+  }
+  .led.done{ background: var(--green-dim); }
+  .led.done::after{ background: var(--green); border-color: var(--green); box-shadow: 0 0 8px 2px rgba(71,247,166,.6); }
+  .led.current::after{ background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 10px 3px rgba(95,212,244,.7); width:11px; height:11px; }
+
+  /* ---------- Panels ---------- */
+  .panel{
+    background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border: 1px solid #1f2b3a;
+    border-radius: 18px;
+    padding: 30px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+
+  .meta-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 18px;
+    letter-spacing: 0.04em;
+  }
+  .meta-row .score{ color: var(--green); }
+
+  .qtag{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    background: rgba(95,212,244,0.08);
+    border: 1px solid rgba(95,212,244,0.3);
+    padding: 3px 10px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .question{
+    font-size: clamp(19px, 3.2vw, 23px);
+    font-weight: 600;
+    line-height: 1.45;
+    margin: 0 0 6px;
+  }
+  .question code{
+    font-family:'JetBrains Mono', monospace;
+    background: #0c1420;
+    border: 1px solid #223046;
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--green);
+    font-size: 0.92em;
+  }
+
+  .options{
+    display:grid;
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .opt{
+    display:flex; align-items:center; gap: 12px;
+    text-align:left;
+    background: #0d1420;
+    border: 1px solid #223046;
+    color: var(--ink);
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-family: 'Sora', sans-serif;
+    font-size: 15.5px;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .opt code{ font-family:'JetBrains Mono', monospace; color: var(--cyan); }
+  .opt .key{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    width: 24px; height:24px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius: 6px;
+    background: #16202f;
+    color: var(--muted);
+    flex-shrink:0;
+  }
+  .opt:hover:not(.locked){
+    border-color: var(--cyan);
+    transform: translateX(3px);
+    background: #101a29;
+  }
+  .opt.correct{
+    border-color: var(--green);
+    background: rgba(71,247,166,0.08);
+    box-shadow: 0 0 0 1px rgba(71,247,166,.4) inset;
+  }
+  .opt.correct .key{ background: var(--green); color: #06110c; }
+  .opt.wrong{
+    border-color: var(--red);
+    background: rgba(255,107,107,0.08);
+    animation: shake .35s ease;
+  }
+  .opt.wrong .key{ background: var(--red); color: #240808; }
+  .opt.locked{ cursor: default; }
+  .opt.dim{ opacity: 0.45; }
+  @keyframes shake{
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-6px); }
+    75%{ transform: translateX(6px); }
+  }
+
+  .feedback{
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    display:none;
+    border: 1px solid;
+  }
+  .feedback.show{ display:block; animation: fadeUp .3s ease; }
+  .feedback.good{ background: rgba(71,247,166,0.06); border-color: rgba(71,247,166,0.35); color: #d3ffe9; }
+  .feedback.bad{ background: rgba(255,180,84,0.07); border-color: rgba(255,180,84,0.35); color: #ffe6c2; }
+  .feedback b{ font-family:'JetBrains Mono', monospace; }
+  @keyframes fadeUp{ from{opacity:0; transform: translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  .next-row{ display:flex; justify-content:flex-end; margin-top: 22px; }
+  .btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--green);
+    color: #06150e;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    display:none;
+    align-items:center; gap:8px;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 8px 20px -8px rgba(71,247,166,0.6);
+  }
+  .btn.show{ display:inline-flex; }
+  .btn:hover{ transform: translateY(-2px); }
+  .btn:active{ transform: translateY(0); }
+  .btn.ghost{
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    box-shadow:none;
+  }
+
+  /* ---------- Results ---------- */
+  .results{ display:none; text-align:center; }
+  .results.show{ display:block; }
+  .gate-badge{
+    width: 110px; height: 110px;
+    margin: 4px auto 20px;
+    border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    background: radial-gradient(circle, rgba(71,247,166,0.15), transparent 70%);
+    border: 2px solid var(--green);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 30px; font-weight:800;
+    color: var(--green);
+    position: relative;
+  }
+  .gate-badge::after{
+    content:"";
+    position:absolute; inset:-10px;
+    border-radius: 50%;
+    border: 1px dashed rgba(71,247,166,0.35);
+    animation: spin 12s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .results h2{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 26px; margin: 0 0 8px;
+  }
+  .results p.verdict{ color: var(--muted); font-size: 15px; max-width: 420px; margin: 0 auto 24px; line-height:1.6; }
+  .stat-row{
+    display:flex; justify-content:center; gap: 14px; flex-wrap:wrap;
+    margin-bottom: 26px;
+  }
+  .stat{
+    background:#0d1420; border:1px solid #223046; border-radius:12px;
+    padding: 14px 20px; min-width: 100px;
+  }
+  .stat b{ display:block; font-family:'JetBrains Mono', monospace; font-size: 22px; color: var(--green); }
+  .stat span{ font-size: 12px; color: var(--muted); }
+  .results .btn{ display:inline-flex; }
+
+  /* particle burst on correct */
+  .burst{ position:fixed; inset:0; pointer-events:none; z-index: 50; }
+  .particle{
+    position:absolute; width:6px; height:6px; border-radius:1px;
+    background: var(--green);
+    top:50%; left:50%;
+  }
+
+  footer{
+    text-align:center; margin-top: 26px;
+    color: #3f5567; font-size: 12px;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="chip"><span class="dot"></span> Class XI · Computer Science</div>
+    <h1>LOGIC<span>_</span>LAB</h1>
+    <p>Trace the full circuit of Boolean Algebra — operators, laws, truth tables and gates. Get the logic right and keep the current flowing.</p>
+  </header>
+
+  <div class="trail" id="trail"></div>
+
+  <div class="panel">
+    <div id="quizArea">
+      <div class="meta-row">
+        <span id="qCounter">QUESTION 01 / 12</span>
+        <span class="score">SCORE: <span id="scoreLive">0</span></span>
+      </div>
+      <div class="qtag" id="qTag">BOOLEAN OPERATORS</div>
+      <div class="question" id="qText"></div>
+      <div class="options" id="optionsArea"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="next-row">
+        <button class="btn" id="nextBtn">Next signal →</button>
+      </div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="gate-badge" id="gradeBadge">A</div>
+      <h2 id="resultTitle">Circuit complete!</h2>
+      <p class="verdict" id="resultVerdict"></p>
+      <div class="stat-row">
+        <div class="stat"><b id="finalScore">0/12</b><span>Correct</span></div>
+        <div class="stat"><b id="finalPct">0%</b><span>Accuracy</span></div>
+        <div class="stat"><b id="finalStreak">0</b><span>Best streak</span></div>
+      </div>
+      <button class="btn" id="retryBtn">⟲ Rewire &amp; retry</button>
+    </div>
+  </div>
+
+  <footer>LOGIC_LAB.EXE — TRUTH TABLES NEVER LIE</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    tag: "Boolean basics",
+    q: "In Boolean Algebra, how many values can a variable take?",
+    options: ["Any real number", "Exactly two: 0 and 1", "0, 1 and 2", "Infinite values"],
+    correct: 1,
+    explain: "Boolean Algebra deals with binary variables — every variable can only be <b>0 (False)</b> or <b>1 (True)</b>. That's the whole game."
+  },
+  {
+    tag: "AND operator",
+    q: "For the Boolean expression <code>X = A · B</code>, when is X equal to 1?",
+    options: ["When at least one of A, B is 1", "Only when both A and B are 1", "When A and B differ", "Never — AND always outputs 0"],
+    correct: 1,
+    explain: "The <b>AND</b> operator gives 1 only when <b>every</b> input is 1 — just like a series circuit where both switches must close for current to flow."
+  },
+  {
+    tag: "OR operator",
+    q: "What is the output of <code>1 + 0</code> in Boolean Algebra?",
+    options: ["0", "1", "10", "Undefined"],
+    correct: 1,
+    explain: "The <b>+</b> symbol here means Boolean <b>OR</b>, not arithmetic addition. OR gives 1 if <b>any</b> input is 1, so 1 + 0 = 1."
+  },
+  {
+    tag: "NOT operator",
+    q: "If A = 1, what is the value of Ā (NOT A)?",
+    options: ["1", "0", "A", "Undefined"],
+    correct: 1,
+    explain: "The <b>NOT</b> operator is a complement — it simply flips the value. So if A = 1, then Ā = 0."
+  },
+  {
+    tag: "Identity law",
+    q: "Which of these correctly shows the Identity Law?",
+    options: ["A · 1 = A", "A · 0 = A", "A + A = A", "A + Ā = 0"],
+    correct: 0,
+    explain: "The <b>Identity Law</b> states A · 1 = A and A + 0 = A — ANDing with 1 or ORing with 0 leaves a variable unchanged."
+  },
+  {
+    tag: "Complement law",
+    q: "According to the Complement Law, what does A + Ā equal?",
+    options: ["0", "A", "1", "Ā"],
+    correct: 2,
+    explain: "The <b>Complement Law</b>: A + Ā = 1 (a variable ORed with its own complement always covers every case) and A · Ā = 0."
+  },
+  {
+    tag: "De Morgan's Law",
+    q: "By De Morgan's Theorem, (A + B)' is equivalent to:",
+    options: ["A' + B'", "A' · B'", "A · B", "A + B"],
+    correct: 1,
+    explain: "De Morgan's First Law: <b>(A + B)' = A' · B'</b> — break the OR, flip each term, and swap OR for AND."
+  },
+  {
+    tag: "De Morgan's Law",
+    q: "By De Morgan's Theorem, (A · B)' is equivalent to:",
+    options: ["A' · B'", "A + B", "A' + B'", "AB"],
+    correct: 2,
+    explain: "De Morgan's Second Law: <b>(A · B)' = A' + B'</b> — the complement of an AND becomes the OR of the complements."
+  },
+  {
+    tag: "Logic gates",
+    q: "Which logic gate is called a 'Universal Gate' because any other gate can be built from it alone?",
+    options: ["XOR", "OR", "NAND", "NOT"],
+    correct: 2,
+    explain: "<b>NAND</b> (and also NOR) is a universal gate — any Boolean function, and every other basic gate, can be constructed using only NAND gates."
+  },
+  {
+    tag: "Truth tables",
+    q: "In a two-input XOR gate, when does the output equal 1?",
+    options: ["When both inputs are the same", "When both inputs are 1", "When the inputs are different", "Never"],
+    correct: 2,
+    explain: "<b>XOR</b> (Exclusive OR) outputs 1 only when the inputs <b>differ</b> — 0⊕1 = 1 and 1⊕0 = 1, but 0⊕0 = 0 and 1⊕1 = 0."
+  },
+  {
+    tag: "Absorption law",
+    q: "Simplify using the Absorption Law: A + (A · B) = ?",
+    options: ["A", "B", "A · B", "1"],
+    correct: 0,
+    explain: "The <b>Absorption Law</b> states A + AB = A. Since A already guarantees the OR is true, the AB term adds nothing new — it gets 'absorbed'."
+  },
+  {
+    tag: "Distributive law",
+    q: "Which expression is the Boolean equivalent of the Distributive Law A · (B + C)?",
+    options: ["A + B · A + C", "AB + AC", "(A + B) · (A + C)", "A + BC"],
+    correct: 1,
+    explain: "Just like ordinary algebra: <b>A · (B + C) = A·B + A·C</b>. Boolean AND distributes over OR."
+  },
+  {
+    tag: "Commutative law",
+    q: "The Commutative Law of Boolean Algebra states that:",
+    options: ["A + B = B + A and A · B = B · A", "A + B = A · B", "A + 0 = A", "A + Ā = 1"],
+    correct: 0,
+    explain: "The <b>Commutative Law</b> says the order of operands doesn't matter for AND or OR: A + B = B + A, and A · B = B · A."
+  },
+  {
+    tag: "Associative law",
+    q: "According to the Associative Law, (A + B) + C is equal to:",
+    options: ["A + (B · C)", "A + (B + C)", "(A · B) + C", "A · (B + C)"],
+    correct: 1,
+    explain: "The <b>Associative Law</b> lets you regroup operands of the same operator freely: (A + B) + C = A + (B + C). The same holds for AND."
+  },
+  {
+    tag: "NAND gate",
+    q: "A NAND gate is formed by combining which two gates in sequence?",
+    options: ["OR gate followed by NOT gate", "AND gate followed by NOT gate", "NOT gate followed by OR gate", "XOR gate followed by AND gate"],
+    correct: 1,
+    explain: "<b>NAND</b> = NOT-AND. Its output is the complement of a plain AND gate's output — it's 1 for every combination except when all inputs are 1."
+  },
+  {
+    tag: "NOR gate",
+    q: "For a two-input NOR gate, what is the output when both inputs are 0?",
+    options: ["0", "1", "Undefined", "Depends on the inputs"],
+    correct: 1,
+    explain: "<b>NOR</b> = NOT-OR. Since OR(0,0) = 0, the NOR output is its complement: 1. NOR only outputs 0 when at least one input is 1."
+  },
+  {
+    tag: "XNOR gate",
+    q: "A two-input XNOR gate outputs 1 when:",
+    options: ["The inputs are different", "Both inputs are 0 only", "The inputs are the same", "Both inputs are 1 only"],
+    correct: 2,
+    explain: "<b>XNOR</b> (Exclusive NOR) is the complement of XOR — it outputs 1 whenever the inputs <b>match</b>: 0,0 → 1 and 1,1 → 1."
+  },
+  {
+    tag: "Canonical forms",
+    q: "The expression A'BC + AB'C + ABC' is written in which canonical form?",
+    options: ["Product of Sums (POS)", "Sum of Products (SOP)", "Simplified Boolean form", "Truth table form"],
+    correct: 1,
+    explain: "This is <b>Sum of Products (SOP)</b> — a sum (OR) of product (AND) terms, where each term is a minterm covering the variables."
+  }
+];
+
+let current = 0;
+let score = 0;
+let streak = 0;
+let bestStreak = 0;
+let answered = false;
+
+const trail = document.getElementById('trail');
+const optionsArea = document.getElementById('optionsArea');
+const qText = document.getElementById('qText');
+const qTag = document.getElementById('qTag');
+const qCounter = document.getElementById('qCounter');
+const scoreLive = document.getElementById('scoreLive');
+const feedback = document.getElementById('feedback');
+const nextBtn = document.getElementById('nextBtn');
+const quizArea = document.getElementById('quizArea');
+const resultsArea = document.getElementById('results');
+
+function buildTrail(){
+  trail.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const led = document.createElement('div');
+    led.className = 'led';
+    led.id = 'led-' + i;
+    trail.appendChild(led);
+  });
+}
+
+function updateTrail(){
+  QUESTIONS.forEach((_, i) => {
+    const led = document.getElementById('led-' + i);
+    led.classList.remove('done','current');
+    if (i < current) led.classList.add('done');
+    else if (i === current) led.classList.add('current');
+  });
+}
+
+function renderQuestion(){
+  answered = false;
+  const item = QUESTIONS[current];
+  qTag.textContent = item.tag.toUpperCase();
+  qCounter.textContent = `QUESTION ${String(current+1).padStart(2,'0')} / ${QUESTIONS.length}`;
+  qText.innerHTML = item.q;
+  optionsArea.innerHTML = '';
+  feedback.className = 'feedback';
+  feedback.innerHTML = '';
+  nextBtn.classList.remove('show');
+  const keys = ['A','B','C','D'];
+
+  item.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="key">${keys[idx]}</span><span>${opt}</span>`;
+    btn.addEventListener('click', () => selectOption(idx, btn));
+    optionsArea.appendChild(btn);
+  });
+
+  updateTrail();
+}
+
+function selectOption(idx, btnEl){
+  if (answered) return;
+  answered = true;
+  const item = QUESTIONS[current];
+  const allOpts = optionsArea.querySelectorAll('.opt');
+
+  allOpts.forEach((el, i) => {
+    el.classList.add('locked');
+    if (i !== idx && i !== item.correct) el.classList.add('dim');
+  });
+
+  if (idx === item.correct){
+    btnEl.classList.add('correct');
+    score++;
+    streak++;
+    bestStreak = Math.max(bestStreak, streak);
+    feedback.className = 'feedback good show';
+    feedback.innerHTML = `<b>✓ Correct.</b> ${item.explain}`;
+    burstConfetti();
+  } else {
+    btnEl.classList.add('wrong');
+    allOpts[item.correct].classList.add('correct');
+    streak = 0;
+    feedback.className = 'feedback bad show';
+    feedback.innerHTML = `<b>✗ Not quite.</b> ${item.explain}`;
+  }
+
+  scoreLive.textContent = score;
+  nextBtn.classList.add('show');
+  nextBtn.textContent = current === QUESTIONS.length - 1 ? 'See results →' : 'Next signal →';
+}
+
+nextBtn.addEventListener('click', () => {
+  current++;
+  if (current >= QUESTIONS.length){
+    showResults();
+  } else {
+    renderQuestion();
+  }
+});
+
+function showResults(){
+  quizArea.style.display = 'none';
+  resultsArea.classList.add('show');
+  updateTrail();
+
+  const pct = Math.round((score / QUESTIONS.length) * 100);
+  document.getElementById('finalScore').textContent = `${score}/${QUESTIONS.length}`;
+  document.getElementById('finalPct').textContent = `${pct}%`;
+  document.getElementById('finalStreak').textContent = bestStreak;
+
+  const badge = document.getElementById('gradeBadge');
+  const title = document.getElementById('resultTitle');
+  const verdict = document.getElementById('resultVerdict');
+
+  let grade, msg, titleText;
+  if (pct === 100){
+    grade = '1'; titleText = 'Full circuit — perfect signal!';
+    msg = "Every gate fired correctly. Your grasp of Boolean Algebra is textbook-ready — De Morgan himself would approve.";
+  } else if (pct >= 75){
+    grade = 'A'; titleText = 'Strong current, minor resistance.';
+    msg = "Solid work — most of your logic gates are wired correctly. Revisit the ones you missed and you're exam-ready.";
+  } else if (pct >= 50){
+    grade = 'B'; titleText = 'Signal detected, some noise.';
+    msg = "You've got the basics flowing. Go back over the Boolean laws and truth tables to tighten the connections.";
+  } else {
+    grade = 'C'; titleText = 'Short circuit — needs rewiring.';
+    msg = "Time to revisit your notes on Boolean operators and laws. Try the quiz again once you've reviewed the chapter.";
+  }
+  badge.textContent = grade;
+  title.textContent = titleText;
+  verdict.textContent = msg;
+}
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+  current = 0; score = 0; streak = 0; bestStreak = 0;
+  scoreLive.textContent = 0;
+  resultsArea.classList.remove('show');
+  quizArea.style.display = 'block';
+  renderQuestion();
+});
+
+function burstConfetti(){
+  const burst = document.createElement('div');
+  burst.className = 'burst';
+  document.body.appendChild(burst);
+  const colors = ['#47f7a6', '#5fd4f4', '#ffb454'];
+  for (let i = 0; i < 18; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const angle = (Math.PI * 2 * i) / 18;
+    const dist = 80 + Math.random() * 60;
+    const x = Math.cos(angle) * dist;
+    const y = Math.sin(angle) * dist;
+    p.style.background = colors[i % colors.length];
+    p.style.transition = 'transform .6s ease-out, opacity .6s ease-out';
+    burst.appendChild(p);
+    requestAnimationFrame(() => {
+      p.style.transform = `translate(${x}px, ${y}px)`;
+      p.style.opacity = '0';
+    });
+  }
+  setTimeout(() => burst.remove(), 650);
+}
+
+buildTrail();
+renderQuestion();
+</script>
+
+</body>
+</html>
