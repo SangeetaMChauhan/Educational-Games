@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBSE Class XI IP - Introduction to Python Quiz</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#eef2ff,#ecfeff,#fff7ed);color:#172033;min-height:100vh}
+.container{max-width:920px;margin:auto;padding:24px}.hero{background:linear-gradient(135deg,#7c3aed,#0891b2);color:#fff;padding:28px;border-radius:25px;box-shadow:0 12px 30px #0002}
+h1{margin:0 0 8px;font-size:32px}.sub{margin:0;opacity:.95}.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.badge{background:#ffffff30;padding:9px 14px;border-radius:20px;font-weight:bold}
+.progress{height:12px;background:#ffffff35;border-radius:20px;margin-top:20px;overflow:hidden}.bar{height:100%;background:#fef08a;width:5%;transition:.3s}
+.card{background:#fff;margin-top:22px;padding:28px;border-radius:22px;box-shadow:0 8px 25px #0002}.q{font-size:21px;font-weight:700;line-height:1.5;margin-bottom:20px}
+.option{width:100%;padding:15px;margin:8px 0;border:2px solid #e5e7eb;background:#fff;border-radius:14px;text-align:left;font-size:16px;cursor:pointer;transition:.2s}.option:hover{border-color:#7c3aed;background:#f5f3ff}
+.correct{background:#dcfce7!important;border-color:#22c55e!important}.wrong{background:#fee2e2!important;border-color:#ef4444!important}
+.feedback{display:none;margin-top:16px;padding:15px;border-radius:12px;background:#ecfeff;border-left:5px solid #0891b2;line-height:1.5}.actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+button.nav{padding:12px 22px;border:0;border-radius:12px;background:#e5e7eb;font-weight:bold;font-size:16px;cursor:pointer}button.primary{background:#7c3aed;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}
+.result{text-align:center}.score{font-size:60px;font-weight:800;color:#7c3aed;margin:15px}.review{margin-top:15px;padding:14px;background:#f8fafc;border-radius:12px;text-align:left}
+@media(max-width:600px){.container{padding:14px}h1{font-size:25px}.card{padding:20px}.q{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="hero">
+<h1>🐍 Introduction to Python</h1>
+<p class="sub">CBSE Class XI Informatics Practices (065) • Unit 2</p>
+<div class="badges"><span class="badge" id="count">Question 1 of 25</span><span class="badge" id="score">Score: 0</span></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+</div>
+<div class="card" id="card">
+<div class="q" id="question"></div><div id="options"></div><div class="feedback" id="feedback"></div>
+<div class="actions"><button class="nav" id="prev">← Previous</button><button class="nav primary" id="next">Next →</button></div>
+</div>
+</div>
+<script>
+const Q=[
+["Which mode of Python allows commands to be executed one at a time at the Python prompt?",["Interactive mode","Script mode","Debug mode","Compile mode"],0],
+["Which file extension is normally used for a Python program?",[".html",".py",".sql",".exe"],1],
+["Which symbol starts a single-line comment in Python?",["//","#","<!--","--"],1],
+["Which of the following is a valid Python identifier?",["2marks","student_name","class","student-name"],1],
+["Which of the following is a Python keyword?",["student","marks","if","total_marks"],2],
+["What is the value of the expression 5 + 3 * 2?",["16","11","13","10"],1],
+["Which operator is used for exponentiation in Python?",["^","**","//","%%"],1],
+["What is the result of 17 // 5 in Python?",["3","3.4","2","4"],0],
+["What is the result of 17 % 5 in Python?",["2","3","3.4","5"],0],
+["Which function is used to take input from the user?",["get()","read()","input()","scan()"],2],
+["Which function is commonly used to display output in Python?",["display()","print()","output()","show()"],1],
+["What data type is the value 25 in Python?",["float","str","int","bool"],2],
+["What data type is the value 3.14 in Python?",["int","float","str","bool"],1],
+["What data type is the value True?",["int","float","bool","str"],2],
+["What is the result of int('25')?",["25 as an integer","'25' as a string","25.0 as a float","Error"],0],
+["What is the result of float('3.5')?",["'3.5'","3","3.5","Error"],2],
+["Which statement correctly assigns 10 to variable x?",["10 = x","x == 10","x = 10","int x = 10"],2],
+["What does indentation in Python primarily indicate?",["Variable type","Block structure","Program title","Comment"],1],
+["Which operator checks equality between two values?",["=","==","!=","<="],1],
+["Which operator means 'not equal to' in Python?",["<>","!=","~=","!=="],1],
+["Which of the following is a mutable data type?",["Tuple","String","List","Integer"],2],
+["Which of the following is an immutable data type?",["List","Dictionary","String","Set"],2],
+["What is the result of 10 > 5?",["True","False","10","5"],0],
+["Which function can be used to know the data type of an object?",["type()","datatype()","typeof()","kind()"],0],
+["Which statement about Python is correct?",["Python uses no indentation","Python is case-sensitive","Python has no variables","Python cannot perform arithmetic"],1]
+];
+
+let i=0,score=0,answered=false;
+const $=id=>document.getElementById(id);
+function render(){
+let q=Q[i];$("count").textContent=`Question ${i+1} of ${Q.length}`;$("score").textContent=`Score: ${score}`;
+$("bar").style.width=((i+1)/Q.length*100)+"%";$("question").textContent=q[0];$("options").innerHTML="";$("feedback").style.display="none";
+q[1].forEach((x,n)=>{let b=document.createElement("button");b.className="option";b.textContent=String.fromCharCode(65+n)+". "+x;b.onclick=()=>select(n);$("options").appendChild(b)});
+$("prev").disabled=i===0;$("next").textContent=i===Q.length-1?"Finish Quiz":"Next →";answered=false;
+}
+function select(n){
+if(answered)return;answered=true;let q=Q[i],bs=document.querySelectorAll(".option");
+bs.forEach((b,k)=>{if(k===q[2])b.classList.add("correct");if(k===n&&n!==q[2])b.classList.add("wrong")});
+if(n===q[2]){score++;$("feedback").textContent="✓ Correct! Excellent understanding of the Python concept."}
+else{$("feedback").textContent="Review this concept. The correct answer is: "+q[1][q[2]]}
+$("feedback").style.display="block";$("score").textContent=`Score: ${score}`;
+}
+$("prev").onclick=()=>{if(i>0){i--;render()}};
+$("next").onclick=()=>{
+if(i<Q.length-1){i++;render();return}
+let p=Math.round(score/Q.length*100),msg=p>=90?"Outstanding! You have mastered the Python basics.":p>=70?"Very good! Revise a few concepts and practise some programs.":p>=50?"Good attempt! More practice will strengthen your basics.":"Keep practising! Revise Python syntax, operators and data types.";
+$("card").innerHTML=`<div class="result"><h2>🎉 Quiz Completed!</h2><div class="score">${score} / ${Q.length}</div><p><strong>${p}%</strong></p><p>${msg}</p><div class="review"><strong>Topics covered:</strong><br>Interactive & script mode • Program structure • Indentation • Identifiers • Keywords • Variables • Operators & precedence • Data types • Mutable/immutable data • Expressions • Comments • Input/Output • Type conversion • Debugging basics</div><br><button class="nav primary" onclick="location.reload()">Restart Quiz</button></div>`;
+};
+render();
+</script>
+</body>
+</html>
