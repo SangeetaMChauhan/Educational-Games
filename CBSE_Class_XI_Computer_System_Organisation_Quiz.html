@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBSE Class XI - Computer System Organisation Quiz</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#eef2ff,#ecfeff,#fff7ed);color:#172033;min-height:100vh}
+.container{max-width:900px;margin:auto;padding:24px}
+.header{background:linear-gradient(135deg,#4f46e5,#0891b2);color:white;padding:28px;border-radius:24px;box-shadow:0 12px 30px #0002}
+.header h1{margin:0 0 8px;font-size:32px}.header p{margin:0}
+.info{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.badge{background:#ffffff30;padding:9px 14px;border-radius:20px;font-weight:bold}
+.progress{height:12px;background:#ffffff35;border-radius:20px;margin-top:20px;overflow:hidden}
+.progress-bar{height:100%;width:4%;background:#fff59d;transition:.3s}
+.card{background:white;margin-top:22px;padding:28px;border-radius:22px;box-shadow:0 8px 25px #0002}
+.question{font-size:22px;font-weight:bold;line-height:1.5;margin-bottom:20px}
+.option{width:100%;padding:16px;margin:9px 0;border:2px solid #e5e7eb;background:white;border-radius:14px;text-align:left;font-size:17px;cursor:pointer}
+.option:hover{border-color:#6366f1;background:#eef2ff}
+.correct{background:#dcfce7!important;border-color:#22c55e!important}
+.wrong{background:#fee2e2!important;border-color:#ef4444!important}
+.feedback{display:none;margin-top:16px;padding:15px;border-radius:12px;background:#eff6ff;border-left:5px solid #0891b2}
+.actions{display:flex;justify-content:space-between;margin-top:22px;gap:10px}
+button.nav{padding:12px 22px;border:0;border-radius:12px;background:#e5e7eb;font-weight:bold;cursor:pointer;font-size:16px}
+button.primary{background:#4f46e5;color:white}
+button:disabled{opacity:.45;cursor:not-allowed}
+.result{text-align:center}.score{font-size:60px;font-weight:800;color:#4f46e5;margin:15px}
+@media(max-width:600px){.container{padding:14px}.header h1{font-size:25px}.card{padding:20px}.question{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>💻 Computer System Organisation</h1>
+<p>CBSE Class XI Computer Science (083) • Unit 1</p>
+<div class="info">
+<span class="badge" id="count">Question 1 of 25</span>
+<span class="badge" id="score">Score: 0</span>
+</div>
+<div class="progress"><div class="progress-bar" id="bar"></div></div>
+</div>
+
+<div class="card" id="card">
+<div class="question" id="question"></div>
+<div id="options"></div>
+<div class="feedback" id="feedback"></div>
+<div class="actions">
+<button class="nav" id="prev">← Previous</button>
+<button class="nav primary" id="next">Next →</button>
+</div>
+</div>
+</div>
+
+<script>
+const questions=[
+["Which component of a computer performs arithmetic and logical operations?",["ALU","RAM","Hard Disk","Input Unit"],0],
+["Which of the following is an input device?",["Monitor","Printer","Keyboard","Speaker"],2],
+["Which of the following is an output device?",["Keyboard","Mouse","Scanner","Monitor"],3],
+["Which unit of the CPU controls and coordinates the activities of the computer?",["ALU","Control Unit","Cache","RAM"],1],
+["Which memory is generally faster than main memory and is placed close to the CPU?",["Secondary memory","Cache memory","Optical disk","Pen drive"],1],
+["Which of the following is primary memory?",["RAM","Hard disk","DVD","Pen drive"],0],
+["Which of the following is a unit of memory larger than GB?",["KB","MB","TB","Byte"],2],
+["How many bits are there in one byte?",["4","8","16","32"],1],
+["Which of the following is system software?",["Operating system","Presentation software","Web page","Spreadsheet document"],0],
+["Which software is designed to perform a specific task for the user?",["Application software","System software","Firmware only","Device driver only"],0],
+["Which software manages and controls computer hardware resources?",["Operating system","Word processor","Web browser","Media player"],0],
+["Which of the following is a utility software?",["Disk cleanup utility","Textbook","Keyboard","Monitor"],0],
+["What is the main purpose of a device driver?",["Translate high-level programs","Allow OS to communicate with hardware","Store files permanently","Create presentations"],1],
+["Which language translator converts assembly language into machine language?",["Compiler","Interpreter","Assembler","Debugger"],2],
+["Which translator generally translates an entire high-level program before execution?",["Compiler","Assembler","Interpreter","Loader"],0],
+["Which translator translates and executes a high-level program statement by statement?",["Compiler","Interpreter","Assembler","Linker"],1],
+["Which is a major function of an operating system?",["Managing resources","Designing websites","Printing textbooks","Creating hardware"],0],
+["Which OS interface allows users to interact with a computer using commands?",["Command-line interface","Graphical interface only","Touchscreen hardware","Printer interface"],0],
+["What is the output of an AND gate when both inputs are 1?",["0","1","Undefined","Depends on CPU"],1],
+["What is the output of an OR gate when both inputs are 0?",["0","1","10","Undefined"],0],
+["What is the output of a NOT gate when its input is 1?",["0","1","11","Undefined"],0],
+["Which logic gate produces 1 only when its two inputs are different?",["AND","OR","XOR","NOR"],2],
+["Which of the following is a universal logic gate?",["XOR","NAND","AND","OR"],1],
+["Which number system uses base 2?",["Decimal","Octal","Binary","Hexadecimal"],2],
+["Which number system uses base 16?",["Binary","Octal","Decimal","Hexadecimal"],3]
+];
+
+let current=0,total=0,answered=false;
+const $=id=>document.getElementById(id);
+
+function render(){
+let q=questions[current];
+$("count").textContent=`Question ${current+1} of ${questions.length}`;
+$("score").textContent=`Score: ${total}`;
+$("bar").style.width=((current+1)/questions.length*100)+"%";
+$("question").textContent=q[0];
+$("options").innerHTML="";
+$("feedback").style.display="none";
+q[1].forEach((x,i)=>{
+let b=document.createElement("button");
+b.className="option";
+b.textContent=String.fromCharCode(65+i)+". "+x;
+b.onclick=()=>select(i);
+$("options").appendChild(b);
+});
+$("prev").disabled=current===0;
+$("next").textContent=current===questions.length-1?"Finish Quiz":"Next →";
+answered=false;
+}
+function select(i){
+if(answered)return;
+answered=true;
+let q=questions[current];
+let buttons=document.querySelectorAll(".option");
+buttons.forEach((b,n)=>{if(n===q[2])b.classList.add("correct");if(n===i&&i!==q[2])b.classList.add("wrong")});
+if(i===q[2]){
+total++;
+$("feedback").textContent="✓ Correct! Excellent understanding of the concept.";
+}else{
+$("feedback").textContent="Review this concept. The correct answer is: "+q[1][q[2]];
+}
+$("feedback").style.display="block";
+$("score").textContent=`Score: ${total}`;
+}
+$("prev").onclick=()=>{if(current>0){current--;render()}};
+$("next").onclick=()=>{
+if(current<questions.length-1){current++;render()}
+else{
+let pct=Math.round(total/questions.length*100);
+$("card").innerHTML=`<div class="result"><h2>🎉 Quiz Completed!</h2><div class="score">${total} / ${questions.length}</div><p><strong>${pct}%</strong></p><p>${pct>=90?"Outstanding!":pct>=70?"Very Good!":pct>=50?"Good Attempt!":"Keep Practising!"}</p><p>CBSE Class XI Computer Science (083)<br>Computer System Organisation</p><button class="nav primary" onclick="location.reload()">Restart Quiz</button></div>`;
+}
+};
+render();
+</script>
+</body>
+</html>
