@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Python MySQL Connectivity Quiz – Class XII</title>
+<style>
+:root{--bg1:#6a5cff;--bg2:#ff6fb5;--card:#ffffff;--text:#23204a;--muted:#6b6894;--accent:#7c4dff;--ok:#12b76a;--bad:#f04438;--warn:#ffb020;--opt:#f3f0ff;--code:#1e1b3a;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#2a1f7a;--bg2:#7a1f5c;--card:#1d1a3d;--text:#f1eeff;--muted:#a9a4d6;--opt:#2a2660;--code:#0f0d26;color-scheme:dark}}
+:root[data-theme="dark"]{--bg1:#2a1f7a;--bg2:#7a1f5c;--card:#1d1a3d;--text:#f1eeff;--muted:#a9a4d6;--opt:#2a2660;--code:#0f0d26;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));background-attachment:fixed;color:var(--text);display:flex;justify-content:center;padding:14px}
+#app{width:100%;max-width:720px}
+.card{background:var(--card);border-radius:22px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+h1{margin:0;font-size:2rem;background:linear-gradient(90deg,#7c4dff,#ff4fa3,#ffb020);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero{text-align:center}
+.hero .big{font-size:4rem;animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-10px) rotate(6deg)}}
+p{line-height:1.5}
+.muted{color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:12px 22px;font-size:1.05rem;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(90deg,#7c4dff,#ff4fa3);box-shadow:0 5px 0 rgba(0,0,0,.25);transition:transform .1s}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.btn.sm{padding:8px 12px;font-size:.85rem;background:linear-gradient(90deg,#00b8d9,#12b76a)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.hud{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px}
+.chip{background:rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:6px 12px;font-weight:700;font-size:.9rem;backdrop-filter:blur(4px)}
+.bar{height:12px;border-radius:99px;background:var(--opt);overflow:hidden;margin:10px 0 14px}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#12b76a,#ffb020,#f04438);background-size:300% 100%;transition:width .25s linear}
+.prog{height:8px;border-radius:99px;background:rgba(255,255,255,.25);margin-bottom:12px;overflow:hidden}
+.prog i{display:block;height:100%;background:#ffd84d;width:0;transition:width .4s}
+.lvl{font-size:.8rem;font-weight:800;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.q{font-size:1.15rem;font-weight:700;margin:6px 0 10px}
+pre{background:var(--code);color:#9ef0c0;padding:12px;border-radius:12px;overflow-x:auto;font-size:.88rem;line-height:1.45;margin:0 0 12px;max-width:100%}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;background:var(--opt);color:var(--text);border:2px solid transparent;border-radius:14px;padding:12px;font-size:1rem;cursor:pointer;font-family:inherit;transition:transform .12s,border-color .12s}
+.opt:hover:not(:disabled){transform:translateX(4px);border-color:var(--accent)}
+.opt b{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--accent)}
+.opt:nth-child(2) b{background:#ff4fa3}.opt:nth-child(3) b{background:#00b8d9}.opt:nth-child(4) b{background:#ffb020}
+.opt code{font-family:Consolas,monospace}
+.opt.ok{background:var(--ok);color:#fff;animation:pop .4s}
+.opt.bad{background:var(--bad);color:#fff;animation:shake .4s}
+.opt.hide{visibility:hidden}
+@keyframes pop{50%{transform:scale(1.04)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.fb{margin-top:12px;padding:12px;border-radius:12px;background:var(--opt);font-size:.95rem}
+.row{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.stat{background:var(--opt);border-radius:14px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.4rem}
+.fx{position:fixed;top:-30px;font-size:1.6rem;pointer-events:none;animation:fall 2.2s linear forwards;z-index:9}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.8}}
+.tog{background:none;border:0;color:#fff;font-size:1.2rem;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var Q=[
+{l:"Easy",q:"Which Python library is commonly used to connect Python with MySQL?",o:["mysql.connector","sqlite3","pymongo","tkinter"],a:0,e:"mysql.connector (installed via pip install mysql-connector-python) is the module used in the CBSE syllabus."},
+{l:"Easy",q:"Which command installs the MySQL connector package?",o:["pip install mysql-connector-python","pip get mysql","python install mysql.connector","install mysql-python"],a:0,e:"pip is Python’s package installer; the package name is mysql-connector-python."},
+{l:"Easy",q:"Which function establishes a connection to a MySQL database?",o:["connect()","open()","link()","start()"],a:0,e:"mysql.connector.connect(host, user, passwd, database) returns a connection object."},
+{l:"Easy",q:"Which of these is NOT an argument normally passed to connect()?",o:["table","host","user","passwd"],a:0,e:"A table name is used in SQL queries, not in connect(). You pass host, user, passwd and optionally database."},
+{l:"Easy",q:"Which method creates a cursor object?",o:["con.cursor()","con.execute()","con.fetch()","con.query()"],a:0,e:"A cursor is created from the connection object using cursor()."},
+{l:"Medium",q:"What is the purpose of the code below?",code:"mycon = mysql.connector.connect(host='localhost',\n        user='root', passwd='tiger', database='school')\nprint(mycon.is_connected())",o:["Checks whether connection succeeded (True/False)","Creates a table","Closes the database","Fetches all rows"],a:0,e:"is_connected() returns True if the connection is open, otherwise False."},
+{l:"Medium",q:"Which method runs an SQL query through a cursor?",o:["execute()","run()","query()","send()"],a:0,e:"cursor.execute(sql) sends the SQL statement to MySQL."},
+{l:"Medium",q:"What does fetchone() return when no more rows remain?",o:["None","0","An empty list","An error"],a:0,e:"fetchone() returns one record as a tuple, and None when the result set is exhausted."},
+{l:"Medium",q:"What data type does fetchall() return?",o:["List of tuples","Tuple of lists","Dictionary","String"],a:0,e:"fetchall() returns all remaining rows as a list, each row being a tuple."},
+{l:"Medium",q:"Rohit inserts a row but it is missing when he checks MySQL later. What did he forget?",code:"cur.execute(\"INSERT INTO emp VALUES(1,'Amit')\")\n# program ends here",o:["mycon.commit()","cur.fetchall()","mycon.rollback()","cur.rowcount"],a:0,e:"INSERT, UPDATE and DELETE need commit() to make changes permanent."},
+{l:"Hard",q:"What is the output?",code:"cur.execute(\"SELECT * FROM emp\")\ndata = cur.fetchall()\nrow = cur.fetchone()\nprint(row)",o:["None","First record","Last record","Error"],a:0,e:"fetchall() consumes every row, so the following fetchone() finds nothing and returns None."},
+{l:"Hard",q:"Which is the correct parameterised query (safe from SQL injection)?",o:["cur.execute(\"SELECT * FROM emp WHERE id=%s\",(5,))","cur.execute(\"SELECT * FROM emp WHERE id=%s\"%5,)","cur.execute(\"SELECT * FROM emp WHERE id=\"+5)","cur.execute(\"SELECT * FROM emp WHERE id=\",5)"],a:0,e:"Placeholders %s with a tuple of values let the connector escape the data safely."},
+{l:"Hard",q:"Which attribute gives the number of rows affected or fetched by the last query?",o:["cur.rowcount","cur.count()","cur.length","cur.total"],a:0,e:"cursor.rowcount holds the number of rows produced or affected by the last execute()."},
+{l:"Hard",q:"Which statement undoes uncommitted changes?",o:["mycon.rollback()","mycon.undo()","cur.cancel()","mycon.revert()"],a:0,e:"rollback() cancels all changes made since the last commit()."},
+{l:"Boss",q:"Which code correctly fetches exactly 3 records and then closes the connection?",o:["cur.fetchmany(3) … mycon.close()","cur.fetch(3) … cur.exit()","cur.fetchall(3) … mycon.stop()","cur.fetchmany[3] … mycon.end()"],a:0,e:"fetchmany(size) returns a list of up to size rows, and close() on the connection ends the session."},
+{l:"Easy",q:"Which statement correctly imports the MySQL connector module?",o:["import mysql.connector","import mysql-connector","include mysql.connector","using mysql.connector"],a:0,e:"Python uses the import keyword, and the module name is mysql.connector (a dot, not a hyphen)."},
+{l:"Easy",q:"What does the connect() function return?",o:["A connection object","A cursor object","A tuple of rows","A database name"],a:0,e:"connect() returns a connection object, from which you create a cursor using cursor()."},
+{l:"Medium",q:"Which keyword argument of connect() supplies the MySQL password?",o:["passwd","pwd","secret","login"],a:0,e:"The connector accepts passwd (or password) to give the MySQL user password."},
+{l:"Medium",q:"What is the output?",code:"cur.execute(\"SELECT name FROM emp WHERE id=1\")\nr = cur.fetchone()\nprint(type(r))",o:["<class 'tuple'>","<class 'list'>","<class 'str'>","<class 'dict'>"],a:0,e:"fetchone() returns a single record as a tuple, even when only one column is selected."},
+{l:"Medium",q:"nm holds a string and age holds an integer. Which query inserts them correctly?",o:["cur.execute(\"INSERT INTO stu VALUES('{}',{})\".format(nm,age))","cur.execute(\"INSERT INTO stu VALUES({},{})\".format(nm,age))","cur.execute(\"INSERT INTO stu VALUES('{}','{}')\",nm,age)","cur.execute(\"INSERT INTO stu VALUES(nm,age)\")"],a:0,e:"String values need quotes inside the SQL text, numbers do not. format() fills the placeholders before execute() runs."},
+{l:"Hard",q:"Which cursor method executes one SQL statement for many sets of data at once?",o:["executemany()","executeall()","fetchmany()","multiexecute()"],a:0,e:"executemany(sql, list_of_tuples) is ideal for bulk inserts."},
+{l:"Hard",q:"The emp table has 5 rows. What does the last line print?",code:"cur.execute(\"SELECT * FROM emp\")\nd = cur.fetchmany(2)\nr = cur.fetchone()\nprint(r)",o:["The 3rd record","The 1st record","None","The 2nd record"],a:0,e:"The cursor moves forward: fetchmany(2) consumes rows 1 and 2, so fetchone() returns row 3."},
+{l:"Hard",q:"An UPDATE changes 3 rows. What does cur.rowcount give right after execute()?",code:"cur.execute(\"UPDATE emp SET sal=sal+500 WHERE dept='HR'\")\nprint(cur.rowcount)",o:["3","0","None","500"],a:0,e:"For INSERT, UPDATE and DELETE, rowcount reports how many rows were affected."},
+{l:"Boss",q:"Which is the correct order of steps for Python–MySQL connectivity?",o:["connect() → cursor() → execute() → fetch/commit → close()","cursor() → connect() → execute() → close() → commit()","connect() → execute() → cursor() → fetch → close()","execute() → connect() → cursor() → commit() → close()"],a:0,e:"Connect first, create a cursor, execute the query, fetch results or commit changes, then close."},
+{l:"Boss",q:"Assume fetchall() returns [(101,'Asha',82),(102,'Ravi',74)]. What is printed?",code:"for r in cur.fetchall():\n    print(r[1], end=' ')",o:["Asha Ravi","101 102","82 74","Asha 82"],a:0,e:"Each row is a tuple and r[1] is the second field, the name."}
+];
+var S,timer,tleft,audio,mute=false,TIME=25,app=document.getElementById("app");
+function sh(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function beep(f,d){if(mute)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();var o=audio.createOscillator(),g=audio.createGain();o.frequency.value=f;o.type="triangle";g.gain.value=.12;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+d)}catch(e){}}
+function best(v){try{if(v!=null){localStorage.setItem("sqlquest-best",v);return v}return +localStorage.getItem("sqlquest-best")||0}catch(e){return v||0}}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+function confetti(n,set){for(var i=0;i<n;i++){var d=document.createElement("div");d.className="fx";d.textContent=set[i%set.length];d.style.left=Math.random()*100+"vw";d.style.animationDelay=Math.random()*.8+"s";document.body.appendChild(d);setTimeout(function(x){x.remove()},3200,d)}}
+function home(){clearInterval(timer);
+app.innerHTML='<div class="card hero"><div class="big">🐍🐬</div><h1>Python MySQL Connectivity Quiz</h1><p class="muted">Interactive Game Challenge · Class XII Computer Science</p><p>Beat <b>25 questions</b> across 4 levels. Answer fast for bonus points, build streaks for multipliers, and guard your ❤️ lives!</p><div class="stats"><div class="stat">⏱️<b>25s</b>per question</div><div class="stat">❤️<b>3</b>lives</div><div class="stat">🏆<b>'+best()+'</b>best score</div></div><button class="btn" id="go">🚀 Start Game</button><p class="muted" style="font-size:.85rem">Lifelines: 🎯 50:50 ×2 · ⏰ +10 seconds ×2</p></div>';
+document.getElementById("go").onclick=start}
+function start(){beep(520,.15);S={i:0,score:0,lives:3,streak:0,maxs:0,ok:0,f:2,t:2,qs:sh(Q.map(function(x){return x})).sort(function(a,b){return ["Easy","Medium","Hard","Boss"].indexOf(a.l)-["Easy","Medium","Hard","Boss"].indexOf(b.l)}),done:false};
+S.qs=S.qs.map(function(x){var c=x.o[x.a],o=sh(x.o.slice());return{l:x.l,q:x.q,code:x.code,e:x.e,o:o,a:o.indexOf(c)}});show()}
+function show(){var q=S.qs[S.i];S.done=false;tleft=TIME;
+var h='<div class="hud"><span class="chip">⭐ <span id="sc">'+S.score+'</span></span><span class="chip">🔥 x'+(1+Math.floor(S.streak/3))+'</span><span class="chip">'+"❤️".repeat(S.lives)+"🖤".repeat(3-S.lives)+'</span><button class="tog" id="mu" title="Sound">'+(mute?"🔇":"🔊")+'</button></div><div class="prog"><i style="width:'+(S.i/S.qs.length*100)+'%"></i></div><div class="card"><div class="row" style="margin:0"><span class="lvl">'+(q.l==="Boss"?"👹 Boss Level":"Level · "+q.l)+'</span><span class="muted">Q '+(S.i+1)+'/'+S.qs.length+'</span></div><div class="bar"><i id="tb"></i></div><div class="q">'+esc(q.q)+'</div>'+(q.code?'<pre>'+esc(q.code)+'</pre>':'')+'<div class="opts">';
+q.o.forEach(function(t,k){h+='<button class="opt" data-k="'+k+'"><b>'+"ABCD"[k]+'</b><span>'+(/\(|\)/.test(t)&&t.length<80?'<code>'+esc(t)+'</code>':esc(t))+'</span></button>'});
+h+='</div><div id="fb"></div><div class="row"><span><button class="btn sm" id="l5">🎯 50:50 ('+S.f+')</button> <button class="btn sm" id="lt">⏰ +10s ('+S.t+')</button></span><button class="btn" id="nx" style="display:none">Next ➜</button></div></div>';
+app.innerHTML=h;
+document.getElementById("mu").onclick=function(){mute=!mute;this.textContent=mute?"🔇":"🔊"};
+Array.prototype.forEach.call(document.querySelectorAll(".opt"),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+document.getElementById("l5").onclick=function(){if(S.done||S.f<1)return;S.f--;var w=[];q.o.forEach(function(_,k){if(k!==q.a)w.push(k)});sh(w).slice(0,2).forEach(function(k){document.querySelector('.opt[data-k="'+k+'"]').classList.add("hide")});this.disabled=true;this.textContent="🎯 50:50 ("+S.f+")";beep(300,.1)};
+document.getElementById("lt").onclick=function(){if(S.done||S.t<1)return;S.t--;tleft=Math.min(tleft+10,TIME+10);this.textContent="⏰ +10s ("+S.t+")";this.disabled=true;beep(700,.1)};
+clearInterval(timer);timer=setInterval(function(){tleft-=.25;var tb=document.getElementById("tb");if(tb)tb.style.width=Math.max(0,tleft/TIME*100)+"%";if(tleft<=0){clearInterval(timer);pick(-1)}},250)}
+function pick(k){if(S.done)return;S.done=true;clearInterval(timer);var q=S.qs[S.i],right=k===q.a,msg;
+Array.prototype.forEach.call(document.querySelectorAll(".opt"),function(b){b.disabled=true});
+document.querySelector('.opt[data-k="'+q.a+'"]').classList.add("ok");
+if(right){S.streak++;S.maxs=Math.max(S.maxs,S.streak);S.ok++;var mult=1+Math.floor((S.streak-1)/3),bonus=Math.ceil(Math.max(tleft,0)/2.5),pts=(100+bonus*5)*mult;S.score+=pts;msg="🎉 <b>Correct! +"+pts+"</b> (speed bonus "+bonus*5+(mult>1?", streak ×"+mult:"")+")";beep(880,.2);confetti(S.streak>=3?24:8,["⭐","✨","🎉"])}
+else{S.streak=0;S.lives--;if(k>=0)document.querySelector('.opt[data-k="'+k+'"]').classList.add("bad");msg=(k<0?"⌛ <b>Time up!</b>":"💥 <b>Oops!</b>")+" You lost a life.";beep(160,.35)}
+document.getElementById("fb").innerHTML='<div class="fb">'+msg+'<br>💡 '+esc(q.e)+'</div>';
+var nx=document.getElementById("nx");nx.style.display="";nx.textContent=(S.lives<1||S.i===S.qs.length-1)?"See Results 🏁":"Next ➜";nx.onclick=function(){S.i++;(S.lives<1||S.i>=S.qs.length)?end():show()}}
+function end(){var acc=Math.round(S.ok/S.qs.length*100),won=S.lives>0&&S.i>=S.qs.length,nb=S.score>best();if(nb)best(S.score);
+var rank=acc>=90?"🏆 Database Wizard":acc>=70?"🥇 Query Master":acc>=50?"🥈 Cursor Cadet":"🥉 Keep Practising";
+app.innerHTML='<div class="card hero"><div class="big">'+(won?"🏆":"💔")+'</div><h1>'+(won?"Quest Complete!":"Game Over")+'</h1><h2>'+rank+'</h2><div class="stats"><div class="stat">⭐<b>'+S.score+'</b>score</div><div class="stat">🎯<b>'+acc+'%</b>accuracy</div><div class="stat">🔥<b>'+S.maxs+'</b>best streak</div></div>'+(nb?'<p><b>🎊 New high score!</b></p>':'<p class="muted">Best score: '+best()+'</p>')+'<p class="muted">Correct: '+S.ok+' of '+S.qs.length+' · Tip: revise commit(), fetchone() vs fetchall() and parameterised queries.</p><button class="btn" id="again">🔁 Play Again</button></div>';
+document.getElementById("again").onclick=start;confetti(won?40:10,won?["🎉","🏆","⭐","🎊"]:["💔"]);beep(won?990:200,.4)}
+home();
+</script>
+</body>
+</html>
