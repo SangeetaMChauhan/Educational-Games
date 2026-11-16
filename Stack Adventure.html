@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stack Adventure – Push, Pop & Traverse</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg1:#ede9fe;--bg2:#fce7f3;--card:#ffffffd9;--ink:#1e1b4b;--muted:#5b5b8a;--tube:#ffffff;--line:#c4b5fd;--code:#1e1b4b;--codeink:#e0e7ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#1e1b4b;--bg2:#3b0764;--card:#2a2560d9;--ink:#f5f3ff;--muted:#c4b5fd;--tube:#1b1747;--line:#6d5bd0;--code:#0f0c2e;--codeink:#c7d2fe}}
+:root[data-theme="dark"]{--bg1:#1e1b4b;--bg2:#3b0764;--card:#2a2560d9;--ink:#f5f3ff;--muted:#c4b5fd;--tube:#1b1747;--line:#6d5bd0;--code:#0f0c2e;--codeink:#c7d2fe}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);background:linear-gradient(135deg,var(--bg1),var(--bg2));min-height:100vh}
+.wrap{max-width:1020px;margin:0 auto;padding:14px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:clamp(1.4rem,4vw,2.2rem);background:linear-gradient(90deg,#ec4899,#8b5cf6,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tog button{background:var(--card);border:2px solid var(--line);color:var(--ink);border-radius:20px;padding:6px 12px;cursor:pointer;font-weight:700;margin-left:6px}
+.grid{display:grid;grid-template-columns:minmax(250px,340px) 1fr;gap:14px;margin-top:12px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:20px;padding:14px;box-shadow:0 8px 24px #6d28d933;backdrop-filter:blur(6px)}
+.stackzone{display:flex;gap:8px;justify-content:center;align-items:flex-end}
+.tube{width:190px;height:420px;border:5px solid var(--line);border-top:none;border-radius:0 0 26px 26px;background:var(--tube);display:flex;flex-direction:column-reverse;padding:6px;gap:6px;position:relative;overflow:hidden}
+.slots{display:flex;flex-direction:column-reverse;height:420px;justify-content:flex-start;gap:6px;padding:6px 0}
+.slotno{height:55px;display:flex;align-items:center;font-size:.8rem;color:var(--muted);font-weight:700;width:54px}
+.blk{height:55px;flex:none;border-radius:14px;color:#fff;font-size:1.7rem;font-weight:800;display:flex;align-items:center;justify-content:center;text-shadow:0 2px 4px #0004;box-shadow:inset 0 -5px 0 #0003,0 3px 6px #0003;position:relative}
+.blk.drop{animation:drop .55s cubic-bezier(.3,1.4,.5,1)}
+.blk.out{animation:out .45s forwards}
+.blk.glow{outline:5px solid #facc15;transform:scale(1.06);z-index:2;filter:brightness(1.2)}
+.blk.done{opacity:.55}
+.blk.top::after{content:"TOP";position:absolute;right:-62px;font-size:.8rem;background:#f43f5e;color:#fff;padding:3px 8px;border-radius:10px;text-shadow:none;animation:bob 1s infinite}
+@keyframes drop{from{transform:translateY(-420px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes out{to{transform:translateY(-300px) rotate(25deg) scale(.4);opacity:0}}
+@keyframes bob{50%{transform:translateX(5px)}}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.shake{animation:shake .4s}
+.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;text-align:center;padding:20px;pointer-events:none}
+.info{text-align:center;margin-top:8px;font-weight:700;color:var(--muted)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input{font-size:1.2rem;width:110px;padding:10px;border-radius:12px;border:3px solid var(--line);background:var(--tube);color:var(--ink);font-weight:700;text-align:center}
+.btn{border:0;border-radius:14px;padding:12px 16px;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 5px 0 #0003;transition:transform .1s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #0003}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.push{background:#10b981}.pop{background:#f43f5e}.trav{background:#8b5cf6}.peek{background:#0ea5e9}.clr{background:#64748b}
+.tray{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--tube);border:3px solid var(--line);border-radius:16px;padding:10px;margin-bottom:12px}
+.tray .lbl{font-weight:800}
+#queue{display:flex;flex-wrap:wrap;gap:8px;flex:1;min-height:44px;align-items:center}
+.chip{min-width:44px;height:44px;border-radius:12px;color:#fff;font-weight:800;font-size:1.2rem;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -4px 0 #0003;position:relative;text-shadow:0 2px 3px #0004}
+.chip.next{outline:4px solid #facc15;transform:translateY(-3px)}
+.chip.next::after{content:"NEXT";position:absolute;bottom:-17px;font-size:.62rem;background:#f43f5e;padding:0 5px;border-radius:8px}
+.bubble{display:flex;gap:10px;align-items:flex-start;margin-top:12px;background:var(--tube);border:3px dashed var(--line);border-radius:18px;padding:12px;min-height:84px}
+.bot{font-size:2.4rem;animation:bob 2s infinite}
+#msg{font-size:1.05rem;line-height:1.45}
+pre{background:var(--code);color:var(--codeink);border-radius:14px;padding:10px;margin:12px 0 0;font-size:.9rem;line-height:1.5;overflow-x:auto}
+pre b{background:#facc15;color:#1e1b4b;border-radius:4px;padding:0 3px}
+.mission{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;background:linear-gradient(90deg,#fde68a,#fbcfe8);color:#1e1b4b;border-radius:16px;padding:10px 14px;font-weight:800;margin-top:12px}
+.bar{height:10px;background:#fff8;border-radius:6px;width:100%;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#10b981;transition:width .4s}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
+.fact{border-radius:16px;padding:12px;color:#fff;font-size:.95rem}
+.fact h3{margin:0 0 4px}
+.pop-emoji{position:fixed;font-size:2rem;pointer-events:none;animation:fly 1.4s forwards;z-index:9}
+@keyframes fly{to{transform:translateY(-220px) rotate(40deg);opacity:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <h1>📚 Stack Adventure</h1>
+ <div class="tog"><button id="sndBtn">🔊 Sound: On</button><button id="voiceBtn">🗣️ Voice: On</button></div>
+</header>
+
+<div class="grid">
+ <div class="card">
+  <div class="stackzone">
+   <div class="slots" id="nums"></div>
+   <div class="tube" id="tube"><div class="empty" id="emptyMsg">Stack is empty!<br>Tap PUSH 👇</div></div>
+  </div>
+  <div class="info" id="info">Size: 0 / 6</div>
+ </div>
+
+ <div>
+  <div class="card">
+   <div class="tray"><span class="lbl">📦 Items to push (in order):</span><div id="queue"></div><button class="btn clr" id="bNew">🔀 New list</button></div>
+   <div class="ctl">
+    <input id="val" type="number" min="1" max="99" placeholder="1–99" aria-label="Value to push">
+    <button class="btn push" id="bPush">⬇️ PUSH</button>
+    <button class="btn pop" id="bPop">⬆️ POP</button>
+    <button class="btn peek" id="bPeek">👀 PEEK</button>
+    <button class="btn trav" id="bTrav">🚶 TRAVERSE</button>
+    <button class="btn clr" id="bClr">🧹 Reset</button>
+   </div>
+   <div class="bubble"><div class="bot">🤖</div><div id="msg"></div></div>
+   <pre id="code"></pre>
+  </div>
+  <div class="mission"><div>🎯 Mission: <span id="mTxt"></span></div><div>⭐ Score: <span id="score">0</span></div><div class="bar"><i id="mBar"></i></div></div>
+ </div>
+</div>
+
+<div class="facts">
+ <div class="fact" style="background:#10b981"><h3>⬇️ PUSH</h3>Add a new item on the TOP of the stack.</div>
+ <div class="fact" style="background:#f43f5e"><h3>⬆️ POP</h3>Remove the item from the TOP of the stack.</div>
+ <div class="fact" style="background:#8b5cf6"><h3>🚶 TRAVERSE</h3>Visit every item, from TOP down to the bottom.</div>
+ <div class="fact" style="background:#0ea5e9"><h3>🥞 LIFO</h3>Last In, First Out – like a pile of plates!</div>
+</div>
+</div>
+
+<script>
+const CAP=6, COLORS=["#ef4444","#f97316","#eab308","#22c55e","#06b6d4","#8b5cf6"];
+let stack=[], busy=false, snd=true, voice=true, score=0, mi=0, mcount=0, ctx=null, colorIdx=0;
+const $=id=>document.getElementById(id);
+const CODE={
+ idle:"stack = [ ]   // empty list\nTOP  = -1   // points to nothing",
+ push:"<b>if TOP == MAX-1 → OVERFLOW</b>\nTOP = TOP + 1\nstack[TOP] = value",
+ pushFull:"<b>if TOP == MAX-1 → OVERFLOW</b>  // no space!",
+ pop:"<b>if TOP == -1 → UNDERFLOW</b>\nvalue = stack[TOP]\nTOP = TOP - 1",
+ popEmpty:"<b>if TOP == -1 → UNDERFLOW</b>  // nothing to remove!",
+ peek:"return stack[TOP]   // look, don’t remove",
+ trav:"i = TOP\nwhile i >= 0:\n  <b>visit(stack[i])</b>\n  i = i - 1"
+};
+const MISSIONS=[
+ {t:"PUSH 3 items",type:"push",n:3},{t:"POP 2 items",type:"pop",n:2},
+ {t:"PUSH 3 items, then TRAVERSE",type:"trav",n:1},{t:"PEEK at the top",type:"peek",n:1},
+ {t:"Fill the stack to cause OVERFLOW",type:"overflow",n:1},{t:"POP on an empty stack (UNDERFLOW)",type:"underflow",n:1}
+];
+
+function tone(f,d=.18,type="sine",when=0){
+ if(!snd)return;
+ try{ctx=ctx||new(window.AudioContext||window.webkitAudioContext)();
+ const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f;
+ const t=ctx.currentTime+when;g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.25,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);
+ o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+d+.02);}catch(e){}
+}
+const sfx={push:()=>{tone(392);tone(523,.2,"sine",.1);tone(659,.25,"sine",.2)},
+ pop:()=>{tone(659);tone(523,.2,"sine",.1);tone(392,.25,"sine",.2)},
+ err:()=>{tone(150,.3,"sawtooth");tone(120,.35,"sawtooth",.15)},
+ win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.25,"triangle",i*.12))};
+function speak(t){
+ if(!voice||!window.speechSynthesis)return;
+ try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[^\w\s.,!?'’:-]/g,""));u.rate=.95;u.pitch=1.2;speechSynthesis.speak(u);}catch(e){}
+}
+function say(t,key){$("msg").textContent=t;speak(t);if(key)$("code").innerHTML=CODE[key];}
+function burst(emo){for(let i=0;i<10;i++){const s=document.createElement("div");s.className="pop-emoji";s.textContent=emo;
+ s.style.left=(15+Math.random()*70)+"vw";s.style.top=(50+Math.random()*30)+"vh";document.body.appendChild(s);setTimeout(()=>s.remove(),1500);}}
+
+function render(){
+ const tube=$("tube");tube.querySelectorAll(".blk").forEach(e=>e.remove());
+ stack.forEach((it,i)=>{const b=document.createElement("div");b.className="blk"+(i===stack.length-1?" top":"");
+  b.style.background=it.c;b.textContent=it.v;b.dataset.i=i;if(it.fresh){b.classList.add("drop");it.fresh=false}tube.appendChild(b);});
+ $("emptyMsg").style.display=stack.length?"none":"flex";
+ $("info").textContent=`Size: ${stack.length} / ${CAP}`+(stack.length?`  •  TOP = ${stack.length-1}`:"  •  TOP = -1");
+ $("nums").innerHTML="";for(let i=0;i<CAP;i++){const d=document.createElement("div");d.className="slotno";d.textContent="pos "+i;$("nums").appendChild(d);}
+}
+let queue=[];
+function newList(){const s=new Set();while(s.size<8)s.add(1+Math.floor(Math.random()*99));queue=[...s];renderQueue();}
+function renderQueue(){const q=$("queue");q.innerHTML="";
+ queue.forEach((v,i)=>{const c=document.createElement("div");c.className="chip"+(i===0?" next":"");c.style.background=COLORS[(colorIdx+i)%COLORS.length];c.textContent=v;q.appendChild(c);});
+ if(!queue.length)q.textContent="All items pushed! Tap New list.";}
+function lock(v){busy=v;document.querySelectorAll(".btn").forEach(b=>b.disabled=v)}
+function shakeTube(){const t=$("tube");t.classList.remove("shake");void t.offsetWidth;t.classList.add("shake")}
+
+function progress(type){
+ const m=MISSIONS[mi];if(m.type===type)mcount++;
+ $("mBar").style.width=Math.min(100,mcount/m.n*100)+"%";
+ if(mcount>=m.n){score+=10;$("score").textContent=score;sfx.win();burst("⭐");
+  setTimeout(()=>{mi=(mi+1)%MISSIONS.length;mcount=0;loadMission();say("Mission complete! Plus ten points! New mission: "+MISSIONS[mi].t)},900);}
+}
+function loadMission(){$("mTxt").textContent=MISSIONS[mi].t;$("mBar").style.width="0"}
+
+function push(){
+ if(busy)return;
+ let v=parseInt($("val").value);const useQ=!(v>=1&&v<=99);
+ if(useQ){if(!queue.length){newList();say("The list was empty, so I made a new one. Press PUSH again!");return;}v=queue[0];}
+ $("val").value="";
+ if(stack.length>=CAP){sfx.err();shakeTube();say("Oops! Stack Overflow! The stack is full, so I can’t push "+v+" anymore.","pushFull");progress("overflow");return;}
+ stack.push({v,c:COLORS[colorIdx++%COLORS.length],fresh:true});if(useQ){queue.shift();renderQueue();}render();sfx.push();
+ say(`PUSH ${v}: I placed ${v} on the top of the stack. It now sits at position ${stack.length-1}.`,"push");progress("push");
+}
+function pop(){
+ if(busy)return;
+ if(!stack.length){sfx.err();shakeTube();say("Oops! Stack Underflow! The stack is empty, so there is nothing to pop.","popEmpty");progress("underflow");return;}
+ lock(true);const it=stack[stack.length-1];const el=$("tube").querySelector(".blk.top");if(el)el.classList.add("out");sfx.pop();
+ say(`POP: I removed ${it.v} from the top. Last in, first out!`,"pop");
+ setTimeout(()=>{stack.pop();render();lock(false);progress("pop")},450);
+}
+function peek(){
+ if(busy)return;
+ if(!stack.length){sfx.err();say("The stack is empty. There is nothing to peek at.","popEmpty");return;}
+ const el=$("tube").querySelector(".blk.top");el.classList.add("glow");tone(700,.2);setTimeout(()=>el.classList.remove("glow"),1200);
+ say(`PEEK: The top item is ${stack[stack.length-1].v}. I only looked, I did not remove it.`,"peek");progress("peek");
+}
+async function trav(){
+ if(busy)return;
+ if(!stack.length){sfx.err();say("Nothing to traverse. Push some items first!","idle");return;}
+ lock(true);say("TRAVERSE: let’s visit every item, starting from the top and going down.","trav");
+ await new Promise(r=>setTimeout(r,1800));
+ for(let i=stack.length-1;i>=0;i--){
+  const el=$("tube").querySelector(`.blk[data-i="${i}"]`);el.classList.add("glow");tone(880-(stack.length-1-i)*90,.25,"triangle");
+  $("msg").textContent=`Visiting position ${i}: value ${stack[i].v}`;speak(`Position ${i}, value ${stack[i].v}`);
+  await new Promise(r=>setTimeout(r,1300));el.classList.remove("glow");el.classList.add("done");
+ }
+ render();say("Traversal finished! I visited all "+stack.length+" items and the stack is unchanged.");lock(false);progress("trav");
+}
+function reset(){if(busy)return;stack=[];newList();render();say("Fresh start! The stack is empty. Try PUSH to add your first item.","idle");}
+
+$("bPush").onclick=push;$("bPop").onclick=pop;$("bPeek").onclick=peek;$("bTrav").onclick=trav;$("bClr").onclick=reset;$("bNew").onclick=()=>{if(!busy){newList();say("Here is a fresh list of items to push. They go in from left to right.")}};
+$("val").addEventListener("keydown",e=>{if(e.key==="Enter")push()});
+$("sndBtn").onclick=()=>{snd=!snd;$("sndBtn").textContent="🔊 Sound: "+(snd?"On":"Off")};
+$("voiceBtn").onclick=()=>{voice=!voice;if(!voice&&window.speechSynthesis)speechSynthesis.cancel();$("voiceBtn").textContent="🗣️ Voice: "+(voice?"On":"Off")};
+
+newList();render();loadMission();
+$("msg").textContent="Hi friend! I’m Stacky. A stack works like a pile of plates: the last plate you put on is the first one you take off. The tray above shows the items waiting to be pushed, from left to right. Tap PUSH to begin!";
+$("code").innerHTML=CODE.idle;
+$("msg").addEventListener("click",()=>speak($("msg").textContent));
+document.addEventListener("pointerdown",()=>{if(!window.__greeted){window.__greeted=true;speak($("msg").textContent)}},{once:true});
+</script>
+</body>
+</html>
