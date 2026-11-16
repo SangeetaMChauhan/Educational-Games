@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Python ↔ MySQL Connectivity Simulator</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1b1f2a;--mu:#667085;--bd:#dfe3ec;--ac:#4f46e5;--ok:#16a34a;--bad:#dc2626;--wa:#f59e0b;--code:#0f172a;--cx:#e2e8f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1118;--card:#171b26;--tx:#e8ebf3;--mu:#98a2b3;--bd:#2a3042;--ac:#818cf8;--code:#05070c}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+.w{max-width:980px;margin:0 auto;padding:14px}
+h1{font-size:24px;margin:6px 0}h2{font-size:17px;margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.mu{color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 14px}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button:disabled{opacity:.45;cursor:not-allowed}
+.case{cursor:pointer;transition:.15s}.case:hover{border-color:var(--ac);transform:translateY(-2px)}
+.tag{display:inline-block;font-size:12px;background:var(--ac);color:#fff;border-radius:99px;padding:1px 10px;margin-bottom:6px}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px}
+.pipe{position:relative;height:120px;display:flex;justify-content:space-between;align-items:center;padding:0 4%}
+.node{width:27%;text-align:center;border:2px solid var(--bd);border-radius:14px;padding:10px 4px;background:var(--card);transition:.3s;z-index:2}
+.node b{display:block;font-size:26px}.node small{color:var(--mu)}
+.node.on{border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 25%,transparent)}
+.node.ok{border-color:var(--ok)}.node.err{border-color:var(--bad)}
+.line{position:absolute;left:15%;right:15%;top:50%;border-top:3px dashed var(--bd);z-index:1}
+#pk{position:absolute;top:8px;left:12%;transform:translateX(-50%);background:var(--wa);color:#000;font-size:12px;font-weight:600;border-radius:8px;padding:2px 8px;opacity:0;transition:left 1.1s ease,opacity .3s;z-index:3;white-space:nowrap}
+table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left}
+tr.hit td{background:color-mix(in srgb,var(--ac) 22%,transparent)}tr.pend td{background:color-mix(in srgb,var(--wa) 30%,transparent);font-style:italic}
+tr.del td{text-decoration:line-through;background:color-mix(in srgb,var(--bad) 25%,transparent)}
+tr.saved td{background:color-mix(in srgb,var(--ok) 25%,transparent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:720px){.two{grid-template-columns:1fr}}
+pre{margin:0;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+#code{background:var(--code);color:var(--cx);border-radius:10px;padding:8px;max-height:260px;overflow:auto}
+#code div{padding:3px 8px;border-left:3px solid transparent;opacity:.45;border-radius:4px}
+#code div.cur{opacity:1;border-left-color:var(--wa);background:#ffffff14}#code div.done{opacity:.85}
+#con{background:var(--code);color:#86efac;border-radius:10px;padding:8px;min-height:60px;max-height:150px;overflow:auto}
+#cap{font-size:16px;border-left:4px solid var(--ac);padding-left:10px}
+.opt{display:block;width:100%;text-align:left;margin:6px 0}.opt.good{background:var(--ok);color:#fff}.opt.bad{background:var(--bad);color:#fff}
+.stat{display:flex;gap:14px;font-weight:600}.hide{display:none}
+.prog{height:6px;background:var(--bd);border-radius:9px;overflow:hidden;margin-bottom:10px}.prog i{display:block;height:100%;background:var(--ac);width:0;transition:.4s}
+.lay rect{fill:var(--card);stroke:var(--bd);stroke-width:2;transition:.3s}.lay.on rect{stroke:var(--ac);stroke-width:4}.lay text{fill:var(--tx);font:13px system-ui,sans-serif}.lay .sm{fill:var(--mu);font-size:11px}.dg{width:100%;height:auto}.dg .ar{stroke:var(--mu);stroke-width:2.5;fill:none}.dg .al{fill:var(--mu);font:11px system-ui,sans-serif}select{font:inherit;padding:7px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);max-width:100%}
+@keyframes fl{from{box-shadow:0 0 0 5px var(--wa)}to{box-shadow:0 0 0 0 transparent}}.fl{animation:fl 1.6s}#rf input{font:inherit;padding:6px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx)}
+/* ---- v7: colourful theme, +1pt fonts ---- */
+body{background:linear-gradient(135deg,#e0e7ff 0%,#fce7f3 45%,#cffafe 100%) fixed;font-size:16.4px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{background:linear-gradient(135deg,#1e1b4b 0%,#3b0764 50%,#082f49 100%) fixed}}
+h1{font-size:27.4px;background:linear-gradient(90deg,#4f46e5,#db2777,#ea580c);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:18.4px}.card{border:none;border-top:5px solid #6366f1;box-shadow:0 6px 18px rgba(79,70,229,.18)}
+#cap{font-size:17.4px;background:color-mix(in srgb,#6366f1 12%,var(--card));border-left:6px solid #ec4899;border-radius:10px;padding:10px 12px}
+#cap b{color:#db2777;font-size:18.4px}
+.case:nth-child(1){background:linear-gradient(135deg,color-mix(in srgb,#6366f1 24%,var(--card)),var(--card));border-top-color:#6366f1}
+.case:nth-child(2){background:linear-gradient(135deg,color-mix(in srgb,#10b981 24%,var(--card)),var(--card));border-top-color:#10b981}
+.case:nth-child(3){background:linear-gradient(135deg,color-mix(in srgb,#f59e0b 26%,var(--card)),var(--card));border-top-color:#f59e0b}
+.case:nth-child(4){background:linear-gradient(135deg,color-mix(in srgb,#ef4444 22%,var(--card)),var(--card));border-top-color:#ef4444}
+.case:nth-child(5){background:linear-gradient(135deg,color-mix(in srgb,#ec4899 24%,var(--card)),var(--card));border-top-color:#ec4899}
+.tag{background:linear-gradient(90deg,#6366f1,#ec4899);font-size:13.4px}
+button{font-size:16.4px}button.p{background:linear-gradient(90deg,#6366f1,#ec4899);border:none;color:#fff}
+#n0{background:color-mix(in srgb,#3b82f6 16%,var(--card))}#n1{background:color-mix(in srgb,#a855f7 16%,var(--card))}#n2{background:color-mix(in srgb,#f97316 16%,var(--card))}
+#n0:not(.on):not(.ok):not(.err){border-color:#60a5fa}#n1:not(.on):not(.ok):not(.err){border-color:#c084fc}#n2:not(.on):not(.ok):not(.err){border-color:#fb923c}
+.node{font-size:16.4px;font-weight:600}.node small{font-size:14px;font-weight:400}
+#pk{background:linear-gradient(90deg,#f59e0b,#ef4444);color:#fff;font-size:14.4px;padding:4px 12px;box-shadow:0 3px 10px rgba(239,68,68,.5)}
+th{background:linear-gradient(90deg,#6366f1,#8b5cf6);color:#fff}pre{font-size:14.4px}#con{color:#4ade80}
+#code div.cur{background:rgba(251,191,36,.18);border-left-color:#f472b6}
+.prog{height:10px}.prog i{background:linear-gradient(90deg,#22c55e,#06b6d4,#6366f1)}
+.opt{background:color-mix(in srgb,#a78bfa 16%,var(--card));font-size:16.4px}
+.lay text{font-size:14.4px}.lay .sm{font-size:12.4px}.dg .al{font-size:12.4px}
+#hL0 rect,#pL0 rect{fill:color-mix(in srgb,#3b82f6 18%,var(--card))}#hL1 rect,#pL1 rect{fill:color-mix(in srgb,#a855f7 18%,var(--card))}#hL2 rect,#pL2 rect{fill:color-mix(in srgb,#f97316 18%,var(--card))}
+#nx{background:linear-gradient(90deg,#10b981,#06b6d4);border:none;font-size:17.4px}
+/* ---- v8: bold, larger case titles on contrasting backgrounds ---- */
+.case h2,#cn{display:block;color:#fff;font-weight:800;font-size:23px;line-height:1.3;padding:10px 14px;border-radius:12px;letter-spacing:.2px;text-shadow:0 1px 2px rgba(0,0,0,.35);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.case h2{margin:6px 0 10px}
+.case:nth-child(1) h2{background:linear-gradient(90deg,#4338ca,#7c3aed)}.case:nth-child(2) h2{background:linear-gradient(90deg,#047857,#0f766e)}.case:nth-child(3) h2{background:linear-gradient(90deg,#b45309,#c2410c)}.case:nth-child(4) h2{background:linear-gradient(90deg,#b91c1c,#9f1239)}.case:nth-child(5) h2{background:linear-gradient(90deg,#be185d,#7e22ce)}
+#cn{background:var(--cc,linear-gradient(90deg,#4338ca,#7c3aed));font-size:21px}
+/* ---- v9: all text bold, stronger grey text ---- */
+:root{--mu:#3b4458}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--mu:#d0d6e4}}
+*{font-weight:700 !important}
+h1,h2,.case h2,#cn,#cap b{font-weight:800 !important}
+</style></head><body><div class="w">
+
+<div id="home">
+  <h1>🐍 Python ↔ 🗄️ MySQL Simulator</h1>
+  <p class="mu">Watch every step of database connectivity happen live, listen to a voice explain it, and answer a quick question at each step to earn points. Pick a case to begin.</p>
+  <div class="card"><h2>🎙️ Indian female narrator</h2><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><select id="vsel" onchange="setV(this.value)"></select><label class="mu" style="display:flex;gap:6px;align-items:center">Pitch <input type="range" id="ptc" min="0.8" max="2" step="0.05" value="1.1" oninput="$('pv').textContent=this.value"><b id="pv">1.1</b></label><button onclick="testVoice()">▶ Test voice</button></div><div id="vinfo" class="mu" style="margin-top:6px">Loading voices…</div></div>
+  <div class="card"><h2>🧩 Concept: how Python talks to a DBMS</h2><div id="dgh"></div><p class="mu">A DBMS (MySQL) stores and manages data. Python cannot open its files directly — it uses an <b>interface</b> (the connector) that sends SQL over the network to the server.</p><button class="p" onclick="tour()">▶ Explain with audio</button></div>
+  <div class="grid" id="cases"></div>
+</div>
+
+<div id="play" class="hide">
+  <div class="bar"><div class="stat"><span id="cn"></span></div>
+    <div class="stat"><span>⭐ <span id="sc">0</span></span><span>🔥 <span id="stk">0</span></span>
+    <button id="mb" onclick="toggleMute()">🔊</button><button onclick="goHome()">🏠</button></div></div>
+  <div class="prog"><i id="pg"></i></div>
+
+  <div class="card"><div class="pipe"><div class="line"></div><div id="pk">SQL</div>
+    <div class="node" id="n0"><b>🐍</b>Python script<br><small id="s0">idle</small></div>
+    <div class="node" id="n1"><b>🔌</b>MySQL Connector<br><small id="s1">not loaded</small></div>
+    <div class="node" id="n2"><b>🗄️</b>MySQL Server<br><small id="s2">waiting</small></div></div></div>
+
+  <div class="card"><h2>Architecture</h2><div id="dgp"></div></div>
+  <div class="card"><div id="cap"></div><div style="margin-top:8px"><button onclick="speakCur()">🔁 Replay audio</button></div></div>
+
+  <div class="two">
+    <div class="card"><h2>Python code</h2><div id="code"></div></div>
+    <div class="card" id="tcard"><h2>Table: <code>school.students</code></h2><div id="rf" class="hide"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0"><b>➕ Your new row:</b><input id="ri" type="number" value="4" style="width:64px" aria-label="id"><input id="rn" value="Kabir" maxlength="12" style="width:110px" aria-label="name"><input id="rm" type="number" value="88" style="width:72px" aria-label="marks"></div><div class="mu" style="font-size:13px">Edit these values, then press Next until the INSERT step runs.</div></div><table><thead><tr><th>id</th><th>name</th><th>marks</th></tr></thead><tbody id="tb"></tbody></table>
+      <h2 style="margin-top:12px">Output</h2><pre id="con"></pre></div>
+  </div>
+
+  <div class="card" id="qz"><h2 id="qt"></h2><div id="qo"></div><div id="fb" style="margin:6px 0;font-weight:600"></div>
+    <button class="p" id="nx" onclick="next()" disabled>Next step ➜</button></div>
+</div>
+
+<div id="end" class="hide card" style="text-align:center">
+  <h1>🎉 Case complete!</h1><p id="er" style="font-size:18px"></p>
+  <button class="p" onclick="start(CI)">Replay this case</button> <button onclick="start((CI+1)%CASES.length)">Next case ➜</button> <button onclick="goHome()">All cases</button>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const POOL={imp:'Loads the MySQL connector library into Python',conn:'Opens a connection to the MySQL server',cur:'Creates a cursor used to send SQL commands',exe:'Sends the SQL query to the server to run',fet:'Reads the result rows back into Python',com:'Saves the changes permanently in the database',rol:'Undoes the changes that were not committed',cls:'Releases the cursor and the connection',exc:'Catches the error so the program does not crash',try:'Attempts a connection that might fail'};
+const base=()=>[{id:1,n:'Asha',m:92},{id:2,n:'Ravi',m:85},{id:3,n:'Meera',m:78}];
+const CON="con = mysql.connector.connect(host='localhost', user='root', password='pass123', database='school')";
+const S={
+ imp:()=>({q:'imp',a:[0,1],code:'import mysql.connector',t:'Import the connector',say:'Step one. We import the mysql dot connector module. Python cannot talk to MySQL by itself, so this library acts as the translator between the two.',f:c=>{c.s1='loaded';}}),
+ conn:()=>({q:'conn',a:[0,2],lb:'connect()',code:CON,t:'Connect to the server',say:'Step two. The connect function takes the host, the user, the password and the database name. The connector knocks on the MySQL server door, the server checks the credentials, and a live connection object called con is returned.',f:c=>{c.s2='connected';c.ok=[2];},log:'Connected to MySQL server ✔'}),
+ cur:()=>({q:'cur',a:[0,1],lb:'cursor()',code:'cur = con.cursor()',t:'Create a cursor',say:'Step three. A cursor is like a messenger. You hand it SQL statements, and it carries them to the server and brings the answers back. Always create a cursor from your connection.',f:c=>{c.s1='cursor ready';}}),
+ cls:(x)=>({q:'cls',a:[0,2],lb:'close()',code:'cur.close()\ncon.close()',t:'Close cursor & connection',say:'Final step. We close the cursor and then the connection, which frees server resources. Forgetting this can leave connections open and eventually block new users.',f:c=>{c.s0='finished';c.s1='closed';c.s2='disconnected';c.ok=[];},log:x||'Connection closed.'}),
+};
+const CASES=[
+{n:'Case 1 · SELECT: read data',d:'Fetch students scoring above 80 using a parameterised query and fetchall().',steps:[
+ S.imp(),S.conn(),S.cur(),
+ {q:'exe',a:[0,2],lb:'SELECT',code:'cur.execute("SELECT * FROM students WHERE marks > %s", (80,))',t:'Execute the SELECT',say:'Step four. The execute method sends our SELECT query to the server. Notice the percent s placeholder, and the value eighty passed separately. The server finds every row where marks are greater than eighty, highlighted here in blue.',f:c=>{c.T.forEach(r=>{if(r.m>80)r.c='hit'});}},
+ {q:'fet',a:[2,0],lb:'2 rows',code:'rows = cur.fetchall()\nfor r in rows: print(r)',t:'Fetch the results',say:'Step five. SELECT only prepares results, so we call fetch all to bring them back to Python as a list of tuples. A loop then prints each row. No commit is needed, because reading changes nothing.',f:c=>{},log:"(1, 'Asha', 92)\n(2, 'Ravi', 85)"},
+ S.cls()]},
+{n:'Case 2 · INSERT: add a row',d:'Add a new student and see why commit() is essential.',steps:[
+ S.imp(),S.conn(),S.cur(),
+ {q:'exe',a:[0,2],lb:'INSERT',code:'cur.execute("INSERT INTO students VALUES (%s,%s,%s)", (4,"Kabir",88))',t:'Execute the INSERT',say:'Step four. We send an INSERT statement with three values. The server adds the row, but only temporarily, inside a transaction. Notice the orange row: it is pending, and other users cannot see it yet.',f:c=>{c.T.push({id:4,n:'Kabir',m:88,c:'pend'});},log:'1 row inserted (not saved yet)'},
+ {q:'com',a:[0,2],lb:'COMMIT',code:'con.commit()',t:'Commit the transaction',say:'Step five. Commit makes the change permanent. The row turns green because it is now saved for everyone. Without this line, the insert would be lost when the connection closes.',f:c=>{c.T.forEach(r=>{if(r.c=='pend')r.c='saved'});},log:'Transaction committed ✔'},
+ S.cls()]},
+{n:'Case 3 · UPDATE: change a value',d:'Raise Meera’s marks and print how many rows were affected.',steps:[
+ S.imp(),S.conn(),S.cur(),
+ {q:'exe',a:[0,2],lb:'UPDATE',code:'cur.execute("UPDATE students SET marks=%s WHERE id=%s", (82,3))',t:'Execute the UPDATE',say:'Step four. The UPDATE statement changes the marks of the student whose id is three. The WHERE clause is vital: without it, every row in the table would be changed. The change is pending for now.',f:c=>{const r=c.T.find(r=>r.id==3);r.m=82;r.c='pend';},log:'Update pending…'},
+ {q:'com',a:[0,2],lb:'COMMIT',code:'con.commit()\nprint(cur.rowcount, "row updated")',t:'Commit and check rowcount',say:'Step five. We commit to save the new marks. Then cur dot rowcount tells us how many rows were affected. Here it is one, which confirms that exactly the row we wanted was changed.',f:c=>{c.T.forEach(r=>{if(r.c=='pend')r.c='saved'});},log:'1 row updated'},
+ S.cls()]},
+{n:'Case 4 · DELETE + ROLLBACK',d:'Delete a row by mistake, then undo it with rollback().',steps:[
+ S.imp(),S.conn(),S.cur(),
+ {q:'exe',a:[0,2],lb:'DELETE',code:'cur.execute("DELETE FROM students WHERE id = %s", (2,))',t:'Execute the DELETE',say:'Step four. We delete the student with id two. The row is struck through in red, but the deletion is still inside an open transaction. Nothing is permanent yet, so we still have a chance to change our mind.',f:c=>{c.T.find(r=>r.id==2).c='del';},log:'1 row deleted (not saved yet)'},
+ {q:'rol',a:[0,2],lb:'ROLLBACK',code:'con.rollback()',t:'Rollback the change',say:'Step five. Oops, that was the wrong student! Calling rollback cancels everything since the last commit. Ravi’s row comes back, exactly as it was. This is why transactions make databases safe.',f:c=>{c.T.forEach(r=>delete r.c);},log:'Transaction rolled back ↺'},
+ S.cls()]},
+{n:'Case 5 · Error handling',d:'A wrong password fails. Catch the error with try / except, then reconnect.',steps:[
+ S.imp(),
+ {q:'try',a:[0,2],lb:'bad password',code:"try:\n    con = mysql.connector.connect(host='localhost', user='root', password='wrong')",t:'Try a risky connection',say:'Step two. Connections can fail, for example with a wrong password or a stopped server. So we place the call inside a try block. Here the server rejects our wrong password, and the connector raises an error.',f:c=>{c.s2='access denied';c.err=[2];}},
+ {q:'exc',a:[2,0],lb:'Error 1045',code:"except mysql.connector.Error as e:\n    print('Error:', e)",t:'Catch it with except',say:'Step three. Because we wrapped the call in try, Python jumps to the except block instead of crashing. We print the message: error one zero four five, access denied. Now we know what went wrong and can fix it.',f:c=>{c.err=[0];},log:"Error: 1045 (28000): Access denied for user 'root'@'localhost'"},
+ {q:'conn',a:[0,2],lb:'connect()',code:CON,t:'Retry with correct password',say:'Step four. We correct the password and connect again. This time the server accepts us, and the border turns green. Real programs often retry like this, or show a friendly message to the user.',f:c=>{c.err=[];c.ok=[2];c.s2='connected';},log:'Connected to MySQL server ✔'},
+ {q:'cls',a:[0,2],lb:'is_connected()',code:'if con.is_connected():\n    con.close()',t:'Check, then close',say:'Final step. Before closing, we check is connected, so we never close a connection that does not exist. Good programs always clean up, even after errors.',f:c=>{c.s0='finished';c.s1='closed';c.s2='disconnected';c.ok=[];},log:'Connection closed.'}]}
+];
+
+// ---- voice ----
+let voice=null,muted=false,cur=null;
+function pick(){const v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang));
+ voice=v.find(x=>/female|zira|samantha|aria|jenny|karen|moira|tessa|victoria|hazel|susan|fiona|libby|sonia|natasha|google (uk|us) english/i.test(x.name)&&!/male$|david|mark|george|daniel|james|alex|fred/i.test(x.name))||v[0]||null;
+ $('vinfo').textContent=voice?'🔊 Voice: '+voice.name+' (female voice if your device has one)':'🔇 No speech voice found on this device — captions only';}
+if('speechSynthesis'in window){pick();speechSynthesis.onvoiceschanged=pick}else $('vinfo').textContent='🔇 Speech not supported — captions only';
+function say(t){if(muted||!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);if(voice)u.voice=voice;u.lang='en-US';u.pitch=1.2;u.rate=.95;speechSynthesis.speak(u)}
+function testVoice(){const m=muted;muted=false;say('Hello! I am your guide. Let us learn how Python talks to MySQL, one step at a time.');muted=m}
+function toggleMute(){muted=!muted;$('mb').textContent=muted?'🔇':'🔊';if(muted)speechSynthesis.cancel();else speakCur()}
+function speakCur(){if(cur)say(cur.say)}
+
+// ---- game ----
+let CI=0,SI=0,score=0,streak=0,C,answered=false;
+$('cases').innerHTML=CASES.map((c,i)=>`<div class="card case" onclick="start(${i})"><span class="tag">${c.steps.length} steps</span><h2>${c.n}</h2><div class="mu">${c.d}</div></div>`).join('');
+function show(id){['home','play','end'].forEach(x=>$(x).classList.toggle('hide',x!=id))}
+function goHome(){speechSynthesis.cancel&&speechSynthesis.cancel();show('home')}
+function start(i){CI=i;SI=-1;score=0;streak=0;C={T:base(),s0:'idle',s1:'not loaded',s2:'waiting',ok:[],err:[]};
+ $('cn').textContent=CASES[i].n;$('sc').textContent=0;$('stk').textContent=0;$('con').textContent='';
+ $('code').innerHTML=CASES[i].steps.map(s=>`<div><pre>${esc(s.code)}</pre></div>`).join('');show('play');window.scrollTo(0,0);next()}
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function next(){SI++;const st=CASES[CI].steps;if(SI>=st.length){speechSynthesis.cancel();$('er').textContent='Score: '+score+' / '+st.length*10+(score==st.length*10?' — perfect! 🏆':'');show('end');return}
+ cur=st[SI];$('pg').style.width=(SI/st.length*100)+'%';
+ [...$('code').children].forEach((d,i)=>{d.className=i<SI?'done':i==SI?'cur':''});
+ cur.f(C);if(cur.log)$('con').textContent+=(cur.log)+'\n';$('con').scrollTop=1e5;
+ $('cap').innerHTML='<b>'+cur.t+'</b><br>'+cur.say;render();fly(cur.a,cur.lb||'SQL');say(cur.say);
+ const ids=Object.keys(POOL).filter(k=>k!=cur.q).sort(()=>Math.random()-.5).slice(0,2);
+ const opts=[cur.q,...ids].sort(()=>Math.random()-.5);answered=false;$('fb').textContent='';$('nx').disabled=true;
+ $('nx').textContent=SI==st.length-1?'Finish 🏁':'Next step ➜';
+ $('qt').textContent='Quick check: what does this line do?';
+ $('qo').innerHTML=opts.map(k=>`<button class="opt" onclick="ans(this,'${k}')">${POOL[k]}</button>`).join('')}
+function ans(b,k){if(answered)return;answered=true;const ok=k==cur.q;
+ if(ok){score+=10;streak++;b.classList.add('good');$('fb').textContent='✔ Correct! +10 points'}
+ else{streak=0;b.classList.add('bad');[...$('qo').children].find(x=>x.textContent==POOL[cur.q]).classList.add('good');$('fb').textContent='✘ Not quite — see the green answer.'}
+ $('sc').textContent=score;$('stk').textContent=streak;$('nx').disabled=false}
+function render(){$('tb').innerHTML=C.T.map(r=>`<tr class="${r.c||''}"><td>${r.id}</td><td>${r.n}</td><td>${r.m}</td></tr>`).join('');
+ ['s0','s1','s2'].forEach((k,i)=>{$(k).textContent=C[k];const n=$('n'+i);n.className='node'+(C.ok.includes(i)?' ok':'')+(C.err.includes(i)?' err':'')});}
+function fly(a,lb){const p=$('pk'),P=[12,50,88];p.textContent=lb;p.style.transition='none';p.style.left=P[a[0]]+'%';p.style.opacity=1;
+ $('n'+a[0]).classList.add('on');
+ setTimeout(()=>{p.style.transition='left 1.1s ease,opacity .3s';p.style.left=P[a[1]]+'%'},60);
+ setTimeout(()=>{$('n'+a[1]).classList.add('on');p.style.opacity=0},1300);
+ setTimeout(()=>{$('n0').classList.remove('on');$('n1').classList.remove('on');$('n2').classList.remove('on')},2400)}
+// ---- v2: Indian female voice + architecture diagram ----
+let VL=[],manual=false;
+function pick(){if(!('speechSynthesis'in window)){$('vinfo').textContent='🔇 Speech not supported on this browser — captions only';return}
+ const fem=/female|neerja|heera|kalpana|swara|veena|lekha|priya|aditi|raveena|sangeeta|zira|samantha|hazel|susan|karen|tessa|moira|fiona|aria|jenny|google/i,male=/\bmale\b|ravi|hemant|prabhat|rishi|david|mark|george|daniel|james|alex|fred/i,ind=/india|neerja|heera|kalpana|swara|veena|lekha|priya|aditi|raveena|sangeeta|hindi|हिन्दी/i;
+ const sc=v=>{let s=0;if(/en[-_]IN/i.test(v.lang))s=100;else if(/hi[-_]IN/i.test(v.lang))s=60;else if(/^en/i.test(v.lang))s=10;else return -1;if(ind.test(v.name))s+=30;if(fem.test(v.name))s+=20;if(male.test(v.name)&&!/female/i.test(v.name))s-=80;return s};
+ const l=speechSynthesis.getVoices().map(v=>({v,s:sc(v)})).filter(x=>x.s>=0).sort((a,b)=>b.s-a.s);
+ VL=l.map(x=>x.v);$('vsel').innerHTML=VL.map((v,i)=>'<option value="'+i+'">'+v.name+' ('+v.lang+')</option>').join('');
+ if(!manual)voice=VL[0]||null;
+ if(!voice){$('vinfo').textContent='🔇 No voice found on this device — captions only';return}
+ const isIN=/[-_]IN/i.test(voice.lang);
+ $('vinfo').textContent=(isIN?'✔ Indian voice selected: ':'⚠ No Indian voice installed, using best available female voice: ')+voice.name+(isIN?'':' — tip: add “English (India)” e.g. Neerja/Heera in your device’s speech settings.');}
+function setV(i){manual=true;voice=VL[i];pick();$('vsel').value=i}
+function say(t){if(muted||!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='en-IN';u.pitch=1.1;u.rate=.92;speechSynthesis.speak(u)}
+function testVoice(){const m=muted;muted=false;say('Namaste! I am your guide. Let us learn how Python talks to MySQL, one step at a time.');muted=m}
+function dia(p){const L=(i,x,y,w,h,t,s)=>'<g class="lay" id="'+p+'L'+i+'"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="12"/><text x="'+(x+w/2)+'" y="'+(y+22)+'" text-anchor="middle" font-weight="600">'+t+'</text>'+s.map((q,j)=>'<text class="sm" x="'+(x+w/2)+'" y="'+(y+44+j*18)+'" text-anchor="middle">'+q+'</text>').join('')+'</g>';
+ return '<svg class="dg" viewBox="0 0 760 250" role="img" aria-label="Python to MySQL architecture">'+L(0,10,30,190,150,'🐍 Python application',['your .py script','calls connect(), cursor(),','execute(), fetchall()','commit(), close()'])+L(1,285,30,190,150,'🔌 Interface / Connector',['mysql.connector','follows Python DB-API','builds & sends SQL packets','converts rows to tuples'])+L(2,555,10,195,230,'🗄️ MySQL Server (DBMS)',['Connection manager','Parser → Optimizer','Storage engine (InnoDB)','💾 Database “school”','table: students'])+'<path class="ar" d="M200 90H285"/><path class="ar" d="M475 90H555"/><path class="ar" d="M285 130H200" stroke-dasharray="5 4"/><path class="ar" d="M555 130H475" stroke-dasharray="5 4"/><text class="al" x="242" y="80" text-anchor="middle">calls</text><text class="al" x="242" y="148" text-anchor="middle">rows</text><text class="al" x="515" y="80" text-anchor="middle">SQL</text><text class="al" x="515" y="148" text-anchor="middle">result</text><text class="al" x="515" y="170" text-anchor="middle">TCP/IP :3306</text><text class="al" x="380" y="225" text-anchor="middle">Request flows left → right, results flow right → left</text></svg>'}
+function hl(p,i){[0,1,2].forEach(k=>{const e=$(p+'L'+k);if(e)e.classList.toggle('on',k==i)})}
+$('dgp').innerHTML=dia('p');$('dgh').innerHTML=dia('h');
+const _fly=fly;fly=function(a,lb){_fly(a,lb);hl('p',a[0]);setTimeout(()=>hl('p',a[1]),1300);setTimeout(()=>hl('p',-1),2400)};
+function tour(){const t='A D B M S, or database management system, like MySQL, stores your data and answers queries. Your Python program cannot open its files directly. Instead, it uses an interface, the MySQL connector, which follows the Python D B A P I standard. The connector packs your S Q L into network packets and sends them over T C P I P, port three three zero six. Inside the server, the parser checks the query, the optimizer plans it, and the storage engine reads or writes the data files. The results travel back the same way, as rows into Python.';
+ say(t);hl('h',0);setTimeout(()=>hl('h',1),9000);setTimeout(()=>hl('h',2),19000);setTimeout(()=>hl('h',-1),38000)}
+if('speechSynthesis'in window){pick();speechSynthesis.onvoiceschanged=pick}else pick();
+// ---- v3: show ALL voices, rank female first, pitch control ----
+function gender(v){const n=v.name;if(/female|woman/i.test(n))return 'f';if(/\bmale\b|\bman\b|ravi|hemant|prabhat|rishi|david|mark|george|daniel|james|alex|fred|guy|ryan|thomas|oliver|arthur|bruce|jorge|diego|\bpaul\b|\bsean\b/i.test(n))return 'm';if(/neerja|heera|kalpana|swara|veena|lekha|priya|aditi|raveena|sangeeta|zira|samantha|hazel|susan|karen|tessa|moira|fiona|aria|jenny|libby|sonia|natasha|catherine|linda|heather|victoria|allison|ava|serena|ellen|kathy|google us english|google हिन्दी|google hindi/i.test(n))return 'f';return '?'}
+function autoPitch(){const g=voice?gender(voice):'?';const p=g=='f'?1.1:1.6;$('ptc').value=p;$('pv').textContent=p}
+function info(){if(!voice){$('vinfo').textContent='🔇 No voice found on this device — captions only';return}
+ const g=gender(voice),ind=/[-_]IN/i.test(voice.lang);
+ $('vinfo').textContent=(g=='f'?'♀ Female voice: ':g=='m'?'♂ Male voice (pitch raised to sound female — use the Pitch slider): ':'? Unknown gender (pitch raised — adjust the Pitch slider): ')+voice.name+' ['+voice.lang+']'+(ind?'':' — no Indian-accent voice on this device; install “English (India)” Neerja/Heera in system speech settings for an Indian accent.')}
+function pick(){if(!('speechSynthesis'in window)){$('vinfo').textContent='🔇 Speech not supported on this browser — captions only';return}
+ const all=speechSynthesis.getVoices();if(!all.length)return;
+ const sc=v=>{let s=/en[-_]IN/i.test(v.lang)?100:/hi[-_]IN/i.test(v.lang)?60:/^en/i.test(v.lang)?20:0;const g=gender(v);s+=g=='f'?200:g=='?'?0:-100;return s};
+ VL=all.slice().sort((a,b)=>sc(b)-sc(a));
+ $('vsel').innerHTML=VL.map((v,i)=>'<option value="'+i+'">'+({f:'♀ ',m:'♂ ','?':'• '})[gender(v)]+v.name+' ('+v.lang+')</option>').join('');
+ if(manual&&voice){const k=VL.findIndex(v=>v.voiceURI==voice.voiceURI);if(k>=0)$('vsel').value=k}else{voice=VL[0];$('vsel').value=0;autoPitch()}
+ info()}
+function setV(i){manual=true;voice=VL[i];autoPitch();info();testVoice()}
+function say(t){if(muted||!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='en-IN';u.pitch=parseFloat($('ptc').value)||1.1;u.rate=.92;speechSynthesis.speak(u)}
+pick();
+// ---- v4: Hindi narration when a Hindi voice is selected ----
+const H={imp:'पहला चरण। हम माई-एस-क्यू-एल डॉट कनेक्टर मॉड्यूल को इम्पोर्ट करते हैं। पायथन अकेले माई-एस-क्यू-एल से बात नहीं कर सकता, इसलिए यह लाइब्रेरी दोनों के बीच अनुवादक का काम करती है।',
+conn:'दूसरा चरण। कनेक्ट फ़ंक्शन होस्ट, यूज़र, पासवर्ड और डेटाबेस का नाम लेता है। कनेक्टर सर्वर का दरवाज़ा खटखटाता है, सर्वर क्रेडेंशियल जाँचता है, और एक लाइव कनेक्शन ऑब्जेक्ट con मिलता है।',
+cur:'तीसरा चरण। कर्सर एक संदेशवाहक की तरह है। आप उसे एस-क्यू-एल कमांड देते हैं, वह उन्हें सर्वर तक ले जाता है और जवाब वापस लाता है। हमेशा कनेक्शन से कर्सर बनाइए।',
+cls:'आख़िरी चरण। हम पहले कर्सर और फिर कनेक्शन बंद करते हैं, जिससे सर्वर के संसाधन मुक्त होते हैं। बंद करना भूलने पर कनेक्शन खुले रह सकते हैं और नए यूज़र रुक सकते हैं।',
+sel:'चौथा चरण। एक्ज़ीक्यूट मेथड हमारी सेलेक्ट क्वेरी सर्वर को भेजता है। ध्यान दें, परसेंट-एस प्लेसहोल्डर है और वैल्यू अस्सी अलग से दी गई है। सर्वर वे सभी पंक्तियाँ ढूँढता है जिनके अंक अस्सी से ज़्यादा हैं, जो नीले रंग में दिख रही हैं।',
+fet:'पाँचवाँ चरण। सेलेक्ट सिर्फ़ नतीजे तैयार करता है, इसलिए हम फ़ेच-ऑल से उन्हें पायथन में लाते हैं, टपल्स की लिस्ट के रूप में। फिर लूप हर पंक्ति प्रिंट करता है। यहाँ कमिट की ज़रूरत नहीं, क्योंकि पढ़ने से डेटा नहीं बदलता।',
+ins:'चौथा चरण। हम तीन वैल्यू के साथ इन्सर्ट स्टेटमेंट भेजते हैं। सर्वर पंक्ति जोड़ देता है, लेकिन अभी सिर्फ़ अस्थायी रूप से, ट्रांज़ैक्शन के अंदर। नारंगी पंक्ति पेंडिंग है, और दूसरे यूज़र उसे अभी नहीं देख सकते।',
+cm1:'पाँचवाँ चरण। कमिट बदलाव को स्थायी बना देता है। अब पंक्ति हरी हो गई, क्योंकि वह सबके लिए सेव हो चुकी है। इस लाइन के बिना, कनेक्शन बंद होते ही यह इन्सर्ट खो जाता।',
+upd:'चौथा चरण। अपडेट स्टेटमेंट आईडी तीन वाले छात्र के अंक बदलता है। वेयर क्लॉज़ बहुत ज़रूरी है, उसके बिना टेबल की हर पंक्ति बदल जाती। अभी बदलाव पेंडिंग है।',
+cm2:'पाँचवाँ चरण। नए अंक सेव करने के लिए हम कमिट करते हैं। फिर रो-काउंट बताता है कि कितनी पंक्तियाँ प्रभावित हुईं। यहाँ एक है, यानी सिर्फ़ वही पंक्ति बदली जो हम चाहते थे।',
+del:'चौथा चरण। हम आईडी दो वाले छात्र को डिलीट करते हैं। पंक्ति लाल रंग में कटी दिखती है, पर डिलीट अभी खुले ट्रांज़ैक्शन में है। कुछ भी स्थायी नहीं हुआ, इसलिए हम अपना फ़ैसला बदल सकते हैं।',
+rol:'पाँचवाँ चरण। अरे, यह तो ग़लत छात्र था! रोलबैक आख़िरी कमिट के बाद के सारे बदलाव रद्द कर देता है। रवि की पंक्ति ठीक पहले जैसी वापस आ गई। इसीलिए ट्रांज़ैक्शन डेटाबेस को सुरक्षित बनाते हैं।',
+try_:'दूसरा चरण। कनेक्शन फ़ेल भी हो सकता है, जैसे ग़लत पासवर्ड या बंद सर्वर। इसलिए हम कॉल को ट्राई ब्लॉक में रखते हैं। यहाँ सर्वर ग़लत पासवर्ड को ठुकरा देता है और कनेक्टर एक एरर उठाता है।',
+exc:'तीसरा चरण। ट्राई की वजह से पायथन क्रैश होने के बजाय एक्सेप्ट ब्लॉक में चला जाता है। हम एरर संदेश प्रिंट करते हैं: एरर एक हज़ार पैंतालीस, एक्सेस डिनाइड। अब हमें पता है कि क्या गड़बड़ हुई और उसे ठीक कर सकते हैं।',
+conn2:'चौथा चरण। हम पासवर्ड सही करके फिर से कनेक्ट करते हैं। इस बार सर्वर हमें स्वीकार करता है और बॉर्डर हरा हो जाता है। असली प्रोग्राम अक्सर ऐसे ही दोबारा कोशिश करते हैं या यूज़र को सरल संदेश दिखाते हैं।',
+cls2:'आख़िरी चरण। बंद करने से पहले हम इज़-कनेक्टेड जाँचते हैं, ताकि कभी ऐसा कनेक्शन बंद न करें जो है ही नहीं। अच्छे प्रोग्राम एरर के बाद भी सफ़ाई ज़रूर करते हैं।'};
+const HI=[[H.imp,H.conn,H.cur,H.sel,H.fet,H.cls],[H.imp,H.conn,H.cur,H.ins,H.cm1,H.cls],[H.imp,H.conn,H.cur,H.upd,H.cm2,H.cls],[H.imp,H.conn,H.cur,H.del,H.rol,H.cls],[H.imp,H.try_,H.exc,H.conn2,H.cls2]];
+const HIMAP=new Map();CASES.forEach((c,i)=>c.steps.forEach((s,j)=>HIMAP.set(s.say,HI[i][j])));
+const isHi=()=>!!(voice&&/^hi/i.test(voice.lang));
+function say(t){if(muted||!('speechSynthesis'in window))return;let x=t;
+ if(HIMAP.has(t)&&cur){if(isHi()){x=HIMAP.get(t)}$('cap').innerHTML='<b>'+cur.t+'</b><br>'+x}
+ speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(x);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='en-IN';u.pitch=parseFloat($('ptc').value)||1.1;u.rate=isHi()?.9:.92;speechSynthesis.speak(u)}
+function testVoice(){const m=muted;muted=false;say(isHi()?'नमस्ते! मैं आपकी गाइड हूँ। आइए सीखें कि पायथन माई एस क्यू एल से कैसे बात करता है, एक-एक चरण में।':'Namaste! I am your guide. Let us learn how Python talks to MySQL, one step at a time.');muted=m}
+function tour(){const t=isHi()?'डी बी एम एस, यानी डेटाबेस मैनेजमेंट सिस्टम, जैसे माई एस क्यू एल, आपका डेटा रखता है और क्वेरी का जवाब देता है। आपका पायथन प्रोग्राम उसकी फ़ाइलें सीधे नहीं खोल सकता। इसके बजाय वह एक इंटरफ़ेस, यानी माई एस क्यू एल कनेक्टर, इस्तेमाल करता है, जो पायथन के डी बी ए पी आई मानक को मानता है। कनेक्टर आपकी एस क्यू एल को नेटवर्क पैकेट में बदलकर टी सी पी आई पी से, पोर्ट तीन हज़ार तीन सौ छह पर भेजता है। सर्वर के अंदर पार्सर क्वेरी जाँचता है, ऑप्टिमाइज़र योजना बनाता है, और स्टोरेज इंजन डेटा फ़ाइलें पढ़ता या लिखता है। नतीजे उसी रास्ते से पंक्तियों के रूप में वापस पायथन में आते हैं।':'A D B M S, or database management system, like MySQL, stores your data and answers queries. Your Python program cannot open its files directly. Instead, it uses an interface, the MySQL connector, which follows the Python D B A P I standard. The connector packs your S Q L into network packets and sends them over T C P I P, port three three zero six. Inside the server, the parser checks the query, the optimizer plans it, and the storage engine reads or writes the data files. The results travel back the same way, as rows into Python.';
+ say(t);hl('h',0);const k=isHi()?1.15:1;setTimeout(()=>hl('h',1),9000*k);setTimeout(()=>hl('h',2),19000*k);setTimeout(()=>hl('h',-1),38000*k)}
+// ---- v5: add-a-row form for Case 2 + auto-scroll to table changes ----
+CASES[1].steps[3].f=function(c){const g=id=>$(id);let id=parseInt(g('ri').value),n=(g('rn').value||'Kabir').replace(/[^A-Za-z0-9 ]/g,'').trim().slice(0,12)||'Kabir',m=parseInt(g('rm').value),note='';
+ if(isNaN(m))m=88;m=Math.max(0,Math.min(100,m));
+ if(isNaN(id)||c.T.some(r=>r.id==id)){const nid=Math.max(0,...c.T.map(r=>r.id))+1;note=' (id '+(isNaN(id)?'missing':id+' already exists')+', using '+nid+')';id=nid}
+ const code='cur.execute("INSERT INTO students VALUES (%s,%s,%s)", ('+id+',"'+n+'",'+m+'))';
+ cur.code=code;$('code').children[SI].innerHTML='<pre>'+esc(code)+'</pre>';
+ c.T.push({id:id,n:n,m:m,c:'pend'});cur.log='1 row inserted: ('+id+", '"+n+"', "+m+')'+note+' — not saved yet';
+ ['ri','rn','rm'].forEach(k=>g(k).disabled=true)};
+const _st=start;start=function(i){_st(i);$('rf').classList.toggle('hide',i!=1);['ri','rn','rm'].forEach(k=>$(k).disabled=false)};
+const _nx=next;next=function(){const b=JSON.stringify(C.T);_nx();if(JSON.stringify(C.T)!==b){const t=$('tcard');t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.remove('fl');void t.offsetWidth;t.classList.add('fl')}};
+// ---- v6: Next always enabled (floating button), quiz optional, reliable narration queue ----
+let sayId=0;
+function say(t){if(muted||!('speechSynthesis'in window))return;let x=t;
+ if(HIMAP.has(t)&&cur){if(isHi())x=HIMAP.get(t);$('cap').innerHTML='<b>'+cur.t+'</b><br>'+x}
+ speechSynthesis.cancel();speechSynthesis.resume();
+ const parts=x.match(/[^।.!?]+[।.!?]?/g)||[x],pt=parseFloat($('ptc').value)||1.1,id=++sayId;
+ setTimeout(()=>{if(id!==sayId)return;parts.forEach(p=>{p=p.trim();if(!p)return;const u=new SpeechSynthesisUtterance(p);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='en-IN';u.pitch=pt;u.rate=isHi()?.9:.92;speechSynthesis.speak(u)})},150)}
+const _nx2=next;next=function(){_nx2();$('nx').disabled=false;$('qt').textContent='Quick check (optional, +10 points): what does this line do?'};
+Object.assign($('nx').style,{position:'fixed',right:'14px',bottom:'calc(14px + env(safe-area-inset-bottom, 0px))',zIndex:50,boxShadow:'0 4px 14px rgba(0,0,0,.35)',padding:'12px 22px',fontWeight:'600'});
+$('nx').disabled=false;
+document.querySelector('.w').style.paddingBottom='90px';
+// ---- v7: auto-play (default) or game mode; no extra clicks ----
+let MODE='auto',paused=false;
+function say(t){const id=++sayId;let x=t;
+ if(HIMAP.has(t)&&cur){if(isHi())x=HIMAP.get(t);$('cap').innerHTML='<b>'+cur.t+'</b><br>'+x}
+ const adv=()=>setTimeout(()=>{if(id===sayId&&MODE=='auto'&&!paused&&!$('play').classList.contains('hide'))next()},1300);
+ const sp='speechSynthesis'in window;if(sp)speechSynthesis.cancel();
+ if(muted||!sp){setTimeout(adv,Math.min(x.length*45,9000));return}
+ speechSynthesis.resume();
+ const parts=(x.match(/[^।.!?]+[।.!?]?/g)||[x]).map(s=>s.trim()).filter(Boolean),pt=parseFloat($('ptc').value)||1.1;
+ setTimeout(()=>{if(id!==sayId)return;parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);if(voice){u.voice=voice;u.lang=voice.lang}else u.lang='en-IN';u.pitch=pt;u.rate=isHi()?.9:.92;if(i==parts.length-1){u.onend=adv;u.onerror=adv}speechSynthesis.speak(u)})},150);
+ setTimeout(adv,x.length*(isHi()?120:95)+3000)}
+function applyMode(){const a=MODE=='auto';$('qz').classList.toggle('hide',a);$('m1').className=a?'p':'';$('m2').className=a?'':'p';$('pz').style.display=a?'':'none';
+ $('mh').textContent=a?'Sit back: each step is explained and moves on by itself. Press Next ➜ to skip ahead.':'Answer the question and the next step starts by itself.'}
+function setMode(m){MODE=m;paused=false;$('pz').textContent='⏸ Pause';applyMode();if(cur)speakCur()}
+function togglePause(){paused=!paused;$('pz').textContent=paused?'▶ Resume':'⏸ Pause';if(paused){sayId++;speechSynthesis.cancel()}else speakCur()}
+const ctl=document.createElement('div');ctl.className='card';ctl.style.cssText='display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px';
+ctl.innerHTML='<button id="m1" onclick="setMode(\'auto\')">▶ Auto-play</button><button id="m2" onclick="setMode(\'game\')">🎮 Game mode (quiz)</button><button id="pz" onclick="togglePause()">⏸ Pause</button><span class="mu" id="mh"></span>';
+$('play').insertBefore(ctl,document.querySelector('#play .prog'));
+const _ans=ans;ans=function(b,k){if(answered)return;_ans(b,k);const s=SI;setTimeout(()=>{if(SI===s&&MODE=='game')next()},1900)};
+const _nx3=next;next=function(){_nx3();$('qt').textContent='🎮 Answer to score +10 — the next step starts automatically: what does this line do?';$('nx').textContent=SI>=CASES[CI].steps.length-1?'Finish 🏁':'Next step ➜'};
+const _st3=start;start=function(i){paused=false;$('pz').textContent='⏸ Pause';applyMode();_st3(i)};
+applyMode();
+const CC=['linear-gradient(90deg,#4338ca,#7c3aed)','linear-gradient(90deg,#047857,#0f766e)','linear-gradient(90deg,#b45309,#c2410c)','linear-gradient(90deg,#b91c1c,#9f1239)','linear-gradient(90deg,#be185d,#7e22ce)'];
+const _st4=start;start=function(i){$('cn').style.setProperty('--cc',CC[i]);_st4(i)};
+</script></body></html>
